@@ -16,7 +16,8 @@ APlayerProjectile::APlayerProjectile()
 	ProjectileComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Component"));
 	// Projectile Params
 	ProjectileComponent->InitialSpeed = 1000;
-	ProjectileComponent->MaxSpeed = 1000;
+	ProjectileComponent->MaxSpeed = 1100;
+	ProjectileComponent->ProjectileGravityScale = 0;
 
 }
 

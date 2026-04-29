@@ -10,7 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
-
+#include "OctoPirateAbilitySystemComponent.h"
 AOctoPirateCharacter::AOctoPirateCharacter()
 {
 	// Set size for player capsule
@@ -45,6 +45,9 @@ AOctoPirateCharacter::AOctoPirateCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	// Initialize The AbilitySystemComponent
+	AbilitySystemComponent = CreateDefaultSubobject<UOctoPirateAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 }
 
 void AOctoPirateCharacter::BeginPlay()
