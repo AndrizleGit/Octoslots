@@ -12,7 +12,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="" />
+    <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_PlayerProjectile.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_PlayerProjectile.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/AI/BT_Enemy.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/AI/BT_Enemy.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_OctoPirateBaseEnemy.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_OctoPirateBaseEnemy.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Levels/Level_Prototype.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Levels/Level_Prototype.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Materials/Dummy_Material.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Materials/Dummy_Material.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Private/Enemy/OctoPirateEnemyCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Private/Enemy/OctoPirateEnemyCharacter.cpp" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,6 +36,8 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Intermediate/Build/Win64/UnrealEditor/Inc/OctoPirate/UHT/BTTask_FindRandomLocation.gen.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Private/Enemy/AI/BTTask_ChasePlayer.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Private/Enemy/OctoPirateEnemyCharacter.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Private/Enemy/OctoPirateEnemySpawner.cpp" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Public/Enemy/AI/BTTask_ChasePlayer.h" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="ProjectColorInfo">{
@@ -170,7 +181,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1778003812626</updated>
-      <workItem from="1778003814070" duration="3556000" />
+      <workItem from="1778003814070" duration="9739000" />
     </task>
     <servers />
   </component>

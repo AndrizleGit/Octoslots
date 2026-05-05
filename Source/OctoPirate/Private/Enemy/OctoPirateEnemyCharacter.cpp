@@ -3,6 +3,7 @@
 #include "Enemy/OctoPirateEnemyCharacter.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Enemy/OctoPirateAIController.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Perception/AISense.h"
 #include "Perception/AISenseConfig_Sight.h"
@@ -18,6 +19,7 @@ AOctoPirateEnemyCharacter::AOctoPirateEnemyCharacter(const FObjectInitializer& O
 	SenseConfigs.Add(SightConfig);
 	DominantSense = UAISenseConfig_Sight::StaticClass();
 
+	AIControllerClass = AOctoPirateAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
