@@ -51,41 +51,37 @@ void USlotMachineComponent::Spin()
 FSlotResult USlotMachineComponent::RollReels()
 {
 	FSlotResult Result;
-	
-	for (int32 i = 0; i < 3; i++)
-	{
-		switch (ESlotSymbol RolledSymbol = static_cast<ESlotSymbol>(FMath::RandRange(0,2)))
-		{
-			case ESlotSymbol::MovementSpeed: Result.MovementSpeedCount++; break;
-			case ESlotSymbol::AttackSpeed: Result.AttackSpeedCount++; break;
-			case ESlotSymbol::AttackDamage: Result.AttackDamageCount++; break;
-		}
-	}
-	
+	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
+	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
+	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
 	return Result;
 }
 
 void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 {
-	if (Result.MovementSpeedCount > 0)
+	int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
+	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
+	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
+	
+	if (MovementCount > 0)
 	{
-		float Bonus = BuffConfig.MovementSpeedBonus * Result.MovementSpeedCount;
+		float Bonus = BuffConfig.MovementSpeedBonus * MovementCount;
 		//GetOwner<AOctoPirateCharacter>()->AddMovementSpeedBonus(Bonus);
-		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d (+%.1f)"), Result.MovementSpeedCount, Bonus);
+		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d (+%.1f)"), MovementCount, Bonus);
 	}
 	
-	if (Result.AttackDamageCount > 0)
+	if (AttackSpeedCount > 0)
 	{
-		float Multiplier = FMath::Pow(BuffConfig.AttackSpeedMultiplier, Result.AttackSpeedCount);
+		float Multiplier = FMath::Pow(BuffConfig.AttackSpeedMultiplier, AttackSpeedCount);
 		//GetOwner<AOctoPirateCharacter>()->ApplyAttackSpeedMultiplier(Multiplier);
-		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d (+%.1f)"), Result.AttackSpeedCount, Multiplier);
+		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d (+%.1f)"), AttackSpeedCount, Multiplier);
 	}
 	
-	if (Result.MovementSpeedCount > 0)
+	if (AttackDamageCount > 0)
 	{
-		float Bonus = BuffConfig.AttackDamageBonus * Result.AttackDamageCount;
+		float Bonus = BuffConfig.AttackDamageBonus * AttackDamageCount;
 		//GetOwner<AOctoPirateCharacter>()->AddAttackDamageBonus(Bonus);
-		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d (+%.1f)"), Result.AttackDamageCount, Bonus);
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d (+%.1f)"), AttackDamageCount, Bonus);
 	}
 }
 
