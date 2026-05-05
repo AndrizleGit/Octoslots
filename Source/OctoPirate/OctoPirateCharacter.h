@@ -16,6 +16,25 @@ UCLASS(abstract)
 class AOctoPirateCharacter : public ACharacter
 {
 	GENERATED_BODY()
+	
+public:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void AddMovementSpeedBonus(float Bonus);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveMovementSpeedBonus();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyAttackSpeedMultiplier(float Multiplier);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveAttackSpeedMultiplier();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void AddAttackDamageBonus(float Bonus);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveAttackDamageBonus();
 
 private:
 
@@ -47,5 +66,6 @@ public:
 	/** Ability System Component **/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
 	class UOctoPirateAbilitySystemComponent* AbilitySystemComponent;
+	
 };
 
