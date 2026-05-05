@@ -11,6 +11,7 @@
 #include "Materials/Material.h"
 #include "Engine/World.h"
 #include "OctoPirateAbilitySystemComponent.h"
+#include "AutoShootAbility.h"
 AOctoPirateCharacter::AOctoPirateCharacter()
 {
 	// Set size for player capsule
