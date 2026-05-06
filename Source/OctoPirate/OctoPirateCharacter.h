@@ -16,6 +16,28 @@ UCLASS(abstract)
 class AOctoPirateCharacter : public ACharacter
 {
 	GENERATED_BODY()
+	
+public:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void AddMovementSpeedBonus(float Bonus);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveMovementSpeedBonus();
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyAttackSpeedMultiplier(float Multiplier);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveAttackSpeedMultiplier();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "Slot Machine|Player")
+	void AddAttackDamageBonus(float Bonus);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Slot Machine|Player")
+	void RemoveAttackDamageBonus();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float CurrentDamage = 1.f;
 
 private:
 
@@ -44,5 +66,9 @@ public:
 	/** Returns the Camera Boom component **/
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom.Get(); }
 
+	/** Ability System Component **/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
+	class UOctoPirateAbilitySystemComponent* AbilitySystemComponent;
+	
 };
 
