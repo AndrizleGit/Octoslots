@@ -16,9 +16,18 @@ struct FSlotResult
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(BlueprintReadOnly) int32 MovementSpeedCount = 0;
-	UPROPERTY(BlueprintReadOnly) int32 AttackSpeedCount = 0;
-	UPROPERTY(BlueprintReadOnly) int32 AttackDamageCount = 0;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel1 = ESlotSymbol::MovementSpeed;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel2 = ESlotSymbol::MovementSpeed;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel3 = ESlotSymbol::MovementSpeed;
+	
+	int32 GetCount(ESlotSymbol Symbol) const
+	{
+		int32 Count = 0;
+		if (Reel1 == Symbol) Count++;
+		if (Reel2 == Symbol) Count++;
+		if (Reel3 == Symbol) Count++;
+		return Count;
+	}
 };
 
 USTRUCT(BlueprintType)

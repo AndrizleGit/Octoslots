@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "OctoPirateCharacter.h"
 #include "SlotMachineTypes.h"
 #include "SlotMachineComponent.generated.h"
 
@@ -64,12 +65,14 @@ public:
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
 private:
+	UPROPERTY()
+	AOctoPirateCharacter* PlayerCharacter = nullptr;
 	float DopamineCurrent = 100.f;
 	bool bDebuffActive = false;
 	FSlotResult LastResult;
 
 	static FSlotResult RollReels();
 	void ApplyBuffs(const FSlotResult& Result) const;
-	static void RemoveAllBuffs();
+	void RemoveAllBuffs() const;
 	void SetDebuffActive(bool bActive);
 };
