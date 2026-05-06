@@ -2,7 +2,8 @@
 
 
 #include "PlayerProjectile.h"
-#include "GameFramework/ProjectileMovementComponent.h" 
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APlayerProjectile::APlayerProjectile()
@@ -21,11 +22,23 @@ APlayerProjectile::APlayerProjectile()
 
 }
 
-// Called when the game starts or when spawned
 void APlayerProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// inherit the shooter's current damage so buffs apply automatically
+	if (const AOctoPirateCharacter* Player = Cast<AOctoPirateCharacter>(GetInstigator()))
+	{
+		Damage = Player->CurrentDamage;
+	}
+}
+
+void APlayerProjectile::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	UGameplayStatics::ApplyDamage(Other, Damage, GetInstigatorController(), this, UDamageType::StaticClass());
+	Destroy();
 }
 
 // Called every frame

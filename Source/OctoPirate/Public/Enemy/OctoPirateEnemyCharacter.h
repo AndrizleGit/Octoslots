@@ -36,7 +36,7 @@ protected:
 	UBehaviorTree* BehaviorTree = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Stats")
-	float MaxHealth = 100.f;
+	float MaxHealth = 4.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Stats")
 	float Health;

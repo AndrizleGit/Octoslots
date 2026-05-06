@@ -30,11 +30,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void RemoveAttackSpeedMultiplier();
 	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	UFUNCTION(BlueprintNativeEvent, Category = "Slot Machine|Player")
 	void AddAttackDamageBonus(float Bonus);
-	
-	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Slot Machine|Player")
 	void RemoveAttackDamageBonus();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float CurrentDamage = 1.f;
 
 private:
 
