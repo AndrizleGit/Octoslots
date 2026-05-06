@@ -14,12 +14,17 @@
   <component name="ChangeListManager">
     <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultGame.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultGame.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultInput.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultInput.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/OctoPirateCharacter.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/OctoPirateCharacter.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/OctoPirateCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/OctoPirateCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_PlayerProjectile.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_PlayerProjectile.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_OctoPirateBaseEnemy.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_OctoPirateBaseEnemy.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Materials/PlayerProjectile_Material.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Materials/PlayerProjectile_Material.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MainMenuMockup.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MainMenuMockup.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/OctoPirate.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/OctoPirate.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/OctoPiratePlayerController.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/OctoPiratePlayerController.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/OctoPirate/PlayerProjectile.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/PlayerProjectile.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/PlayerProjectile.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/PlayerProjectile.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/Enemy/OctoPirateEnemyCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/Enemy/OctoPirateEnemyCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/SlotMachineComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/SlotMachineComponent.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Source/OctoPirate/SlotMachineTypes.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/SlotMachineTypes.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />

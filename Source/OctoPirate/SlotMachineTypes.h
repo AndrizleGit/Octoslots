@@ -37,5 +37,5 @@ struct FSlotBuffConfig
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float MovementSpeedBonus = 150.0f;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite) float AttackSpeedMultiplier = 0.75f;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite) float AttackDamageBonus = 1.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite) float AttackDamageBonus = 0.75f;
 };
