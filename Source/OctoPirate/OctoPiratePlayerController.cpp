@@ -29,6 +29,13 @@ AOctoPiratePlayerController::AOctoPiratePlayerController()
 	FollowTime = 0.f;
 }
 
+void AOctoPiratePlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	SetInputMode(FInputModeGameOnly());
+}
+
 void AOctoPiratePlayerController::SetupInputComponent()
 {
 	// set up gameplay key bindings
