@@ -2,7 +2,8 @@
 
 
 #include "PlayerProjectile.h"
-#include "GameFramework/ProjectileMovementComponent.h" 
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APlayerProjectile::APlayerProjectile()
@@ -12,6 +13,9 @@ APlayerProjectile::APlayerProjectile()
 
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Projectile Mesh"));
 	RootComponent = ProjectileMesh;
+	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	ProjectileMesh->SetCollisionResponseToAllChannels(ECR_Block);
+	ProjectileMesh->SetNotifyRigidBodyCollision(true);
 
 	ProjectileComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Component"));
 	// Projectile Params
@@ -21,11 +25,25 @@ APlayerProjectile::APlayerProjectile()
 
 }
 
-// Called when the game starts or when spawned
 void APlayerProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	// inherit the shooter's current damage so buffs apply automatically
+	if (const AOctoPirateCharacter* Player = Cast<AOctoPirateCharacter>(GetInstigator()))
+	{
+		Damage = Player->CurrentDamage;
+	}
+	UE_LOG(LogTemp, Log, TEXT("[Projectile] Spawned with damage: %.1f"), Damage);
+}
+
+void APlayerProjectile::NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit)
+{
+	Super::NotifyHit(MyComp, Other, OtherComp, bSelfMoved, HitLocation, HitNormal, NormalImpulse, Hit);
+
+	UE_LOG(LogTemp, Log, TEXT("[Projectile] Hit: %s — applying %.1f damage"), *GetNameSafe(Other), Damage);
+	UGameplayStatics::ApplyDamage(Other, Damage, GetInstigatorController(), this, UDamageType::StaticClass());
+	Destroy();
 }
 
 // Called every frame

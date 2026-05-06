@@ -4,6 +4,7 @@
 #include "SlotMachineComponent.h"
 
 #include "OctoPirateCharacter.h"
+#include "GameFramework/PawnMovementComponent.h"
 
 USlotMachineComponent::USlotMachineComponent()
 {
@@ -14,12 +15,13 @@ void USlotMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	DopamineCurrent = DopamineMax;
+	PlayerCharacter = Cast<AOctoPirateCharacter>(GetOwner());
 }
 
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
+	//UE_LOG(LogTemp, Warning, TEXT("Current Movement Speed: %f"), PlayerCharacter->GetMovementComponent()->GetMaxSpeed());
 	if (DopamineCurrent > 0.f)
 	{
 		DopamineCurrent = FMath::Max(0.f, DopamineCurrent - (DopamineDrainPerSecond * DeltaTime));
@@ -67,6 +69,10 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	{
 		float Bonus = BuffConfig.MovementSpeedBonus * MovementCount;
 		//GetOwner<AOctoPirateCharacter>()->AddMovementSpeedBonus(Bonus);
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->AddMovementSpeedBonus(Bonus);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d (+%.1f)"), MovementCount, Bonus);
 	}
 	
@@ -74,20 +80,34 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	{
 		float Multiplier = FMath::Pow(BuffConfig.AttackSpeedMultiplier, AttackSpeedCount);
 		//GetOwner<AOctoPirateCharacter>()->ApplyAttackSpeedMultiplier(Multiplier);
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->ApplyAttackSpeedMultiplier(Multiplier);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d (+%.1f)"), AttackSpeedCount, Multiplier);
 	}
 	
 	if (AttackDamageCount > 0)
 	{
-		float Bonus = BuffConfig.AttackDamageBonus * AttackDamageCount;
+		float Bonus = BuffConfig.AttackDamageBonus * (AttackDamageCount * AttackDamageCount);
 		//GetOwner<AOctoPirateCharacter>()->AddAttackDamageBonus(Bonus);
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->AddAttackDamageBonus(Bonus);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d (+%.1f)"), AttackDamageCount, Bonus);
 	}
 }
 
-void USlotMachineComponent::RemoveAllBuffs()
+void USlotMachineComponent::RemoveAllBuffs() const
 {
 	//GetOwner<AOctoPirateCharacter>()->ResetSlotMachineBuffs();
+	if (PlayerCharacter)
+	{
+		PlayerCharacter->RemoveMovementSpeedBonus();
+		PlayerCharacter->RemoveAttackSpeedMultiplier();
+		PlayerCharacter->RemoveAttackDamageBonus();
+	}
 	UE_LOG(LogTemp, Warning, TEXT("All buffs removed"));
 }
 
@@ -100,11 +120,19 @@ void USlotMachineComponent::SetDebuffActive(bool bActive)
 	if (bActive)
 	{
 		//GetOwner<AOctoPirateCharacter>()->AddMovementSpeedBonus(DebuffMovementSpeedPenalty);
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->AddMovementSpeedBonus(DebuffMovementSpeedPenalty);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("Debuff applied"));
 	}
 	else
 	{
 		//GetOwner<AOctoPirateCharacter>()->RemoveMovementSpeedBonus();
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->RemoveMovementSpeedBonus();
+		}
 		UE_LOG(LogTemp, Warning, TEXT("Debuff removed"));
 	}
 	

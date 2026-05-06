@@ -7,6 +7,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "OctoPirateCharacter.h"
 #include "Engine/World.h"
+#include "Engine/GameViewportClient.h"
+#include "Framework/Application/SlateApplication.h"
 #include "EnhancedInputComponent.h"
 #include "Navigation/PathFollowingComponent.h"
 #include "InputActionValue.h"
@@ -27,6 +29,26 @@ AOctoPiratePlayerController::AOctoPiratePlayerController()
 	DefaultMouseCursor = EMouseCursor::Default;
 	CachedDestination = FVector::ZeroVector;
 	FollowTime = 0.f;
+}
+
+void AOctoPiratePlayerController::BeginPlay()
+{
+	Super::BeginPlay();
+
+	FInputModeGameAndUI InputMode;
+	InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	InputMode.SetHideCursorDuringCapture(false);
+	SetInputMode(InputMode);
+
+	if (UGameViewportClient* GameViewport = GetWorld()->GetGameViewport())
+	{
+		GameViewport->SetMouseCaptureMode(EMouseCaptureMode::NoCapture);
+		GameViewport->SetMouseLockMode(EMouseLockMode::DoNotLock);
+	}
+
+	FSlateApplication::Get().SetAllUserFocusToGameViewport();
+
+	UE_LOG(LogTemp, Warning, TEXT("[PlayerController] BeginPlay ran. Capture mode set to NoCapture."));
 }
 
 void AOctoPiratePlayerController::SetupInputComponent()
