@@ -89,7 +89,7 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	
 	if (AttackDamageCount > 0)
 	{
-		float Bonus = BuffConfig.AttackDamageBonus * AttackDamageCount;
+		float Bonus = BuffConfig.AttackDamageBonus * (AttackDamageCount * AttackDamageCount);
 		//GetOwner<AOctoPirateCharacter>()->AddAttackDamageBonus(Bonus);
 		if (PlayerCharacter)
 		{

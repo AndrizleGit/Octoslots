@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "OctoPirateCharacter.h"
 #include "PlayerProjectile.generated.h"
 
 UCLASS()
@@ -20,8 +21,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	virtual void NotifyHit(UPrimitiveComponent* MyComp, AActor* Other, UPrimitiveComponent* OtherComp, bool bSelfMoved, FVector HitLocation, FVector HitNormal, FVector NormalImpulse, const FHitResult& Hit) override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	float Damage = 1.f;
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly, Category = "Components")
 	class UStaticMeshComponent* ProjectileMesh;
