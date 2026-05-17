@@ -6,18 +6,33 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystemComponent.h"
+
 #include "OctopusCharacter.generated.h"
 
+
 UCLASS()
-class OCTOPIRATE_API AOctopusCharacter : public ACharacter
+class OCTOPIRATE_API AOctopusCharacter : public ACharacter, public IAbilitySystemInterface 
 {
 	GENERATED_BODY()
 
 public:
 	AOctopusCharacter();
-
+	
+	// Ability System Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	class UAbilitySystemComponent* AbilitySystemComponent;
+	
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilitySystem")
+	EGameplayEffectReplicationMode AscReplicationMode = EGameplayEffectReplicationMode::Mixed;
+	
 protected:
 	virtual void BeginPlay() override;
+	
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_PlayerState() override;
 
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -52,6 +67,10 @@ public:
 	// --- Movement ---
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void SetMoveDestination(const FVector& Destination);
+	
+	
+	// -- Ability System --
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override; 
 	
 private:
 	void PerformAttack();

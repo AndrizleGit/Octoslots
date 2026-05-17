@@ -29,6 +29,13 @@ AOctopusCharacter::AOctopusCharacter()
 	
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+
+	// -- Ability System --
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(AscReplicationMode);
+
+	
 }
 
 void AOctopusCharacter::BeginPlay()
@@ -150,6 +157,28 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
 	}
+
+}
+void AOctopusCharacter::PossessedBy(AController* NewController)
+	{
+		Super::PossessedBy(NewController);
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->InitAbilityActorInfo(this,this);
+		}
+}
+void AOctopusCharacter::OnRep_PlayerState()
+	{
+		Super::OnRep_PlayerState();
+		
+		if (AbilitySystemComponent)
+		{
+			AbilitySystemComponent->InitAbilityActorInfo(this,this);
+		}
+}
+UAbilitySystemComponent* AOctopusCharacter::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
 }
 
 
