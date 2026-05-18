@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
+#include "Character\AttributeSets\BasicAttributeSet.h"
 
 #include "OctopusCharacter.generated.h"
 
@@ -22,7 +23,10 @@ public:
 	
 	// Ability System Component
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UAbilitySystemComponent* AbilitySystemComponent;
+	UAbilitySystemComponent* AbilitySystemComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	class UBasicAttributeSet* BasicAttributes;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilitySystem")
@@ -46,9 +50,6 @@ public:
 	TObjectPtr<class UCameraComponent> Camera;
 	
 	// --- Combat ---
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
-	float AttackInterval = 1.f;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,Category = "Combat|Attack")
 	float ConeAngleDegrees = 90.f;
 	
@@ -75,6 +76,7 @@ public:
 private:
 	void PerformAttack();
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage);
+	float GetAttackSpeed() const;
 	
 	FTimerHandle AttackTimerHandle;
 };

@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 
 AOctopusCharacter::AOctopusCharacter()
 {
@@ -32,23 +33,25 @@ AOctopusCharacter::AOctopusCharacter()
 
 	// -- Ability System --
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
-	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetIsReplicated(false);
 	AbilitySystemComponent->SetReplicationMode(AscReplicationMode);
 
-	
+	// -- Attribute Sets --
+	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &AOctopusCharacter::PerformAttack, AttackInterval, true);
+	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &AOctopusCharacter::PerformAttack, GetAttackSpeed(), true);
 }
 
 void AOctopusCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
+
 
 void AOctopusCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -159,6 +162,14 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
 	}
 
 }
+
+float AOctopusCharacter::GetAttackSpeed() const
+{
+	const float AttackSpeed = BasicAttributes ? BasicAttributes->GetAttackSpeed() : 1.f;
+
+	return 1.f / FMath::Max(AttackSpeed, 0.01f);
+}
+
 void AOctopusCharacter::PossessedBy(AController* NewController)
 	{
 		Super::PossessedBy(NewController);
@@ -180,6 +191,3 @@ UAbilitySystemComponent* AOctopusCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
 }
-
-
-
