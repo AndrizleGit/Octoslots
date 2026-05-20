@@ -2,6 +2,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
 
 AOctopusCharacter::AOctopusCharacter()
 {
@@ -18,6 +19,13 @@ AOctopusCharacter::AOctopusCharacter()
 	
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	
+	// -- Ability System --
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(false);
+
+	// -- Attribute Sets --
+	BasicAttributes = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void AOctopusCharacter::BeginPlay()
