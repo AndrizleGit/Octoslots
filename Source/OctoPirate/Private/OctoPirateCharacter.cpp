@@ -45,6 +45,8 @@ AOctoPirateCharacter::AOctoPirateCharacter()
 	// Activate ticking in order to update the cursor every frame.
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
+
+	
 }
 
 void AOctoPirateCharacter::BeginPlay()
@@ -60,3 +62,14 @@ void AOctoPirateCharacter::Tick(float DeltaSeconds)
 
 	// stub
 }
+
+void AOctoPirateCharacter::AddAttackDamageBonus_Implementation(float Bonus)
+{
+	CurrentDamage += Bonus;
+}
+
+void AOctoPirateCharacter::RemoveAttackDamageBonus_Implementation()
+{
+	CurrentDamage = 1.f;
+}
+

@@ -20,10 +20,13 @@ public class OctoPirate : ModuleRules
 			"GameplayStateTreeModule",
 			"Niagara",
 			"UMG",
-			"Slate"
+			"Slate",
+			"GameplayTags",
+			"GameplayAbilities",
+			"GameplayTasks"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTasks", "GameplayTags"});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"OctoPirate",

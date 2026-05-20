@@ -68,6 +68,8 @@ public:
 
 protected:
 
+	virtual void BeginPlay() override;
+
 	/** Initialize input bindings */
 	virtual void SetupInputComponent() override;
 	
