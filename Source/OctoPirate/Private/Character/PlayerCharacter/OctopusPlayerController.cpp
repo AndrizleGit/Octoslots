@@ -1,5 +1,5 @@
-#include "Character/OctopusPlayerController.h"
-#include "Character/OctopusCharacter.h"
+#include "Character/PlayerCharacter/OctopusPlayerController.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
@@ -50,7 +50,6 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 		MoveToCursor();
 	}
 }
-
 
 void AOctopusPlayerController::OnRightMousePressed()
 {
