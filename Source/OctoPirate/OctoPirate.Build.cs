@@ -26,7 +26,7 @@ public class OctoPirate : ModuleRules
 			"GameplayTasks"
 		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange(new string[] { "GameplayAbilities", "GameplayTasks", "GameplayTags"});
 
 		PublicIncludePaths.AddRange(new string[] {
 			"OctoPirate",

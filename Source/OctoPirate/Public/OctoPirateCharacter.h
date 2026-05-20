@@ -66,9 +66,7 @@ public:
 	/** Returns the Camera Boom component **/
 	USpringArmComponent* GetCameraBoom() const { return CameraBoom.Get(); }
 
-	/** Ability System Component **/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Abilities")
-	class UOctoPirateAbilitySystemComponent* AbilitySystemComponent;
+	
 	
 };
 

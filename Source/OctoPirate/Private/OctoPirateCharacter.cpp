@@ -10,8 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Materials/Material.h"
 #include "Engine/World.h"
-#include "OctoPirateAbilitySystemComponent.h"
-#include "AutoShootAbility.h"
+
 AOctoPirateCharacter::AOctoPirateCharacter()
 {
 	// Set size for player capsule
@@ -47,8 +46,7 @@ AOctoPirateCharacter::AOctoPirateCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 	PrimaryActorTick.bStartWithTickEnabled = true;
 
-	// Initialize The AbilitySystemComponent
-	AbilitySystemComponent = CreateDefaultSubobject<UOctoPirateAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	
 }
 
 void AOctoPirateCharacter::BeginPlay()
