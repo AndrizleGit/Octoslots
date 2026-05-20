@@ -7,7 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
-#include "Character/AttributeSets/BasicAttributeSet.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
 
 AOctopusCharacter::AOctopusCharacter()
 {
@@ -34,10 +34,9 @@ AOctopusCharacter::AOctopusCharacter()
 	// -- Ability System --
 	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
 	AbilitySystemComponent->SetIsReplicated(false);
-	AbilitySystemComponent->SetReplicationMode(AscReplicationMode);
 
 	// -- Attribute Sets --
-	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
+	BasicAttributes = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void AOctopusCharacter::BeginPlay()
@@ -175,19 +174,56 @@ void AOctopusCharacter::PossessedBy(AController* NewController)
 		Super::PossessedBy(NewController);
 		if (AbilitySystemComponent)
 		{
-			AbilitySystemComponent->InitAbilityActorInfo(this,this);
+			// Initialize Actor Info
+			AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+			// --- Bind Attribute Change Callbacks ---
+        
+			// Bind Health change
+			AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetHealthAttribute())
+				.AddUObject(this, &AOctopusCharacter::OnHealthChanged);
+
+			// Bind AttackSpeed change
+			AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetAttackSpeedAttribute())
+				.AddUObject(this, &AOctopusCharacter::OnAttackSpeedChanged);
+            
 		}
 }
-void AOctopusCharacter::OnRep_PlayerState()
-	{
-		Super::OnRep_PlayerState();
-		
-		if (AbilitySystemComponent)
-		{
-			AbilitySystemComponent->InitAbilityActorInfo(this,this);
-		}
-}
+
 UAbilitySystemComponent* AOctopusCharacter::GetAbilitySystemComponent() const
 {
 	return AbilitySystemComponent;
+}
+// Update Attributes on Change
+void AOctopusCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	// Example: Log the health change or update a UI/HUD
+	float NewHealth = Data.NewValue;
+	float OldHealth = Data.OldValue;
+    
+	UE_LOG(LogTemp, Warning, TEXT("Health Changed! Old: %f, New: %f"), OldHealth, NewHealth);
+    
+	// Logic for Death, UI Updates, or VFX could go here
+	if (NewHealth <= 0)
+	{
+		// Handle Death
+	}
+}
+
+void AOctopusCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	float NewAttackSpeed = Data.NewValue;
+    
+	UE_LOG(LogTemp, Log, TEXT("Attack Speed Updated to: %f"), NewAttackSpeed);
+
+	// If you are using a Timer for attacks (like your AttackTimerHandle), 
+	// you need to clear and restart it with the new speed.
+	if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))
+	{
+		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+        
+		// Calculate new interval (e.g., 1 / AttackSpeed)
+		float NewInterval = 1.f / FMath::Max(NewAttackSpeed, 0.01f);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &AOctopusCharacter::PerformAttack, NewInterval, true);
+	}
 }

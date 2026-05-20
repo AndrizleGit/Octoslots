@@ -8,7 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "AbilitySystemInterface.h"
 #include "AbilitySystemComponent.h"
-#include "Character\AttributeSets\BasicAttributeSet.h"
+#include "Character\AttributeSets\PlayerAttributeSet.h"
 
 #include "OctopusCharacter.generated.h"
 
@@ -26,17 +26,16 @@ public:
 	UAbilitySystemComponent* AbilitySystemComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UBasicAttributeSet* BasicAttributes;
+	class UPlayerAttributeSet* BasicAttributes;
 	
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AbilitySystem")
-	EGameplayEffectReplicationMode AscReplicationMode = EGameplayEffectReplicationMode::Mixed;
 	
-protected:
 	virtual void BeginPlay() override;
-	
 	virtual void PossessedBy(AController* NewController) override;
-	virtual void OnRep_PlayerState() override;
+	
+	// Callback Functions
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnAttackSpeedChanged(const FOnAttributeChangeData& Data);
 
 public:	
 	virtual void Tick(float DeltaTime) override;
