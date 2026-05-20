@@ -1,8 +1,9 @@
-#include "Character//BaseCharacter.h"
+#include "Character/BaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Components/CapsuleComponent.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -140,7 +141,3 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 	}
 
 }
-
-float AOctopusCharacter::GetAttackSpeed() const
-{
-	const float AttackSpeed = BasicAttributes ? BasicAttributes->GetAttackSpeed() : 1.f;

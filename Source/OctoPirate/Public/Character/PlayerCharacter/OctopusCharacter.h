@@ -18,6 +18,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	float GetAttackSpeed() const;
 
 public:	
 	// --- Camera ---
