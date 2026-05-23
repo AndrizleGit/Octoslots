@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
+
 #include "BaseCharacter.generated.h"
 
 UCLASS()
@@ -55,6 +57,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	float GetHealthPercent() const;
+	
+	// Ability System Component
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	UAbilitySystemComponent* AbilitySystemComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	class UPlayerAttributeSet* BasicAttributes;
 	
 protected:
 	virtual void PossessedBy(AController* NewController) override;
