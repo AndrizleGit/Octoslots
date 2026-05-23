@@ -35,8 +35,24 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	if (AbilitySystemComponent)
+	{
+		// Initialize Actor Info
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		// --- Bind Attribute Change Callbacks ---
+        
+		// Bind Health change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetHealthAttribute())
+			.AddUObject(this, &ABaseCharacter::OnHealthChanged);
+
+		// Bind AttackSpeed change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetAttackSpeedAttribute())
+			.AddUObject(this, &ABaseCharacter::OnAttackSpeedChanged);
+            
+	}
 	
-	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, AttackInterval, true);
+	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
@@ -149,3 +165,20 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 	}
 
 }
+// -- Update Attributes -- 
+
+// -- Get Attributes -- 
+float ABaseCharacter::GetAttackSpeed() const
+{
+	const float AttackSpeed = BasicAttributes ? BasicAttributes->GetAttackSpeed() : 1.f;
+
+	return 1.f / FMath::Max(AttackSpeed, 0.01f);
+}
+
+float ABaseCharacter::GetHealth() const
+{
+	const float Health = BasicAttributes ? BasicAttributes->GetHealth() : 100.f;
+
+	return Health;
+}
+
