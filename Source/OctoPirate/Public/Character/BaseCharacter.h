@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
+
 #include "BaseCharacter.generated.h"
 
 UCLASS()
@@ -16,7 +18,13 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void PossessedBy(AController* NewController) override;
+	
+	// Callback Functions
+	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
+	virtual void OnAttackSpeedChanged(const FOnAttributeChangeData& Data);
+	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
+	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
@@ -26,6 +34,14 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
 	float CurrentHealth;
+	
+	// -- Ability System Component --
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	UAbilitySystemComponent* AbilitySystemComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
+	class UPlayerAttributeSet* BasicAttributes;
+	
 	
 	// --- Combat ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
@@ -46,6 +62,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float ExtraDamage = 45.f;
 	
+	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
@@ -56,8 +73,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	float GetHealthPercent() const;
 	
+	
+	
+	// -- Get Attribute functions -- 
+	float GetAttackSpeed() const;
+	float GetAttackDamage() const;
+	float GetHealth() const;
+	float GetMaxHealth() const;
+	float GetWalkSpeed() const;
 protected:
-	virtual void PossessedBy(AController* NewController) override;
+	
 	
 	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
 	void PerformAttack();

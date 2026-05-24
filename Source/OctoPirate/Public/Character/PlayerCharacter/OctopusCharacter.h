@@ -6,7 +6,6 @@
 #include "Character/BaseCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
 #include "OctopusCharacter.generated.h"
 
 UCLASS()
@@ -19,16 +18,11 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	float GetAttackSpeed() const;
+	
 
 public:	
 	
-	// Ability System Component
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	UAbilitySystemComponent* AbilitySystemComponent;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UPlayerAttributeSet* BasicAttributes;
+	
 	
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
