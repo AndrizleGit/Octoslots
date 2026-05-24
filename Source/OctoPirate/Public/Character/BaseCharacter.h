@@ -23,7 +23,8 @@ protected:
 	// Callback Functions
 	virtual void OnHealthChanged(const FOnAttributeChangeData& Data);
 	virtual void OnAttackSpeedChanged(const FOnAttributeChangeData& Data);
-
+	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
+	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
@@ -76,10 +77,10 @@ public:
 	
 	// -- Get Attribute functions -- 
 	float GetAttackSpeed() const;
-	float GetAttackDmg() const;
+	float GetAttackDamage() const;
 	float GetHealth() const;
-	
-	
+	float GetMaxHealth() const;
+	float GetWalkSpeed() const;
 protected:
 	
 	

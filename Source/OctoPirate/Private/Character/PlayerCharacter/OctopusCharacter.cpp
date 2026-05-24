@@ -35,8 +35,4 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(MyController, Destination);
 }
 
-float AOctopusCharacter::GetAttackSpeed() const
-{
-	const float AttackSpeed = BasicAttributes ? BasicAttributes->GetAttackSpeed() : 1.f;
-	return AttackSpeed;
-}
+
