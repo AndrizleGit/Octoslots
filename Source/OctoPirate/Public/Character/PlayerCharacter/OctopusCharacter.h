@@ -18,11 +18,9 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	
+	virtual void PerformAttack_Implementation() override;
 
 public:	
-	
-	
 	
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -34,4 +32,7 @@ public:
 	// --- Movement ---
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void SetMoveDestination(const FVector& Destination);
+	
+private:
+	AActor* GetClosestEnemy() const;
 };

@@ -54,7 +54,7 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	if (DistanceToPlayer > AttackRange) return;
 	
-	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation().GetSafeNormal());
+	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	SetActorRotation(Direction.Rotation());
 	
 	if (BasicAttributes)
