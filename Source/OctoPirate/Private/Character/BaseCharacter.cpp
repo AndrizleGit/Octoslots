@@ -182,8 +182,11 @@ void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
     
 	UE_LOG(LogTemp, Warning, TEXT("Health Changed! Old: %f, New: %f"), OldHealth, NewHealth);
     
-	// Logic for Death, UI Updates, or VFX could go here
-	if (NewHealth <= 0)
+	
+	// -- if Health > MaxHealth , Health = MaxHealth -- 
+	if (NewHealth > BasicAttributes->GetMaxHealth()) BasicAttributes->SetHealth( BasicAttributes->GetMaxHealth());
+	// -- if Health = 0 -> Death --
+	else if (NewHealth <= 0)
 	{
 		OnDeath();
 	}
@@ -243,19 +246,9 @@ float ABaseCharacter::GetAttackDamage() const
 	return Health;
 }
 
-float ABaseCharacter::GetHealth() const
-{
-	const float Health = BasicAttributes ? BasicAttributes->GetHealth() : 100.f;
 
-	return Health;
-}
 
-float ABaseCharacter::GetMaxHealth() const
-{
-	const float Health = BasicAttributes ? BasicAttributes->GetHealth() : 100.f;
 
-	return Health;
-}
 float ABaseCharacter::GetWalkSpeed() const
 {
 	const float WalkSpeed = BasicAttributes ? BasicAttributes->GetWalkSpeed() : 400.f;
