@@ -23,9 +23,6 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UPlayerAttributeSet* BasicAttributes;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Progression")
 	float ExperienceReward = 20.f;
 	

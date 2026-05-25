@@ -20,14 +20,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctoPirateCharacter.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_SpeedBuff.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_SpeedBuff.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Private/Character/AttrbuteSets/PlayerAttributeSet.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Private/Character/AttrbuteSets/PlayerAttributeSet.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Private/SlotMachineComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Private/SlotMachineComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/Character/AttributeSets/PlayerAttributeSet.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/Character/AttributeSets/PlayerAttributeSet.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/Character/PlayerCharacter/OctopusCharacter.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/Character/PlayerCharacter/OctopusCharacter.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_MovementSpeedBuff.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_MovementSpeedBuff.uasset" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -243,6 +237,7 @@
       <workItem from="1779238141120" duration="986000" />
       <workItem from="1779654926862" duration="7000" />
       <workItem from="1779655075950" duration="24000" />
+      <workItem from="1779695069334" duration="14000" />
     </task>
     <servers />
   </component>

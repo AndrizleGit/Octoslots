@@ -55,8 +55,8 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 			.AddUObject(this, &ABaseCharacter::OnAttackSpeedChanged);
 		
 		// Bind WalkSpeed change
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetAttackDamageAttribute())
-			.AddUObject(this, &ABaseCharacter::OnAttackDamageChanged);    
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
+			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);    
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -196,7 +196,7 @@ void ABaseCharacter::OnAttackDamageChanged(const FOnAttributeChangeData& Data)
     
 	UE_LOG(LogTemp, Warning, TEXT("Damage Changed! Old: %f, New: %f"), OldDamage, NewDamage);
     
-	AttackDamage = NewDamage ? NewDamage : 0.f;
+	AttackDamage = BasicAttributes ? NewDamage : 0.f;
 }
 
 void ABaseCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
@@ -226,7 +226,7 @@ void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
     
 	UE_LOG(LogTemp, Warning, TEXT("WalkSpeed Changed! Old: %f, New: %f"), OldWalkSpeed, NewWalkSpeed);
     
-	GetCharacterMovement()->MaxWalkSpeed = NewWalkSpeed ? NewWalkSpeed : 400.f;
+	GetCharacterMovement()->MaxWalkSpeed = BasicAttributes ? NewWalkSpeed : 400.f;
 }
 
 // -- Get Attributes -- 
