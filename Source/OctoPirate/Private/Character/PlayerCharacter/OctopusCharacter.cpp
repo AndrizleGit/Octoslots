@@ -60,6 +60,22 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 	UAIBlueprintHelperLibrary::SimpleMoveToLocation(MyController, Destination);
 }
 
+void AOctopusCharacter::OnDeath_Implementation()
+{
+	Super::OnDeath_Implementation();
+	
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+	{
+		PC->DisableInput(PC);
+		PC->bShowMouseCursor = true;
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
+	
+	OnPlayerDied.Broadcast();
+}
+
 AActor* AOctopusCharacter::GetClosestEnemy() const
 {
 	TArray<AActor*> FoundEnemies;

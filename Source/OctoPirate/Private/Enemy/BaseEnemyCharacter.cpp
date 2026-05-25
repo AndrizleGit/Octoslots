@@ -70,13 +70,6 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 	
-	AOctopusCharacter* OctopusCharacter = Cast<AOctopusCharacter>(PlayerCharacter);
-	if (OctopusCharacter && OctopusCharacter->BasicAttributes)
-	{
-		const float CurrentXP = OctopusCharacter->BasicAttributes->GetExperience();
-		const float MaxXP = OctopusCharacter->BasicAttributes->GetMaxExperience();
-		OctopusCharacter->BasicAttributes->SetExperience(FMath::Min(CurrentXP + ExperienceReward, MaxXP));
-	}
-	
+	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
 }

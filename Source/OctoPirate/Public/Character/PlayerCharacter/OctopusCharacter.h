@@ -8,6 +8,8 @@
 #include "Camera/CameraComponent.h"
 #include "OctopusCharacter.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
+
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -33,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Movement")
 	void SetMoveDestination(const FVector& Destination);
 	
+	virtual void OnDeath_Implementation() override;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Combat")
+	FOnDeathDelegate OnPlayerDied;
 private:
 	AActor* GetClosestEnemy() const;
 };

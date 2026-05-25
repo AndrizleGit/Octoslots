@@ -67,24 +67,41 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 {
 	if (bIsDead) return 0.0f;
 	
-	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CurrentHealth -= FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	
-	if (CurrentHealth <= 0.0f)
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	
+	if (BasicAttributes && AbilitySystemComponent)
+	{
+		const float NewHealth = FMath::Clamp(BasicAttributes->GetHealth() - DamageAmount, 0.0f, BasicAttributes->GetMaxHealth());
+		BasicAttributes->SetHealth(NewHealth);
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s took %.1f damage — Health: %.1f"), *GetName(), DamageAmount, CurrentHealth);
+	
+	if (CurrentHealth <= 0.0f && !bIsDead)
 	{
 		bIsDead = true;
 		OnDeath();
 	}
 	
-	return ActualDamage;
+	return DamageAmount;
 }
 
 void ABaseCharacter::OnDeath_Implementation()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
 	
+	SetActorTickEnabled(false);
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s has died"), *GetName());
+	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetSimulatePhysics(false);
 	//Override this for custom death
 }
 
