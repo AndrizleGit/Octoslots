@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "OctoPirateCharacter.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "SlotMachineTypes.h"
 #include "SlotMachineComponent.generated.h"
 
@@ -66,7 +66,7 @@ public:
 	
 private:
 	UPROPERTY()
-	AOctoPirateCharacter* PlayerCharacter = nullptr;
+	AOctopusCharacter* PlayerCharacter = nullptr;
 	float DopamineCurrent = 100.f;
 	bool bDebuffActive = false;
 	FSlotResult LastResult;
