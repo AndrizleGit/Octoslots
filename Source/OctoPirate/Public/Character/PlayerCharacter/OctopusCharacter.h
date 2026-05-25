@@ -15,15 +15,24 @@ class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 
 public:
 	AOctopusCharacter();
+	// -- Slot Machine Events -- 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyAttackSpeedBuff(int32 Count);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyMovementSpeedBuff(int32 Count);
+	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void RemoveBuffs();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyDebuff(); 
+	    
 protected:
 	virtual void BeginPlay() override;
 	
 
 public:	
-	
-	
-	
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;

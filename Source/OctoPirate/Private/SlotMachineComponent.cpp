@@ -15,7 +15,7 @@ void USlotMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	DopamineCurrent = DopamineMax;
-	PlayerCharacter = Cast<AOctoPirateCharacter>(GetOwner());
+		PlayerCharacter = Cast<AOctoPirateCharacter>(GetOwner());
 }
 
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
