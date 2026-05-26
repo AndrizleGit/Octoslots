@@ -6,7 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 // -- Tag Definitions --
@@ -23,7 +23,7 @@ ABaseCharacter::ABaseCharacter()
 	AbilitySystemComponent->SetIsReplicated(false);
 
 	// -- Attribute Sets --
-	BasicAttributes = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("BasicAttributeSet"));
+	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void ABaseCharacter::BeginPlay()
