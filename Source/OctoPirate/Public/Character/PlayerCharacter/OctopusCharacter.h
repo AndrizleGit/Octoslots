@@ -37,7 +37,7 @@ public:
 	void ApplyPoisonBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplySevenBuff(int32 StackCount);
+	void ApplySevenBuff();
 	
 	// - Debuffs - 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")

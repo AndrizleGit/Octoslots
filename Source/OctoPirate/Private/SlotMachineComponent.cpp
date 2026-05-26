@@ -53,9 +53,9 @@ void USlotMachineComponent::Spin()
 FSlotResult USlotMachineComponent::RollReels()
 {
 	FSlotResult Result;
-	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
-	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
-	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
+	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
+	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
+	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
 	return Result;
 }
 
@@ -64,7 +64,7 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
 	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
 	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
-	
+	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
 	if (MovementCount > 0)
 	{
 		
@@ -96,6 +96,16 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 		}
 		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount );
 	}
+	if (SevenCount == 3)
+	{
+		// --- Call ApplySevenBuff() ---
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->ApplySevenBuff();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("GOD MODE!"));
+	}
+
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const
