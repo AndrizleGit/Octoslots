@@ -19,10 +19,7 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_MovementSpeedBuff.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/GameplayAbilitySystem/Effects/GE_MovementSpeedBuff.uasset" afterDir="false" />
-    </list>
+    <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -238,6 +235,7 @@
       <workItem from="1779654926862" duration="7000" />
       <workItem from="1779655075950" duration="24000" />
       <workItem from="1779695069334" duration="14000" />
+      <workItem from="1779739152511" duration="118000" />
     </task>
     <servers />
   </component>

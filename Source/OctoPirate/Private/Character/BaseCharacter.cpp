@@ -4,8 +4,12 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Character/AttributeSets/PlayerAttributeSet.h"
+
+// -- Tag Definitions --
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit");
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -169,6 +173,12 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		if (AngleToTarget > HalfAngleRad) continue;
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
+		
+		// -- Send OnHitEvent --
+		FGameplayEventData Payload;
+		Payload.Instigator = GetController();
+		Payload.Target = Actor;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Actor,TAG_Event_Combat_Hit, Payload);
 	}
 
 }
