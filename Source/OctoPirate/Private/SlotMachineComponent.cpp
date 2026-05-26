@@ -52,10 +52,11 @@ void USlotMachineComponent::Spin()
 
 FSlotResult USlotMachineComponent::RollReels()
 {
+	int max = StaticEnum<ESlotSymbol>()->NumEnums() - 1;
 	FSlotResult Result;
-	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
-	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
-	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,3));
+	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
+	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
+	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
 	return Result;
 }
 
