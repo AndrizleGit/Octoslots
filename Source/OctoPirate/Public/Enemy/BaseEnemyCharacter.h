@@ -29,6 +29,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Combat")
 	float AttackRange = 350.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	TSubclassOf<AActor> CoinClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	TSubclassOf<AActor> HealthPackClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	float HealthPackDropChance = 0.05f;
+	
 	virtual void OnDeath_Implementation() override;
 	
 protected:

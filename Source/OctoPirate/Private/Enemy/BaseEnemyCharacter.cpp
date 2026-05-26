@@ -70,6 +70,27 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 	
+	const FVector SpawnLocation = GetActorLocation();
+	const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	if (CoinClass)
+	{
+		GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
+	}
+
+	if (HealthPackClass)
+	{
+		const float Roll = FMath::RandRange(0.0f, 1.0f);
+		if (Roll <= HealthPackDropChance)
+		{
+			const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
+			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+		}
+	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
 }
