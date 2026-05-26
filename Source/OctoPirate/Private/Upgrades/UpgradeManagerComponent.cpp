@@ -41,6 +41,12 @@ void UUpgradeManagerComponent::SaveUpgrades()
 
 	SaveData->TotalCoinsSpent = TotalCoinsSpent;
 
+	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    	if (Attributes)
+    	{
+        	SaveData->SavedCoins = Attributes->GetCoins();
+    	}
+
 	UGameplayStatics::SaveGameToSlot(SaveData, SaveSlotName, 0);
 	UE_LOG(LogTemp, Log, TEXT("Upgrades saved"));
 }
@@ -64,6 +70,12 @@ void UUpgradeManagerComponent::LoadUpgrades()
 			ApplyStatChange(Upgrade->AffectedStat, Upgrade->ValuePerLevel * (*SavedLevel));
 		}
 	}
+	
+	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    if (Attributes)
+    {
+        Attributes->SetCoins(SaveData->SavedCoins);
+    }
 
 	TotalCoinsSpent = SaveData->TotalCoinsSpent;
 	UE_LOG(LogTemp, Log, TEXT("Upgrades loaded"));
