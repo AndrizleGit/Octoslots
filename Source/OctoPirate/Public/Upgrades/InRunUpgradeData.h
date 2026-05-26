@@ -14,7 +14,7 @@ enum class EInRunUpgradeStat : uint8
 	AttackRange     UMETA(DisplayName = "Attack Range"),
 };
 
-UCLASS()
+UCLASS(BlueprintType)
 class OCTOPIRATE_API UInRunUpgradeData : public UDataAsset
 {
 	GENERATED_BODY()

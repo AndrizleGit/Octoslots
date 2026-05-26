@@ -25,26 +25,19 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
     UPlayerAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
-
-    // Check if XP has hit max
+    
     if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
-
-    // Level up
+    
     CurrentLevel++;
-
-    // Reset XP and scale max XP for next level
-    // Each level requires 50% more XP than the last
+    
     const float NewMaxXP = Attributes->GetMaxExperience() * 1.5f;
     Attributes->SetExperience(0.0f);
     Attributes->SetMaxExperience(NewMaxXP);
 
-    // Roll 3 random different upgrades
     RollNewChoices();
 
-    // Pause the game
     UGameplayStatics::SetGamePaused(GetWorld(), true);
 
-    // Tell the widget to open and show the level
     OnLevelUp.Broadcast(CurrentLevel);
 }
 
@@ -52,7 +45,6 @@ void UInRunUpgradeManagerComponent::RollNewChoices()
 {
     CurrentChoices.Empty();
 
-    // Copy the full list so we can remove from it without affecting the original
     TArray<UInRunUpgradeData*> AvailablePool;
     for (UInRunUpgradeData* Upgrade : AllPossibleUpgrades)
     {
@@ -60,13 +52,12 @@ void UInRunUpgradeManagerComponent::RollNewChoices()
             AvailablePool.Add(Upgrade);
     }
 
-    // Pick 3 unique random upgrades
     const int32 ChoiceCount = FMath::Min(3, AvailablePool.Num());
     for (int32 i = 0; i < ChoiceCount; i++)
     {
         const int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
         CurrentChoices.Add(AvailablePool[RandomIndex]);
-        AvailablePool.RemoveAt(RandomIndex); // remove so it cant be picked again
+        AvailablePool.RemoveAt(RandomIndex); 
     }
 }
 
@@ -74,17 +65,13 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
 {
     if (!Upgrade) return;
 
-    // Apply the stat change
     ApplyUpgrade(Upgrade);
 
-    // Track how many times picked this run
     if (PickedCounts.Contains(Upgrade))
         PickedCounts[Upgrade]++;
 
-    // Unpause the game
     UGameplayStatics::SetGamePaused(GetWorld(), false);
 
-    // Notify widget to close
     OnUpgradeSelected.Broadcast(Upgrade);
 
     UE_LOG(LogTemp, Log, TEXT("In-run upgrade selected: %s"), *Upgrade->UpgradeName.ToString());
@@ -95,11 +82,9 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
     CurrentLevel = 0;
     CurrentChoices.Empty();
 
-    // Reset all pick counts
     for (auto& Pair : PickedCounts)
         Pair.Value = 0;
 
-    // Reset XP scaling back to base
     UPlayerAttributeSet* Attributes = GetPlayerAttributes();
     if (Attributes)
     {
@@ -143,7 +128,7 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
 
         case EInRunUpgradeStat::AttackRange:
             Character->ConeMaxDistance += Value;
-            Character->ExtraDamageDistance += Value * 0.5f;
+            //Character->ExtraDamageDistance += Value * 0.5f;
             break;
     }
 }
