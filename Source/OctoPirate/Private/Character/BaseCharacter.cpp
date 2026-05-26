@@ -4,8 +4,13 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
+
+// -- Tag Definitions --
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit");
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -56,7 +61,10 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		
 		// Bind WalkSpeed change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
-			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);    
+			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
+		
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
+			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -186,6 +194,12 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		if (AngleToTarget > HalfAngleRad) continue;
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
+		
+		// -- Send OnHitEvent --
+		FGameplayEventData Payload;
+		Payload.Instigator = GetController();
+		Payload.Target = Actor;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Actor,TAG_Event_Combat_Hit, Payload);
 	}
 
 }
@@ -234,7 +248,7 @@ void ABaseCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
         
 		// Calculate new interval (e.g., 1 / AttackSpeed)
 		float NewInterval = 1.f / FMath::Max(NewAttackSpeed, 0.01f);
-		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack, NewInterval, true);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, NewInterval, true);
 	}
 }
 
@@ -247,6 +261,19 @@ void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
 	UE_LOG(LogTemp, Warning, TEXT("WalkSpeed Changed! Old: %f, New: %f"), OldWalkSpeed, NewWalkSpeed);
     
 	GetCharacterMovement()->MaxWalkSpeed = BasicAttributes ? NewWalkSpeed : 400.f;
+}
+
+void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
+{
+	UE_LOG(LogTemp, Error, TEXT("[XP] Current: %.1f / Max: %.1f"), 
+		BasicAttributes->GetExperience(), 
+		BasicAttributes->GetMaxExperience());
+	
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->InRunUpgradeManager)
+	{
+		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
+	}
 }
 
 // -- Get Attributes -- 

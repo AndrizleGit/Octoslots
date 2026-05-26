@@ -6,6 +6,7 @@
 #include "Character/BaseCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Upgrades/UpgradeManagerComponent.h"
 #include "OctopusCharacter.generated.h"
 
@@ -36,7 +37,7 @@ public:
 	void ApplyPoisonBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplySevenBuff(int32 StackCount);
+	void ApplySevenBuff();
 	
 	// - Debuffs - 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
@@ -54,6 +55,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Upgrades")
 	UUpgradeManagerComponent* GetUpgradeManager() const { return UpgradeManager; }
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
+	TObjectPtr<UInRunUpgradeManagerComponent> InRunUpgradeManager;
 	    
 protected:
 	virtual void BeginPlay() override;
