@@ -7,6 +7,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 
 // -- Tag Definitions --
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit");
@@ -60,7 +61,10 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		
 		// Bind WalkSpeed change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
-			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);    
+			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
+		
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
+			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -71,24 +75,41 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 {
 	if (bIsDead) return 0.0f;
 	
-	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CurrentHealth -= FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	
-	if (CurrentHealth <= 0.0f)
+	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	
+	if (BasicAttributes && AbilitySystemComponent)
+	{
+		const float NewHealth = FMath::Clamp(BasicAttributes->GetHealth() - DamageAmount, 0.0f, BasicAttributes->GetMaxHealth());
+		BasicAttributes->SetHealth(NewHealth);
+	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s took %.1f damage — Health: %.1f"), *GetName(), DamageAmount, CurrentHealth);
+	
+	if (CurrentHealth <= 0.0f && !bIsDead)
 	{
 		bIsDead = true;
 		OnDeath();
 	}
 	
-	return ActualDamage;
+	return DamageAmount;
 }
 
 void ABaseCharacter::OnDeath_Implementation()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
 	
+	SetActorTickEnabled(false);
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s has died"), *GetName());
+	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetSimulatePhysics(false);
 	//Override this for custom death
 }
 
@@ -227,7 +248,7 @@ void ABaseCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
         
 		// Calculate new interval (e.g., 1 / AttackSpeed)
 		float NewInterval = 1.f / FMath::Max(NewAttackSpeed, 0.01f);
-		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack, NewInterval, true);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, NewInterval, true);
 	}
 }
 
@@ -240,6 +261,19 @@ void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
 	UE_LOG(LogTemp, Warning, TEXT("WalkSpeed Changed! Old: %f, New: %f"), OldWalkSpeed, NewWalkSpeed);
     
 	GetCharacterMovement()->MaxWalkSpeed = BasicAttributes ? NewWalkSpeed : 400.f;
+}
+
+void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
+{
+	UE_LOG(LogTemp, Error, TEXT("[XP] Current: %.1f / Max: %.1f"), 
+		BasicAttributes->GetExperience(), 
+		BasicAttributes->GetMaxExperience());
+	
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->InRunUpgradeManager)
+	{
+		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
+	}
 }
 
 // -- Get Attributes -- 
