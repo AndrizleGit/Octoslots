@@ -3,7 +3,7 @@
 
 #include "SlotMachineComponent.h"
 
-#include "OctoPirateCharacter.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "GameFramework/PawnMovementComponent.h"
 
 USlotMachineComponent::USlotMachineComponent()
@@ -15,7 +15,7 @@ void USlotMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	DopamineCurrent = DopamineMax;
-	PlayerCharacter = Cast<AOctoPirateCharacter>(GetOwner());
+		PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
 }
 
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -52,10 +52,11 @@ void USlotMachineComponent::Spin()
 
 FSlotResult USlotMachineComponent::RollReels()
 {
+	int max = StaticEnum<ESlotSymbol>()->NumEnums() - 1;
 	FSlotResult Result;
-	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
-	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
-	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,2));
+	Result.Reel1 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
+	Result.Reel2 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
+	Result.Reel3 = static_cast<ESlotSymbol>(FMath::RandRange(0,max));
 	return Result;
 }
 
@@ -64,49 +65,56 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
 	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
 	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
-	
+	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
 	if (MovementCount > 0)
 	{
-		float Bonus = BuffConfig.MovementSpeedBonus * MovementCount;
-		//GetOwner<AOctoPirateCharacter>()->AddMovementSpeedBonus(Bonus);
+		
+		//--- Call ApplyMovementSpeedBuff(StackCount)  ---
 		if (PlayerCharacter)
 		{
-			PlayerCharacter->AddMovementSpeedBonus(Bonus);
+			PlayerCharacter->ApplyMovementSpeedBuff(MovementCount);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d (+%.1f)"), MovementCount, Bonus);
+		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d "), MovementCount);
 	}
 	
 	if (AttackSpeedCount > 0)
 	{
-		float Multiplier = FMath::Pow(BuffConfig.AttackSpeedMultiplier, AttackSpeedCount);
-		//GetOwner<AOctoPirateCharacter>()->ApplyAttackSpeedMultiplier(Multiplier);
+		
+		// --- Call ApplyAttackSpeedBuff(StackCount) ---
 		if (PlayerCharacter)
 		{
-			PlayerCharacter->ApplyAttackSpeedMultiplier(Multiplier);
+			PlayerCharacter->ApplyAttackSpeedBuff(AttackSpeedCount);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d (+%.1f)"), AttackSpeedCount, Multiplier);
+		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d"), AttackSpeedCount);
 	}
 	
 	if (AttackDamageCount > 0)
 	{
-		float Bonus = BuffConfig.AttackDamageBonus * (AttackDamageCount * AttackDamageCount);
-		//GetOwner<AOctoPirateCharacter>()->AddAttackDamageBonus(Bonus);
+		// --- Call ApplyAttackDamageBuff(StackCount) ---
 		if (PlayerCharacter)
 		{
-			PlayerCharacter->AddAttackDamageBonus(Bonus);
+			PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d (+%.1f)"), AttackDamageCount, Bonus);
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount );
 	}
+	if (SevenCount == 3)
+	{
+		// --- Call ApplySevenBuff() ---
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->ApplySevenBuff();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("GOD MODE!"));
+	}
+
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const
 {
-	//GetOwner<AOctoPirateCharacter>()->ResetSlotMachineBuffs();
+	//---  Call ClearBuffs() ---
 	if (PlayerCharacter)
 	{
-		PlayerCharacter->RemoveMovementSpeedBonus();
-		PlayerCharacter->RemoveAttackSpeedMultiplier();
-		PlayerCharacter->RemoveAttackDamageBonus();
+		PlayerCharacter->RemoveBuffs();
 	}
 	UE_LOG(LogTemp, Warning, TEXT("All buffs removed"));
 }
@@ -119,19 +127,19 @@ void USlotMachineComponent::SetDebuffActive(bool bActive)
 	
 	if (bActive)
 	{
-		//GetOwner<AOctoPirateCharacter>()->AddMovementSpeedBonus(DebuffMovementSpeedPenalty);
+		// -- Apply Debuffs --
 		if (PlayerCharacter)
 		{
-			PlayerCharacter->AddMovementSpeedBonus(DebuffMovementSpeedPenalty);
+			PlayerCharacter->ApplyDebuff();
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Debuff applied"));
 	}
 	else
 	{
-		//GetOwner<AOctoPirateCharacter>()->RemoveMovementSpeedBonus();
+		// -- Clear Debuffs --
 		if (PlayerCharacter)
 		{
-			PlayerCharacter->RemoveMovementSpeedBonus();
+			PlayerCharacter->ClearDebuff();
 		}
 		UE_LOG(LogTemp, Warning, TEXT("Debuff removed"));
 	}

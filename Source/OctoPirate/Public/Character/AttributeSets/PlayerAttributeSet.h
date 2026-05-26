@@ -55,6 +55,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData MaxExperience;
 	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, MaxExperience)
-
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
+	FGameplayAttributeData Coins;
+	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, Coins)
 };
+	

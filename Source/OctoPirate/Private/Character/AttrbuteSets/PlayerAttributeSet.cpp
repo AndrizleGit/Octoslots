@@ -17,5 +17,6 @@ UPlayerAttributeSet::UPlayerAttributeSet()
 	Level = 1.0f;
 	Experience = 0.0f;
 	MaxExperience = 100.0f;
+	Coins = 0.0f;
 }
 

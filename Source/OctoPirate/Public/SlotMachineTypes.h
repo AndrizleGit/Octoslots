@@ -9,6 +9,8 @@ enum class ESlotSymbol : uint8
 	MovementSpeed UMETA(DisplayName = "Movement Speed"),
 	AttackSpeed UMETA(DisplayName = "Attack Speed"),
 	AttackDamage UMETA(DisplayName = "Attack Damage"),
+	SEVEN UMETA(DisplayName = "SEVEN"),
+	
 };
 
 USTRUCT(BlueprintType)
