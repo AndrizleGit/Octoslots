@@ -6,6 +6,7 @@
 #include "Character/BaseCharacter.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Upgrades/UpgradeManagerComponent.h"
 #include "OctopusCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
@@ -46,6 +47,13 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ClearDebuff(); 
+	
+	// - Upgrade Manager -
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
+	TObjectPtr<UUpgradeManagerComponent> UpgradeManager;
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Upgrades")
+	UUpgradeManagerComponent* GetUpgradeManager() const { return UpgradeManager; }
 	    
 protected:
 	virtual void BeginPlay() override;

@@ -21,6 +21,7 @@ AOctopusCharacter::AOctopusCharacter()
 	
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+	UpgradeManager = CreateDefaultSubobject<UUpgradeManagerComponent>("UpgradeManager");
 }
 
 void AOctopusCharacter::BeginPlay()
