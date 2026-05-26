@@ -54,7 +54,7 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	if (DistanceToPlayer > AttackRange) return;
 	
-	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation().GetSafeNormal());
+	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	SetActorRotation(Direction.Rotation());
 	
 	if (BasicAttributes)
@@ -70,13 +70,27 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
 	
-	AOctopusCharacter* OctopusCharacter = Cast<AOctopusCharacter>(PlayerCharacter);
-	if (OctopusCharacter && OctopusCharacter->BasicAttributes)
+	const FVector SpawnLocation = GetActorLocation();
+	const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride =
+		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+	if (CoinClass)
 	{
-		const float CurrentXP = OctopusCharacter->BasicAttributes->GetExperience();
-		const float MaxXP = OctopusCharacter->BasicAttributes->GetMaxExperience();
-		OctopusCharacter->BasicAttributes->SetExperience(FMath::Min(CurrentXP + ExperienceReward, MaxXP));
+		GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
 	}
-	
+
+	if (HealthPackClass)
+	{
+		const float Roll = FMath::RandRange(0.0f, 1.0f);
+		if (Roll <= HealthPackDropChance)
+		{
+			const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
+			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+		}
+	}
+	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
 }

@@ -23,14 +23,20 @@ protected:
 public:
 	virtual void Tick(float DeltaTime) override;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UPlayerAttributeSet* BasicAttributes;
-	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Progression")
 	float ExperienceReward = 20.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Combat")
 	float AttackRange = 350.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	TSubclassOf<AActor> CoinClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	TSubclassOf<AActor> HealthPackClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	float HealthPackDropChance = 0.05f;
 	
 	virtual void OnDeath_Implementation() override;
 	

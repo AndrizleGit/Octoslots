@@ -5,14 +5,18 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Character/AttributeSets/PlayerAttributeSet.h"
-
+#include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
+
+// -- Tags -- 
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Combat_Hit);
+	
 UCLASS()
 class OCTOPIRATE_API ABaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
+	
 public:
 	ABaseCharacter();
 
@@ -25,6 +29,7 @@ protected:
 	virtual void OnAttackSpeedChanged(const FOnAttributeChangeData& Data);
 	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
 	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
+	virtual void OnExperienceChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
@@ -81,6 +86,8 @@ public:
 	float GetHealth() const;
 	float GetMaxHealth() const;
 	float GetWalkSpeed() const;
+	
+	
 protected:
 	
 	
