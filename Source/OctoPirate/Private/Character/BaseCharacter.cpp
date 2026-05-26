@@ -6,6 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -56,7 +57,10 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		
 		// Bind WalkSpeed change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
-			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);    
+			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
+		
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
+			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -234,7 +238,7 @@ void ABaseCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
         
 		// Calculate new interval (e.g., 1 / AttackSpeed)
 		float NewInterval = 1.f / FMath::Max(NewAttackSpeed, 0.01f);
-		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack, NewInterval, true);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, NewInterval, true);
 	}
 }
 
@@ -247,6 +251,15 @@ void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
 	UE_LOG(LogTemp, Warning, TEXT("WalkSpeed Changed! Old: %f, New: %f"), OldWalkSpeed, NewWalkSpeed);
     
 	GetCharacterMovement()->MaxWalkSpeed = BasicAttributes ? NewWalkSpeed : 400.f;
+}
+
+void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->InRunUpgradeManager)
+	{
+		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
+	}
 }
 
 // -- Get Attributes -- 
