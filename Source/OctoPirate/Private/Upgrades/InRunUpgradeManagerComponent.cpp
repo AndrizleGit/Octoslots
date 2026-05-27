@@ -127,7 +127,7 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
             break;
 
         case EInRunUpgradeStat::AttackRange:
-            Character->ConeMaxDistance += Value;
+            Character->ConeMaxDistance += Value * 0.5f;
             //Character->ExtraDamageDistance += Value * 0.5f;
             break;
     }
