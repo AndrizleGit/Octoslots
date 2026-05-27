@@ -41,7 +41,7 @@ void UUpgradeManagerComponent::SaveUpgrades()
 
 	SaveData->TotalCoinsSpent = TotalCoinsSpent;
 
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
     	if (Attributes)
     	{
         	SaveData->SavedCoins = Attributes->GetCoins();
@@ -71,7 +71,7 @@ void UUpgradeManagerComponent::LoadUpgrades()
 		}
 	}
 	
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (Attributes)
     {
         Attributes->SetCoins(SaveData->SavedCoins);
