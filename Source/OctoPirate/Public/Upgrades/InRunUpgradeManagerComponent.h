@@ -59,7 +59,7 @@ private:
 	void ApplyUpgrade(UInRunUpgradeData* Upgrade);
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
 
-	bool bIsRunActive = false;
+	bool bIsRunActive = true;
 	int32 CurrentLevel = 0;
 
 	UPROPERTY()
