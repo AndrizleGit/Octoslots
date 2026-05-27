@@ -1,9 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Character\AttributeSets\PlayerAttributeSet.h"
+#include "Character\AttributeSets\BasicAttributeSet.h"
 
-UPlayerAttributeSet::UPlayerAttributeSet()
+UBasicAttributeSet::UBasicAttributeSet()
 {
 	// -- Health --
 	Health = 50.0f;

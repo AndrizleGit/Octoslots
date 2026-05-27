@@ -5,59 +5,59 @@
 #include "CoreMinimal.h"
 #include "AttributeSet.h"
 #include "AbilitySystemComponent.h"
-#include "PlayerAttributeSet.generated.h"
+#include "BasicAttributeSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class OCTOPIRATE_API UPlayerAttributeSet : public UAttributeSet
+class OCTOPIRATE_API UBasicAttributeSet : public UAttributeSet
 {
 	GENERATED_BODY()
 	
 public:
 	
-	UPlayerAttributeSet();
+	UBasicAttributeSet();
 	
 	//Health Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Health")
 	FGameplayAttributeData Health;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, Health)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Health)
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Health")
 	FGameplayAttributeData MaxHealth;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, MaxHealth)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, MaxHealth)
 	
 	// Movement Speed Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Movement")
 	FGameplayAttributeData WalkSpeed;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, WalkSpeed)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, WalkSpeed)
 	
 	// Attack Damage Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Combat")
 	FGameplayAttributeData AttackDamage;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, AttackDamage)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, AttackDamage)
 	
 	// Attack Speed Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Combat")
 	FGameplayAttributeData AttackSpeed;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, AttackSpeed)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, AttackSpeed)
 	
 	// Level Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression")
 	FGameplayAttributeData Level;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, Level)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Level)
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression")
 	FGameplayAttributeData Experience;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, Experience)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Experience)
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData MaxExperience;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, MaxExperience)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, MaxExperience)
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData Coins;
-	ATTRIBUTE_ACCESSORS_BASIC(UPlayerAttributeSet, Coins)
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Coins)
 };
 	

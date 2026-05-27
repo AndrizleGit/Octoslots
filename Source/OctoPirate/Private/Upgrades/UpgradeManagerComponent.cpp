@@ -1,5 +1,5 @@
 #include "Upgrades/UpgradeManagerComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
 #include "OctoSlotsSaveGame.h"
 #include "Kismet/GameplayStatics.h"
@@ -87,7 +87,7 @@ bool UUpgradeManagerComponent::PurchaseUpgrade(UUpgradeData* Upgrade)
 	if (IsUpgradeMaxLevel(Upgrade)) return false;
 	if (!CanAffordUpgrade(Upgrade)) return false;
 
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
 	if (!Attributes) return false;
 
 	const int32 Cost = GetUpgradeCost(Upgrade);
@@ -110,7 +110,7 @@ bool UUpgradeManagerComponent::PurchaseUpgrade(UUpgradeData* Upgrade)
 
 void UUpgradeManagerComponent::RefundAllUpgrades()
 {
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
 	if (!Attributes) return;
 
 	for (auto& Pair : UpgradeLevels)
@@ -168,7 +168,7 @@ int32 UUpgradeManagerComponent::GetUpgradeCost(UUpgradeData* Upgrade) const
 
 bool UUpgradeManagerComponent::CanAffordUpgrade(UUpgradeData* Upgrade) const
 {
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
 	if (!Attributes || !Upgrade) return false;
 
 	return Attributes->GetCoins() >= GetUpgradeCost(Upgrade);
@@ -192,7 +192,7 @@ void UUpgradeManagerComponent::RemoveUpgrade(UUpgradeData* Upgrade, int32 Levels
 
 void UUpgradeManagerComponent::ApplyStatChange(EUpgradeStat Stat, float Value)
 {
-	UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+	UBasicAttributeSet* Attributes = GetPlayerAttributes();
 	ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
 	if (!Attributes || !Character) return;
 
@@ -217,7 +217,7 @@ void UUpgradeManagerComponent::ApplyStatChange(EUpgradeStat Stat, float Value)
 	}
 }
 
-UPlayerAttributeSet* UUpgradeManagerComponent::GetPlayerAttributes() const
+UBasicAttributeSet* UUpgradeManagerComponent::GetPlayerAttributes() const
 {
 	ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
 	if (!Character) return nullptr;
