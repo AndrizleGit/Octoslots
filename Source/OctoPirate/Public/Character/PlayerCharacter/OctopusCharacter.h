@@ -8,6 +8,7 @@
 #include "Camera/CameraComponent.h"
 #include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Upgrades/UpgradeManagerComponent.h"
+#include "Animation/AnimMontage.h"
 #include "OctopusCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
@@ -64,10 +65,24 @@ protected:
 	virtual void PerformAttack_Implementation() override;
 
 public:	
+	// --- Tentacle Attack ---
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
+	TObjectPtr<USkeletalMeshComponent> TentacleMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
+	TObjectPtr<UAnimMontage> TentacleAttackMontage;
+
+	// The default scale of the tentacle mesh (tweak this in the editor to get the right base size)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Tentacle")
+	float BaseTentacleScale = 2.f;
+
+	// Base range used to calculate tentacle scale (set automatically from ConeMaxDistance at BeginPlay)
+	float BaseConeMaxDistance = 0.f;
+
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<class UCameraComponent> Camera;
 	
@@ -81,4 +96,7 @@ public:
 	FOnDeathDelegate OnPlayerDied;
 private:
 	AActor* GetClosestEnemy() const;
+
+	UFUNCTION()
+	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

@@ -3,6 +3,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "NiagaraFunctionLibrary.h"
 
 AOctopusPlayerController::AOctopusPlayerController()
 {
@@ -55,6 +56,7 @@ void AOctopusPlayerController::OnRightMousePressed()
 {
 	bRightMouseHeld = true;
 	MoveToCursor();
+	SpawnCursorFX();
 }
 
 void AOctopusPlayerController::OnRightMouseReleased()
@@ -65,13 +67,40 @@ void AOctopusPlayerController::OnRightMouseReleased()
 void AOctopusPlayerController::MoveToCursor() const
 {
 	FHitResult HitResult;
-	
+
 	bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
-	
+
 	if (!bHit) return;
-	
+
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
-	
+
 	OctopusChar->SetMoveDestination(HitResult.ImpactPoint);
+}
+
+void AOctopusPlayerController::SpawnCursorFX()
+{
+	if (!CursorClickFX)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CursorClickFX is not assigned!"));
+		return;
+	}
+
+	FHitResult HitResult;
+	if (!GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CursorFX: No hit under cursor"));
+		return;
+	}
+
+	const FVector CursorLocation = HitResult.ImpactPoint;
+
+	UE_LOG(LogTemp, Log, TEXT("Spawning CursorFX at %s"), *CursorLocation.ToString());
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		GetWorld(),
+		CursorClickFX,
+		CursorLocation,
+		FRotator::ZeroRotator
+	);
 }

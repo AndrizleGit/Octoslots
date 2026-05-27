@@ -6,6 +6,7 @@
 #include "InputActionValue.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
+#include "NiagaraSystem.h"
 #include "OctopusPlayerController.generated.h"
 
 /**
@@ -24,7 +25,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> RightClickAction;
-	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
+	TObjectPtr<UNiagaraSystem> CursorClickFX;
+
 protected:
 	virtual void SetupInputComponent() override;
 	virtual void PlayerTick( float DeltaTime ) override;
@@ -34,6 +38,7 @@ private:
 	void OnRightMousePressed();
 	void OnRightMouseReleased();
 	void MoveToCursor() const;
+	void SpawnCursorFX();
 	
 	bool bRightMouseHeld = false;
 };
