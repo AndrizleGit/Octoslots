@@ -20,4 +20,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Save")
 	int32 TotalCoinsSpent = 0;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Save")
+	float SavedCoins = 0.0f;
 };
