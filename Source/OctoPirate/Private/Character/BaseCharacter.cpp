@@ -6,7 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Character/AttributeSets/BasicAttributeSet.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 // -- Tag Definitions --
@@ -23,7 +23,7 @@ ABaseCharacter::ABaseCharacter()
 	AbilitySystemComponent->SetIsReplicated(false);
 
 	// -- Attribute Sets --
-	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
+	BasicAttributes = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void ABaseCharacter::BeginPlay()
@@ -31,7 +31,6 @@ void ABaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;	
 	AttackDamage = GetAttackDamage();
-	
 }
 
 void ABaseCharacter::Tick(float DeltaTime)

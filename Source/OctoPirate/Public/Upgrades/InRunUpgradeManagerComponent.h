@@ -61,6 +61,6 @@ private:
 	UPROPERTY()
 	TMap<UInRunUpgradeData*, int32> PickedCounts;
 
-	class UBasicAttributeSet* GetPlayerAttributes() const;
+	class UPlayerAttributeSet* GetPlayerAttributes() const;
 };
 

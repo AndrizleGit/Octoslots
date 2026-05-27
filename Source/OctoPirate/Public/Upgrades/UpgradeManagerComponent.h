@@ -88,5 +88,5 @@ public:
 
 	int32 TotalCoinsSpent = 0;
 
-	class UBasicAttributeSet* GetPlayerAttributes() const;
+	class UPlayerAttributeSet* GetPlayerAttributes() const;
 };

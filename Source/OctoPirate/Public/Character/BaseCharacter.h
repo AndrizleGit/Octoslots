@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
-#include "Character/AttributeSets/BasicAttributeSet.h"
+#include "Character/AttributeSets/PlayerAttributeSet.h"
 #include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
@@ -45,7 +45,7 @@ public:
 	UAbilitySystemComponent* AbilitySystemComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
-	class UBasicAttributeSet* BasicAttributes;
+	class UPlayerAttributeSet* BasicAttributes;
 	
 	
 	// --- Combat ---
