@@ -124,8 +124,8 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
 
         case EInRunUpgradeStat::AttackSpeed:
         {
-            // Cap attack speed at 3.0 to prevent perma-attacking
-            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + (Value * 0.5f), 3.0f);
+            // +0.15 per pick (e.g. 1.2 → 1.35 → 1.5), cap at 2.5
+            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + 0.15f, 2.5f);
             Attributes->SetAttackSpeed(NewSpeed);
             break;
         }
