@@ -62,10 +62,10 @@ public:
 	float ConeMaxDistance = 350.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
-	float AttackDamage = 15.f;
-	
+	float AttackDamage = 10.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
-	float ExtraDamage = 45.f;
+	float ExtraDamage = 0.f;
 	
 	
 	// --- Functions ---

@@ -123,8 +123,7 @@ void ABaseCharacter::PerformAttack_Implementation()
 {
 	if (bIsDead) return;
 	
-	ApplyDamageInZone(0.0f, ExtraDamageDistance, AttackDamage);
-	ApplyDamageInZone(ExtraDamageDistance,ConeMaxDistance, ExtraDamage);
+	ApplyDamageInZone(0.0f, ConeMaxDistance, AttackDamage);
 	
 #if ENABLE_DRAW_DEBUG
 	const FVector Origin  = GetActorLocation();

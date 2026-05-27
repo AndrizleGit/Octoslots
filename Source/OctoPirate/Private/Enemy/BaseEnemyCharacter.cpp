@@ -22,9 +22,10 @@ void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	// -- Set Base Enemy Attributes --
-	BasicAttributes->SetAttackDamage(9.f);
 	if (BasicAttributes)
 	{
+		BasicAttributes->SetAttackDamage(7.f);
+		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
 	}
 	

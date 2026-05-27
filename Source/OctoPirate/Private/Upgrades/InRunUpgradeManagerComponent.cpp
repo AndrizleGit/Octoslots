@@ -23,9 +23,12 @@ void UInRunUpgradeManagerComponent::BeginPlay()
 
 void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
+    if (!bIsRunActive) return;
+
     UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
-    
+
+    if (Attributes->GetExperience() <= 0.f) return;
     if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
     
     CurrentLevel++;
@@ -79,6 +82,7 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
 
 void UInRunUpgradeManagerComponent::ResetForNewRun()
 {
+    bIsRunActive = true;
     CurrentLevel = 0;
     CurrentChoices.Empty();
 
@@ -114,13 +118,17 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
             break;
 
         case EInRunUpgradeStat::MovementSpeed:
-            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + Value);
+            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + (Value * 0.5f));
             Character->GetCharacterMovement()->MaxWalkSpeed = Attributes->GetWalkSpeed();
             break;
 
         case EInRunUpgradeStat::AttackSpeed:
-            Attributes->SetAttackSpeed(Attributes->GetAttackSpeed() + Value);
+        {
+            // Cap attack speed at 3.0 to prevent perma-attacking
+            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + (Value * 0.5f), 3.0f);
+            Attributes->SetAttackSpeed(NewSpeed);
             break;
+        }
 
         case EInRunUpgradeStat::AttackDamage:
             Attributes->SetAttackDamage(Attributes->GetAttackDamage() + Value);

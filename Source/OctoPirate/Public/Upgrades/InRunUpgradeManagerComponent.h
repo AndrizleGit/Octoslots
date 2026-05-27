@@ -44,6 +44,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
 	void ResetForNewRun();
+
+	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
+	void SetRunActive(bool bActive) { bIsRunActive = bActive; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "InRunUpgrades")
+	bool IsRunActive() const { return bIsRunActive; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -53,6 +59,7 @@ private:
 	void ApplyUpgrade(UInRunUpgradeData* Upgrade);
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
 
+	bool bIsRunActive = false;
 	int32 CurrentLevel = 0;
 
 	UPROPERTY()
