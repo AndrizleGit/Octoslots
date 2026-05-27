@@ -31,6 +31,7 @@ void ABaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;	
 	AttackDamage = GetAttackDamage();
+	
 }
 
 void ABaseCharacter::Tick(float DeltaTime)

@@ -43,6 +43,9 @@ void AOctopusCharacter::BeginPlay()
 		TentacleMesh->SetUsingAbsoluteRotation(true);
 		TentacleMesh->SetUsingAbsoluteScale(true);
 	}
+
+	// -- Set Base Attributes --
+	BasicAttributes->SetAttackSpeed(1.2f);
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()
