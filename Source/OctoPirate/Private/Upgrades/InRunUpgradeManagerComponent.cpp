@@ -1,5 +1,5 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,7 +23,7 @@ void UInRunUpgradeManagerComponent::BeginPlay()
 
 void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
     
     if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
@@ -85,7 +85,7 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
     for (auto& Pair : PickedCounts)
         Pair.Value = 0;
 
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (Attributes)
     {
         Attributes->SetExperience(0.0f);
@@ -102,7 +102,7 @@ void UInRunUpgradeManagerComponent::ApplyUpgrade(UInRunUpgradeData* Upgrade)
 
 void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, float Value)
 {
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Attributes || !Character) return;
 
@@ -133,7 +133,7 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
     }
 }
 
-UPlayerAttributeSet* UInRunUpgradeManagerComponent::GetPlayerAttributes() const
+UBasicAttributeSet* UInRunUpgradeManagerComponent::GetPlayerAttributes() const
 {
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Character) return nullptr;

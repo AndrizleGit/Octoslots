@@ -28,6 +28,8 @@ AOctopusCharacter::AOctopusCharacter()
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	// -- Set Base Attributes -- 
+	BasicAttributes->SetAttackSpeed(1.2f);	
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()

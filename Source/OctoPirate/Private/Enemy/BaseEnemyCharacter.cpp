@@ -3,7 +3,7 @@
 
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,7 +21,8 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	// -- Set Base Enemy Attributes --
+	BasicAttributes->SetAttackDamage(9.f);
 	if (BasicAttributes)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
