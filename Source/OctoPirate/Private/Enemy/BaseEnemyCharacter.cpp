@@ -49,20 +49,30 @@ void ABaseEnemyCharacter::ChasePlayer()
 
 void ABaseEnemyCharacter::PerformAttack_Implementation()
 {
-	if (bIsDead || !PlayerCharacter) return;
-	
+	if (bIsDead || !PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Attack skipped (Dead: %d, NoPlayer: %d)"), *GetName(), bIsDead, !PlayerCharacter);
+		return;
+	}
+
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
-	if (DistanceToPlayer > AttackRange) return;
-	
+	if (DistanceToPlayer > AttackRange)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy %s: ATTACKING player (Dist: %.1f, Dmg: %.1f)"), *GetName(), DistanceToPlayer, AttackDamage);
+
 	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	SetActorRotation(Direction.Rotation());
-	
+
 	if (BasicAttributes)
 	{
 		AttackDamage = BasicAttributes->GetAttackDamage();
 		AttackInterval = BasicAttributes->GetAttackSpeed();
 	}
-	
+
 	Super::PerformAttack_Implementation();
 }
 
