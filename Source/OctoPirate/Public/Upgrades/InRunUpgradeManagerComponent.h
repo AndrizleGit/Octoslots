@@ -44,6 +44,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
 	void ResetForNewRun();
+
+	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
+	void SetRunActive(bool bActive) { bIsRunActive = bActive; }
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "InRunUpgrades")
+	bool IsRunActive() const { return bIsRunActive; }
 	
 protected:
 	virtual void BeginPlay() override;
@@ -53,6 +59,7 @@ private:
 	void ApplyUpgrade(UInRunUpgradeData* Upgrade);
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
 
+	bool bIsRunActive = true;
 	int32 CurrentLevel = 0;
 
 	UPROPERTY()
@@ -61,6 +68,6 @@ private:
 	UPROPERTY()
 	TMap<UInRunUpgradeData*, int32> PickedCounts;
 
-	class UPlayerAttributeSet* GetPlayerAttributes() const;
+	class UBasicAttributeSet* GetPlayerAttributes() const;
 };
 

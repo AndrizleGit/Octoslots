@@ -1,5 +1,5 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,9 +23,12 @@ void UInRunUpgradeManagerComponent::BeginPlay()
 
 void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    if (!bIsRunActive) return;
+
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
-    
+
+    if (Attributes->GetExperience() <= 0.f) return;
     if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
     
     CurrentLevel++;
@@ -79,13 +82,14 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
 
 void UInRunUpgradeManagerComponent::ResetForNewRun()
 {
+    bIsRunActive = true;
     CurrentLevel = 0;
     CurrentChoices.Empty();
 
     for (auto& Pair : PickedCounts)
         Pair.Value = 0;
 
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (Attributes)
     {
         Attributes->SetExperience(0.0f);
@@ -102,7 +106,7 @@ void UInRunUpgradeManagerComponent::ApplyUpgrade(UInRunUpgradeData* Upgrade)
 
 void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, float Value)
 {
-    UPlayerAttributeSet* Attributes = GetPlayerAttributes();
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Attributes || !Character) return;
 
@@ -114,13 +118,17 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
             break;
 
         case EInRunUpgradeStat::MovementSpeed:
-            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + Value);
+            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + (Value * 0.5f));
             Character->GetCharacterMovement()->MaxWalkSpeed = Attributes->GetWalkSpeed();
             break;
 
         case EInRunUpgradeStat::AttackSpeed:
-            Attributes->SetAttackSpeed(Attributes->GetAttackSpeed() + Value);
+        {
+            // +0.15 per pick (e.g. 1.2 → 1.35 → 1.5), cap at 2.5
+            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + 0.15f, 2.5f);
+            Attributes->SetAttackSpeed(NewSpeed);
             break;
+        }
 
         case EInRunUpgradeStat::AttackDamage:
             Attributes->SetAttackDamage(Attributes->GetAttackDamage() + Value);
@@ -133,7 +141,7 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
     }
 }
 
-UPlayerAttributeSet* UInRunUpgradeManagerComponent::GetPlayerAttributes() const
+UBasicAttributeSet* UInRunUpgradeManagerComponent::GetPlayerAttributes() const
 {
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Character) return nullptr;

@@ -3,7 +3,7 @@
 
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,9 +21,11 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{
+		BasicAttributes->SetAttackDamage(7.f);
+		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
 	}
 	
@@ -49,20 +51,30 @@ void ABaseEnemyCharacter::ChasePlayer()
 
 void ABaseEnemyCharacter::PerformAttack_Implementation()
 {
-	if (bIsDead || !PlayerCharacter) return;
-	
+	if (bIsDead || !PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Attack skipped (Dead: %d, NoPlayer: %d)"), *GetName(), bIsDead, !PlayerCharacter);
+		return;
+	}
+
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
-	if (DistanceToPlayer > AttackRange) return;
-	
+	if (DistanceToPlayer > AttackRange)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Enemy %s: ATTACKING player (Dist: %.1f, Dmg: %.1f)"), *GetName(), DistanceToPlayer, AttackDamage);
+
 	const FVector Direction = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
 	SetActorRotation(Direction.Rotation());
-	
+
 	if (BasicAttributes)
 	{
 		AttackDamage = BasicAttributes->GetAttackDamage();
 		AttackInterval = BasicAttributes->GetAttackSpeed();
 	}
-	
+
 	Super::PerformAttack_Implementation();
 }
 
