@@ -30,6 +30,7 @@ protected:
 	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
 	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
 	virtual void OnExperienceChanged(const FOnAttributeChangeData& Data);
+	virtual void OnPickupRadiusChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	

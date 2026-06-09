@@ -66,6 +66,10 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
 			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
+		
+		// Bind PickupRadius change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetPickupRadiusAttribute())
+			.AddUObject(this, &ABaseCharacter::OnPickupRadiusChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -273,6 +277,15 @@ void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
 	if (OctopusChar && OctopusChar->InRunUpgradeManager)
 	{
 		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
+	}
+}
+
+void ABaseCharacter::OnPickupRadiusChanged(const FOnAttributeChangeData& Data)
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->PickupRadius)
+	{
+		OctopusChar->PickupRadius->UpdateRadius(Data.NewValue);
 	}
 }
 
