@@ -6,7 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
-#include "Character/AttributeSets/PlayerAttributeSet.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 // -- Tag Definitions --
@@ -23,7 +23,7 @@ ABaseCharacter::ABaseCharacter()
 	AbilitySystemComponent->SetIsReplicated(false);
 
 	// -- Attribute Sets --
-	BasicAttributes = CreateDefaultSubobject<UPlayerAttributeSet>(TEXT("BasicAttributeSet"));
+	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void ABaseCharacter::BeginPlay()
@@ -31,6 +31,7 @@ void ABaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	CurrentHealth = MaxHealth;	
 	AttackDamage = GetAttackDamage();
+	
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -122,8 +123,7 @@ void ABaseCharacter::PerformAttack_Implementation()
 {
 	if (bIsDead) return;
 	
-	ApplyDamageInZone(0.0f, ExtraDamageDistance, AttackDamage);
-	ApplyDamageInZone(ExtraDamageDistance,ConeMaxDistance, ExtraDamage);
+	ApplyDamageInZone(0.0f, ConeMaxDistance, AttackDamage);
 	
 #if ENABLE_DRAW_DEBUG
 	const FVector Origin  = GetActorLocation();
