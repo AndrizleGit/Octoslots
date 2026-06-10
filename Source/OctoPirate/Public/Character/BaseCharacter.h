@@ -8,9 +8,10 @@
 #include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
+// -- Tags --
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
 
-// -- Tags -- 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Combat_Hit);
 	
 UCLASS()
 class OCTOPIRATE_API ABaseCharacter : public ACharacter
@@ -47,6 +48,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	class UBasicAttributeSet* BasicAttributes;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> PoisonEffectClass;
+	
+	UPROPERTY()
+	FGameplayEffectSpecHandle CachedPoisonSpecHandle;
 	
 	// --- Combat ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")

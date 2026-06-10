@@ -9,8 +9,10 @@
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
-// -- Tag Definitions --
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Status.PlayerPoison")
+
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -32,6 +34,18 @@ void ABaseCharacter::BeginPlay()
 	CurrentHealth = MaxHealth;	
 	AttackDamage = GetAttackDamage();
 	
+	//
+	if (AbilitySystemComponent && PoisonEffectClass)
+	{
+		FGameplayEffectContextHandle ContextHandle = 
+			AbilitySystemComponent->MakeEffectContext();
+            
+		CachedPoisonSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+			PoisonEffectClass,
+			1.0f,
+			ContextHandle
+		);
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -195,11 +209,21 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
 		
-		// -- Send OnHitEvent --
-		FGameplayEventData Payload;
-		Payload.Instigator = GetController();
-		Payload.Target = Actor;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Actor,TAG_Event_Combat_Hit, Payload);
+		
+		// -- Apply Poison --
+		if (!CachedPoisonSpecHandle.IsValid()) return;
+		UAbilitySystemComponent* TargetASC = 
+			UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+
+		if (!TargetASC) continue;
+
+		// Check if target is poisoned/immune
+		if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
+		if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
+
+		// Apply poison to target
+		TargetASC->ApplyGameplayEffectSpecToSelf (*CachedPoisonSpecHandle.Data.Get());
+		
 	}
 
 }

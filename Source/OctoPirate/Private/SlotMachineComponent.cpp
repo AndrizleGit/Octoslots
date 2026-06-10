@@ -66,6 +66,7 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
 	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
 	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
+	int32 PoisonCount = Result.GetCount(ESlotSymbol::POISON);
 	if (MovementCount > 0)
 	{
 		
@@ -105,6 +106,15 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 			PlayerCharacter->ApplySevenBuff();
 		}
 		UE_LOG(LogTemp, Warning, TEXT("GOD MODE!"));
+	}
+	if (PoisonCount > 0)
+	{
+		// --- Call Poison(StackCount) ---
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->ApplyPoisonBuff(PoisonCount);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), PoisonCount );
 	}
 
 }
