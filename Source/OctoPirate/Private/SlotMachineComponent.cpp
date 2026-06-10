@@ -4,6 +4,7 @@
 #include "SlotMachineComponent.h"
 
 #include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "GameFramework/PawnMovementComponent.h"
 
 USlotMachineComponent::USlotMachineComponent()
@@ -38,16 +39,34 @@ void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 void USlotMachineComponent::Spin()
 {
+	UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
+	if (!Attributes) return;
+
+	// Charge for the spin. Refuse and notify if the player can't afford it.
+	if (Attributes->GetCoins() < SpinCost)
+	{
+		OnSpinFailed.Broadcast();
+		UE_LOG(LogTemp, Log, TEXT("Spin denied: costs %.0f coins, player has %.0f"), SpinCost, Attributes->GetCoins());
+		return;
+	}
+	Attributes->SetCoins(Attributes->GetCoins() - SpinCost);
+
 	DopamineCurrent = DopamineMax;
-	
+
 	RemoveAllBuffs();
 	SetDebuffActive(false);
-	
+
 	LastResult = RollReels();
 	ApplyBuffs(LastResult);
-	
+
 	OnSpinComplete.Broadcast(LastResult);
 	OnDopamineChanged.Broadcast(GetDopamineNormalized());
+}
+
+bool USlotMachineComponent::CanAffordSpin() const
+{
+	const UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
+	return Attributes && Attributes->GetCoins() >= SpinCost;
 }
 
 FSlotResult USlotMachineComponent::RollReels()
@@ -62,51 +81,39 @@ FSlotResult USlotMachineComponent::RollReels()
 
 void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 {
-	int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
-	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
-	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
-	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
-	if (MovementCount > 0)
+	if (!PlayerCharacter) return;
+
+	// Three of a kind: with only three reels, a match means every reel shows the same
+	// symbol, so no other symbol can be present. The unique jackpot buff therefore
+	// naturally replaces any stacking buff.
+	if (Result.Reel1 == Result.Reel2 && Result.Reel2 == Result.Reel3)
 	{
-		
-		//--- Call ApplyMovementSpeedBuff(StackCount)  ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplyMovementSpeedBuff(MovementCount);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d "), MovementCount);
-	}
-	
-	if (AttackSpeedCount > 0)
-	{
-		
-		// --- Call ApplyAttackSpeedBuff(StackCount) ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplyAttackSpeedBuff(AttackSpeedCount);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d"), AttackSpeedCount);
-	}
-	
-	if (AttackDamageCount > 0)
-	{
-		// --- Call ApplyAttackDamageBuff(StackCount) ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount );
-	}
-	if (SevenCount == 3)
-	{
-		// --- Call ApplySevenBuff() ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplySevenBuff();
-		}
-		UE_LOG(LogTemp, Warning, TEXT("GOD MODE!"));
+		PlayerCharacter->ApplyThreeOfAKindBuff(Result.Reel1);
+		UE_LOG(LogTemp, Warning, TEXT("JACKPOT! Three of a kind: %s"), *UEnum::GetValueAsString(Result.Reel1));
+		return;
 	}
 
+	// Otherwise apply tiered stacking buffs for any symbol that appears once or twice.
+	const int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
+	if (MovementCount > 0)
+	{
+		PlayerCharacter->ApplyMovementSpeedBuff(MovementCount);
+		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d"), MovementCount);
+	}
+
+	const int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
+	if (AttackSpeedCount > 0)
+	{
+		PlayerCharacter->ApplyAttackSpeedBuff(AttackSpeedCount);
+		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d"), AttackSpeedCount);
+	}
+
+	const int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
+	if (AttackDamageCount > 0)
+	{
+		PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount);
+	}
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const

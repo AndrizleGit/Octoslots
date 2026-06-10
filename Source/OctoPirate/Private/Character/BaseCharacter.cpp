@@ -265,10 +265,13 @@ void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
 
 void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
 {
-	UE_LOG(LogTemp, Error, TEXT("[XP] Current: %.1f / Max: %.1f"), 
-		BasicAttributes->GetExperience(), 
-		BasicAttributes->GetMaxExperience());
-	
+	if (BasicAttributes)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[XP] Current: %.1f / Max: %.1f"),
+			BasicAttributes->GetExperience(),
+			BasicAttributes->GetMaxExperience());
+	}
+
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
 	if (OctopusChar && OctopusChar->InRunUpgradeManager)
 	{

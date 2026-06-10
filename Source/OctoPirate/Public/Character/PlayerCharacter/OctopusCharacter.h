@@ -9,6 +9,7 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Upgrades/UpgradeManagerComponent.h"
 #include "Animation/AnimMontage.h"
+#include "SlotMachineTypes.h"
 #include "OctopusCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
@@ -39,8 +40,13 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
-	
-	// - Debuffs - 
+
+	// Fired when all three reels match. Switch on Symbol to give each three-of-a-kind
+	// its own unique payoff. (For SEVEN you can simply call ApplySevenBuff from here.)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyThreeOfAKindBuff(ESlotSymbol Symbol);
+
+	// - Debuffs -
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void RemoveBuffs();
 

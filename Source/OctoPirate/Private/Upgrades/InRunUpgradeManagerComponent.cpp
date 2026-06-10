@@ -25,21 +25,45 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
     if (!bIsRunActive) return;
 
+    // Re-entrancy guard: setting the Experience attribute below re-fires the attribute
+    // change delegate, which calls back into here synchronously. Bail on the nested call.
+    if (bIsProcessingLevelUp) return;
+
     UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
 
-    if (Attributes->GetExperience() <= 0.f) return;
-    if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
-    
-    CurrentLevel++;
-    
-    const float NewMaxXP = Attributes->GetMaxExperience() * 1.5f;
-    Attributes->SetExperience(0.0f);
-    Attributes->SetMaxExperience(NewMaxXP);
+    float Experience = Attributes->GetExperience();
+    float MaxXP = Attributes->GetMaxExperience();
+
+    if (MaxXP <= 0.f) return;          // misconfigured; avoids divide-by-zero / runaway leveling
+    if (Experience < MaxXP) return;    // not enough XP for a level yet
+
+    // Award every level the accumulated XP covers, carrying the remainder into the next level.
+    while (Experience >= MaxXP && MaxXP > 0.f)
+    {
+        Experience -= MaxXP;
+        MaxXP *= 1.5f;
+        CurrentLevel++;
+    }
+
+    // Commit the new XP state under the guard so the resulting change callbacks no-op.
+    bIsProcessingLevelUp = true;
+    Attributes->SetMaxExperience(MaxXP);
+    Attributes->SetExperience(Experience);
+    bIsProcessingLevelUp = false;
 
     RollNewChoices();
 
-    UGameplayStatics::SetGamePaused(GetWorld(), true);
+    // Only pause for the upgrade screen if there is actually something to choose,
+    // otherwise the game would freeze with an empty selection and no way to resume.
+    if (CurrentChoices.Num() > 0)
+    {
+        UGameplayStatics::SetGamePaused(GetWorld(), true);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Level up reached but no upgrades are configured; skipping upgrade screen."));
+    }
 
     OnLevelUp.Broadcast(CurrentLevel);
 }

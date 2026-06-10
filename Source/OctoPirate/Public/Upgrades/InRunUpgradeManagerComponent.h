@@ -60,6 +60,9 @@ private:
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
 
 	bool bIsRunActive = true;
+	// Guards against re-entry: writing the Experience attribute re-fires the attribute
+	// change delegate, which calls CheckForLevelUp again synchronously.
+	bool bIsProcessingLevelUp = false;
 	int32 CurrentLevel = 0;
 
 	UPROPERTY()
