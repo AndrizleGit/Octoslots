@@ -11,7 +11,7 @@
 // -- Tags --
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
-
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
 	
 UCLASS()
 class OCTOPIRATE_API ABaseCharacter : public ACharacter
@@ -34,12 +34,7 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
-	// --- Stats --- 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxHealth = 100.f;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float CurrentHealth;
 	
 	// -- Ability System Component --
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")

@@ -12,8 +12,7 @@
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Status.PlayerPoison")
-
-
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonWeaponBuff,     "Buffs.PoisonWeapon")
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -31,7 +30,7 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentHealth = MaxHealth;	
+	
 	AttackDamage = GetAttackDamage();
 	
 	//
@@ -86,27 +85,12 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
-                                 AActor* DamageCauser)
+								 AActor* DamageCauser)
 {
 	if (bIsDead) return 0.0f;
 	
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	
-	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
-	
-	if (BasicAttributes && AbilitySystemComponent)
-	{
-		const float NewHealth = FMath::Clamp(BasicAttributes->GetHealth() - DamageAmount, 0.0f, BasicAttributes->GetMaxHealth());
-		BasicAttributes->SetHealth(NewHealth);
-	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("%s took %.1f damage — Health: %.1f"), *GetName(), DamageAmount, CurrentHealth);
-	
-	if (CurrentHealth <= 0.0f && !bIsDead)
-	{
-		bIsDead = true;
-		OnDeath();
-	}
+	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
 	
 	return DamageAmount;
 }
@@ -130,7 +114,8 @@ void ABaseCharacter::OnDeath_Implementation()
 
 float ABaseCharacter::GetHealthPercent() const
 {
-	return CurrentHealth / MaxHealth;
+	if (!BasicAttributes) return 0.f;
+	return BasicAttributes->GetHealth()/ BasicAttributes->GetMaxHealth();
 }
 
 void ABaseCharacter::PerformAttack_Implementation()
@@ -175,6 +160,7 @@ void ABaseCharacter::PerformAttack_Implementation()
 #endif
 }
 
+
 void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damage)
 {
 	if (bIsDead) return;
@@ -211,19 +197,21 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		
 		
 		// -- Apply Poison --
-		if (!CachedPoisonSpecHandle.IsValid()) return;
-		UAbilitySystemComponent* TargetASC = 
-			UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+		if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
+		{
+			if (!CachedPoisonSpecHandle.IsValid()) return;
+			UAbilitySystemComponent* TargetASC = 
+				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
 
-		if (!TargetASC) continue;
+			if (!TargetASC) continue;
 
-		// Check if target is poisoned/immune
-		if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
-		if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
+			// Check if target is poisoned/immune
+			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
+			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
 
-		// Apply poison to target
-		TargetASC->ApplyGameplayEffectSpecToSelf (*CachedPoisonSpecHandle.Data.Get());
-		
+			// Apply poison to target
+			TargetASC->ApplyGameplayEffectSpecToSelf (*CachedPoisonSpecHandle.Data.Get());
+		}
 	}
 
 }
@@ -231,18 +219,21 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 // Update Attributes on Change
 void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
+	if (!BasicAttributes) return;
+	if (bIsDead) return;
 	// -- Log the Health change or update a UI/HUD --
 	float NewHealth = Data.NewValue;
 	float OldHealth = Data.OldValue;
     
-	UE_LOG(LogTemp, Warning, TEXT("Health Changed! Old: %f, New: %f"), OldHealth, NewHealth);
+	UE_LOG(LogTemp, Warning, TEXT("%s Health Changed! Old: %f, New: %f"), *GetName(), OldHealth, NewHealth);
     
 	
-	// -- if Health > MaxHealth , Health = MaxHealth -- 
-	if (NewHealth > BasicAttributes->GetMaxHealth()) BasicAttributes->SetHealth( BasicAttributes->GetMaxHealth());
+	
 	// -- if Health = 0 -> Death --
-	else if (NewHealth <= 0)
+	if (NewHealth <= 0)
 	{
+		
+		bIsDead= true;
 		OnDeath();
 	}
 }
