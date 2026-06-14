@@ -10,6 +10,7 @@
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
 #include "TaskSyncManager.h"
+#include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
@@ -30,6 +31,7 @@ void ABaseEnemyCharacter::BeginPlay()
 	}
 	
 	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
 void ABaseEnemyCharacter::Tick(float DeltaTime)

@@ -9,6 +9,7 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Upgrades/UpgradeManagerComponent.h"
 #include "Animation/AnimMontage.h"
+#include "Components/PickupRadiusComponent.h"
 #include "OctopusCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
@@ -59,6 +60,10 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
 	TObjectPtr<UInRunUpgradeManagerComponent> InRunUpgradeManager;
+	
+	// - Pickup Component -
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup")
+	TObjectPtr<UPickupRadiusComponent> PickupRadius;
 	    
 protected:
 	virtual void BeginPlay() override;
