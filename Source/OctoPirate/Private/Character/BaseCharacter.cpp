@@ -199,6 +199,17 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
 		
+		// -- Knockback --
+		if (Cast<AOctopusCharacter>(this))
+		{
+			ACharacter* HitCharacter = Cast<ACharacter>(Actor);
+			if (HitCharacter)
+			{
+				const FVector KnockbackDirection = ToTarget.GetSafeNormal();
+				HitCharacter->LaunchCharacter(KnockbackDirection * KnockbackStrength, true, false);
+			}
+		}
+		
 		// -- Send OnHitEvent --
 		FGameplayEventData Payload;
 		Payload.Instigator = GetController();
