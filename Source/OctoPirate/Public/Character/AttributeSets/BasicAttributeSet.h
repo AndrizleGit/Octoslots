@@ -63,5 +63,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData Coins;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Coins)
+	
+public:
+	void ApplyLifesteal(float Damage);
 };
 	

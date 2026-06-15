@@ -10,7 +10,8 @@ enum class ESlotSymbol : uint8
 	AttackSpeed UMETA(DisplayName = "Attack Speed"),
 	AttackDamage UMETA(DisplayName = "Attack Damage"),
 	SEVEN UMETA(DisplayName = "SEVEN"),
-	POISON UMETA(DisplayName = "POISON"),
+	Poison UMETA(DisplayName = "Poison"),
+	LifeSteal UMETA(DisplayName = "Life Steal"),
 	
 };
 

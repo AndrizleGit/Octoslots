@@ -31,3 +31,8 @@ void UBasicAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
 	}
 }
+void UBasicAttributeSet::ApplyLifesteal(float Damage)
+{
+	float NewHealth = GetHealth() + Damage * GetLifeSteal();
+	SetHealth(NewHealth);
+}

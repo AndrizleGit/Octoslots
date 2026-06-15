@@ -66,7 +66,8 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
 	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
 	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
-	int32 PoisonCount = Result.GetCount(ESlotSymbol::POISON);
+	int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
+	int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
 	if (MovementCount > 0)
 	{
 		
@@ -114,7 +115,16 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 		{
 			PlayerCharacter->ApplyPoisonBuff(PoisonCount);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), PoisonCount );
+		UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d"), PoisonCount );
+	}
+	if (LifeStealCount > 0)
+	{
+		// --- Call Poison(StackCount) ---
+		if (PlayerCharacter)
+		{
+			PlayerCharacter->ApplyLifeStealBuff( LifeStealCount);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d"), LifeStealCount );
 	}
 
 }

@@ -8,10 +8,7 @@
 #include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
-// -- Tags --
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
+
 	
 UCLASS()
 class OCTOPIRATE_API ABaseCharacter : public ACharacter
@@ -31,6 +28,7 @@ protected:
 	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
 	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
 	virtual void OnExperienceChanged(const FOnAttributeChangeData& Data);
+	virtual void OnLifeStealChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
@@ -43,11 +41,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	class UBasicAttributeSet* BasicAttributes;
 	
-	UPROPERTY(EditDefaultsOnly, Category = "Effects")
-	TSubclassOf<UGameplayEffect> PoisonEffectClass;
 	
-	UPROPERTY()
-	FGameplayEffectSpecHandle CachedPoisonSpecHandle;
 	
 	// --- Combat ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
@@ -96,10 +90,10 @@ protected:
 	void PerformAttack();
 	virtual void PerformAttack_Implementation();
 	
-	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage);
+	virtual void ApplyDamageInZone(float MinDist, float MaxDist, float Damage);
 	
 	FTimerHandle AttackTimerHandle;
 	
 	bool bIsDead = false;
-	
+	bool lifeStealEnabled = false;
 };

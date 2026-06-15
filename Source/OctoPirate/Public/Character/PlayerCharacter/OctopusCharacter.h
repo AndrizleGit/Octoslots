@@ -13,6 +13,10 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
 
+// -- Tags --
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -50,6 +54,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ClearDebuff(); 
 	
+	// -- Extra abilities -- 
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> PoisonEffectClass;
+	
+	UPROPERTY()
+	FGameplayEffectSpecHandle CachedPoisonSpecHandle;
+	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
 	TObjectPtr<UUpgradeManagerComponent> UpgradeManager;
@@ -63,6 +74,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PerformAttack_Implementation() override;
+	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
 
 public:	
 	// --- Tentacle Attack ---

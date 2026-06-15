@@ -10,9 +10,7 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
-UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Status.PlayerPoison")
-UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonWeaponBuff,     "Buffs.PoisonWeapon")
+
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -33,18 +31,7 @@ void ABaseCharacter::BeginPlay()
 	
 	AttackDamage = GetAttackDamage();
 	
-	//
-	if (AbilitySystemComponent && PoisonEffectClass)
-	{
-		FGameplayEffectContextHandle ContextHandle = 
-			AbilitySystemComponent->MakeEffectContext();
-            
-		CachedPoisonSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
-			PoisonEffectClass,
-			1.0f,
-			ContextHandle
-		);
-	}
+	
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -77,8 +64,12 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
 			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
 		
+		// Bind EXP Change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
 			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
+		// Bind LifeSteal Change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetLifeStealAttribute())
+			.AddUObject(this, &ABaseCharacter::OnLifeStealChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
@@ -195,23 +186,7 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
 		
-		
-		// -- Apply Poison --
-		if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
-		{
-			if (!CachedPoisonSpecHandle.IsValid()) return;
-			UAbilitySystemComponent* TargetASC = 
-				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
 
-			if (!TargetASC) continue;
-
-			// Check if target is poisoned/immune
-			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
-			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
-
-			// Apply poison to target
-			TargetASC->ApplyGameplayEffectSpecToSelf (*CachedPoisonSpecHandle.Data.Get());
-		}
 	}
 
 }
@@ -289,6 +264,13 @@ void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
 	{
 		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
 	}
+}
+void ABaseCharacter::OnLifeStealChanged(const FOnAttributeChangeData& Data)
+{
+	float lifeSteal = Data.NewValue;
+	UE_LOG(LogTemp, Log, TEXT("Lifesteal Updated to: %f"), lifeSteal);
+	if (lifeSteal > 0) lifeStealEnabled = true;
+	else lifeStealEnabled = false;
 }
 
 // -- Get Attributes -- 
