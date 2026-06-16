@@ -75,6 +75,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PerformAttack_Implementation() override;
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
+	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
 
 public:	
 	// --- Tentacle Attack ---
@@ -106,6 +107,8 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnDeathDelegate OnPlayerDied;
+	
+	
 private:
 	AActor* GetClosestEnemy() const;
 

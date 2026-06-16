@@ -227,10 +227,31 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
 			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
 
 			// Apply poison to target
-			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
+			for (int i = 0 ; i < GetStacksByTag(AbilitySystemComponent,TAG_Status_PoisonWeaponBuff) ; i++)
+			{
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
+			}
 		}
 	}
 
+}
+int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag)
+{
+	if (!ASC) return 0;
+
+	   FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(
+        FGameplayTagContainer(EffectTag)
+	);
+
+	TArray<FActiveGameplayEffectHandle> Handles = ASC->GetActiveEffects(Query);
+
+	int32 TotalStacks = 0;
+	for (const FActiveGameplayEffectHandle& Handle : Handles)
+	{
+		TotalStacks += ASC->GetCurrentStackCount(Handle);
+	}
+
+	return TotalStacks;
 }
 
 
