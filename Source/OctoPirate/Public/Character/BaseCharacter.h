@@ -48,6 +48,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	class UBasicAttributeSet* BasicAttributes;
 	
+	// --- Damage Numbers ---
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|VFX")
+	TSubclassOf<class ADamageNumberActor> DamageNumberClass;
 	
 	// --- Combat ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
@@ -102,4 +105,6 @@ protected:
 	
 	bool bIsDead = false;
 	
+private:
+	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };
