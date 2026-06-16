@@ -68,6 +68,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float ExtraDamage = 0.f;
 	
+	// --- Joker ---
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
+	bool HasJokerEffect(FName EffectID) const { return ActiveJokerEffects.Contains(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void AddJokerEffect(FName EffectID) { ActiveJokerEffects.AddUnique(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void RemoveJokerEffect(FName EffectID) { ActiveJokerEffects.Remove(EffectID); }
+	
 	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -102,4 +112,6 @@ protected:
 	
 	bool bIsDead = false;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Jokers")
+	TArray<FName> ActiveJokerEffects;
 };
