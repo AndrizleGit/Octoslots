@@ -30,6 +30,8 @@ AOctopusCharacter::AOctopusCharacter()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	UpgradeManager = CreateDefaultSubobject<UUpgradeManagerComponent>("UpgradeManager");
 	InRunUpgradeManager = CreateDefaultSubobject<UInRunUpgradeManagerComponent>("InRunUpgradeManager");
+	
+	PickupRadius = CreateDefaultSubobject<UPickupRadiusComponent>("PickupRadius");
 }
 
 void AOctopusCharacter::BeginPlay()
