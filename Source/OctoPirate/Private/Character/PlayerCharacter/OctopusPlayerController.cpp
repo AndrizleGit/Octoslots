@@ -5,6 +5,8 @@
 #include "InputActionValue.h"
 #include "NiagaraFunctionLibrary.h"
 
+#define TRACE_GROUND ECC_GameTraceChannel1
+
 AOctopusPlayerController::AOctopusPlayerController()
 {
 	bShowMouseCursor = true;
@@ -29,6 +31,8 @@ void AOctopusPlayerController::BeginPlay()
 			Subsystem->AddMappingContext(OctopusMappingContext, 0);
 		}
 	}
+	
+
 }
 
 void AOctopusPlayerController::SetupInputComponent()
@@ -68,10 +72,15 @@ void AOctopusPlayerController::MoveToCursor() const
 {
 	FHitResult HitResult;
 
-	bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
 
 	if (!bHit) return;
-
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s at %s"),
+			*HitResult.GetActor()->GetName(),
+			*HitResult.ImpactPoint.ToString());
+	}
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
