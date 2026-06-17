@@ -96,7 +96,7 @@ void AOctopusPlayerController::SpawnCursorFX()
 	}
 
 	FHitResult HitResult;
-	if (!GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CursorFX: No hit under cursor"));
 		return;
