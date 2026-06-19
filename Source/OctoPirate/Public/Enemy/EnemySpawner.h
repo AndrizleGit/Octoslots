@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Enemy/BaseEnemyCharacter.h"
+#include "Enemy/EnemySpawnData.h"
 #include "GameFramework/Actor.h"
 #include "EnemySpawner.generated.h"
+
+class ABaseEnemyCharacter;
 
 UCLASS()
 class OCTOPIRATE_API AEnemySpawner : public AActor
@@ -20,25 +22,23 @@ protected:
 
 public:	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
-	TSubclassOf<ABaseEnemyCharacter> EnemyClass;
+	TArray<TObjectPtr<UEnemySpawnData>> SpawnPool;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
-	float SpawnInterval = 3.f;
+	float SpawnCycleInterval = 2.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
-	int32 MaxEnemies = 20;
+	int32 MaxEnemies = 30;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
 	float SpawnDistance = 1800.f;
 	
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
-	void SetSpawnInterval(float NewInterval);
-	
-	UFUNCTION(BlueprintCallable, Category = "Spawner")
 	void SetSpawningEnabled(bool bEnabled);
 	
 private:
-	void SpawnEnemy();
+	void SpawnCycle();
+	UEnemySpawnData* PickWeightedEnemy(float DifficultyCoefficient) const;
 	FVector GetSpawnLocationOutsideViewport() const;
 	
 	FTimerHandle SpawnTimerHandle;
