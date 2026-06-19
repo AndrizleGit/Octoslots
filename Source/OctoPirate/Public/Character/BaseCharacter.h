@@ -71,6 +71,15 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float KnockbackDuration = 0.15f;
+	// --- Joker ---
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
+	bool HasJokerEffect(FName EffectID) const { return ActiveJokerEffects.Contains(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void AddJokerEffect(FName EffectID) { ActiveJokerEffects.AddUnique(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void RemoveJokerEffect(FName EffectID) { ActiveJokerEffects.Remove(EffectID); }
 	
 	
 	// --- Functions ---
@@ -107,6 +116,8 @@ protected:
 	bool bIsDead = false;
 	bool lifeStealEnabled = false;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Jokers")
+	TArray<FName> ActiveJokerEffects;
 private:
 	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };
