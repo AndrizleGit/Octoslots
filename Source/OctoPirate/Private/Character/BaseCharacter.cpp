@@ -6,6 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "VFX/DamageNumberActor.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
@@ -210,6 +211,8 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 			}
 		}
 		
+		SpawnDamageNumber(Actor, Damage);
+		
 		// -- Send OnHitEvent --
 		FGameplayEventData Payload;
 		Payload.Instigator = GetController();
@@ -218,6 +221,21 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 	}
 
 }
+
+void ABaseCharacter::SpawnDamageNumber(AActor* Target, float DamageAmount) const
+{
+	if (!DamageNumberClass || !Target) return;
+	
+	const FVector SpawnLocation = Target->GetActorLocation() + FVector(0.f,0.f,100.f);
+	
+	ADamageNumberActor* Spawned = GetWorld()->SpawnActor<ADamageNumberActor>(DamageNumberClass, SpawnLocation, FRotator::ZeroRotator);
+	
+	if (Spawned)
+	{
+		Spawned->Setup(DamageAmount);
+	}
+}
+
 // -- Update Attributes -- 
 // Update Attributes on Change
 void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
