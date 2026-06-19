@@ -68,6 +68,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float ExtraDamage = 0.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float KnockbackStrength = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float KnockbackDuration = 0.15f;
+	
 	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
