@@ -4,8 +4,12 @@
 #include "Camera/CameraComponent.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
-
+// -- Tag Definition --
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Debuffs.PlayerPoison")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonWeaponBuff,     "Buffs.PoisonWeapon")
 AOctopusCharacter::AOctopusCharacter()
 {
 	// --- Tentacle Attack Mesh ---
@@ -48,6 +52,19 @@ void AOctopusCharacter::BeginPlay()
 
 	// -- Set Base Attributes --
 	BasicAttributes->SetAttackSpeed(1.2f);
+	
+	// -- Init Ability SpecHandle --
+	if (AbilitySystemComponent && PoisonEffectClass)
+	{
+		FGameplayEffectContextHandle ContextHandle = 
+			AbilitySystemComponent->MakeEffectContext();
+            
+		CachedPoisonSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+			PoisonEffectClass,
+			1.0f,
+			ContextHandle
+		);
+	}
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()
@@ -162,5 +179,82 @@ AActor* AOctopusCharacter::GetClosestEnemy() const
 	
 	return Closest;
 }
+void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damage)
+{
+	if (bIsDead) return;
+	
+	const FVector Origin = GetActorLocation();
+	FVector Forward = GetActorForwardVector();
+	Forward.Z = 0.0f;
+	Forward.Normalize();
+	
+	const float HalfAngleRad = FMath::DegreesToRadians(ConeAngleDegrees * 0.5f);
+	
+	TArray<AActor*> OverlappingActors;
+	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
+	
+	UKismetSystemLibrary::SphereOverlapActors(GetWorld(), Origin, MaxDist, ObjectTypes, nullptr, { this }, OverlappingActors);
+	
+	for (AActor* Actor : OverlappingActors)
+	{
+		if (!Actor) continue;
+		
+		FVector ToTarget = Actor->GetActorLocation() - Origin;
+		ToTarget.Z = 0.0f;
+		const float Distance = ToTarget.Size();
+		
+		if (Distance < MinDist || Distance > MaxDist) continue;
+		
+		const float DotProduct = FVector::DotProduct(Forward, ToTarget.GetSafeNormal());
+		const float AngleToTarget = FMath::Acos(FMath::Clamp(DotProduct, -1.f, 1.f));
+		
+		if (AngleToTarget > HalfAngleRad) continue;
+		
+		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
+		
+		// -- Lifesteal --
+		if (lifeStealEnabled) BasicAttributes->ApplyLifesteal(Damage);
+		// -- Apply Poison --
+		if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
+		{
+			if (!CachedPoisonSpecHandle.IsValid()) continue;
+			UAbilitySystemComponent* TargetASC = 
+				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+
+			if (!TargetASC) continue;
+
+			// Check if target is poisoned/immune
+			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
+			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
+
+			// Apply poison to target
+			for (int i = 0 ; i < GetStacksByTag(AbilitySystemComponent,TAG_Status_PoisonWeaponBuff) ; i++)
+			{
+				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
+			}
+		}
+	}
+
+}
+int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag)
+{
+	if (!ASC) return 0;
+
+	   FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(
+        FGameplayTagContainer(EffectTag)
+	);
+
+	TArray<FActiveGameplayEffectHandle> Handles = ASC->GetActiveEffects(Query);
+
+	int32 TotalStacks = 0;
+	for (const FActiveGameplayEffectHandle& Handle : Handles)
+	{
+		TotalStacks += ASC->GetCurrentStackCount(Handle);
+	}
+
+	return TotalStacks;
+}
+
 
 

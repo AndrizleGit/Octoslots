@@ -10,8 +10,7 @@
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
-// -- Tag Definitions --
-UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit");
+
 
 ABaseCharacter::ABaseCharacter()
 {
@@ -30,8 +29,9 @@ ABaseCharacter::ABaseCharacter()
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentHealth = MaxHealth;	
+	
 	AttackDamage = GetAttackDamage();
+	
 	
 }
 
@@ -65,39 +65,28 @@ void ABaseCharacter::PossessedBy(AController* NewController)
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
 			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
 		
+		// Bind EXP Change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
 			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
 		
 		// Bind PickupRadius change
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetPickupRadiusAttribute())
 			.AddUObject(this, &ABaseCharacter::OnPickupRadiusChanged);
+		// Bind LifeSteal Change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetLifeStealAttribute())
+			.AddUObject(this, &ABaseCharacter::OnLifeStealChanged);
 	}
 	
 	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
-                                 AActor* DamageCauser)
+								 AActor* DamageCauser)
 {
 	if (bIsDead) return 0.0f;
 	
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	
-	CurrentHealth = FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
-	
-	if (BasicAttributes && AbilitySystemComponent)
-	{
-		const float NewHealth = FMath::Clamp(BasicAttributes->GetHealth() - DamageAmount, 0.0f, BasicAttributes->GetMaxHealth());
-		BasicAttributes->SetHealth(NewHealth);
-	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("%s took %.1f damage — Health: %.1f"), *GetName(), DamageAmount, CurrentHealth);
-	
-	if (CurrentHealth <= 0.0f && !bIsDead)
-	{
-		bIsDead = true;
-		OnDeath();
-	}
+	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
 	
 	return DamageAmount;
 }
@@ -121,7 +110,8 @@ void ABaseCharacter::OnDeath_Implementation()
 
 float ABaseCharacter::GetHealthPercent() const
 {
-	return CurrentHealth / MaxHealth;
+	if (!BasicAttributes) return 0.f;
+	return BasicAttributes->GetHealth()/ BasicAttributes->GetMaxHealth();
 }
 
 void ABaseCharacter::PerformAttack_Implementation()
@@ -165,6 +155,7 @@ void ABaseCharacter::PerformAttack_Implementation()
 	DrawDebugLine(GetWorld(), FVector(Origin.X, Origin.Y, DebugZ), RightEnd, FColor::Red, false, Duration, 0, 2.0f);
 #endif
 }
+
 
 void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damage)
 {
@@ -240,18 +231,21 @@ void ABaseCharacter::SpawnDamageNumber(AActor* Target, float DamageAmount) const
 // Update Attributes on Change
 void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
 {
+	if (!BasicAttributes) return;
+	if (bIsDead) return;
 	// -- Log the Health change or update a UI/HUD --
 	float NewHealth = Data.NewValue;
 	float OldHealth = Data.OldValue;
     
-	UE_LOG(LogTemp, Warning, TEXT("Health Changed! Old: %f, New: %f"), OldHealth, NewHealth);
+	UE_LOG(LogTemp, Warning, TEXT("%s Health Changed! Old: %f, New: %f"), *GetName(), OldHealth, NewHealth);
     
 	
-	// -- if Health > MaxHealth , Health = MaxHealth -- 
-	if (NewHealth > BasicAttributes->GetMaxHealth()) BasicAttributes->SetHealth( BasicAttributes->GetMaxHealth());
+	
 	// -- if Health = 0 -> Death --
-	else if (NewHealth <= 0)
+	if (NewHealth <= 0)
 	{
+		
+		bIsDead= true;
 		OnDeath();
 	}
 }
@@ -307,6 +301,13 @@ void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
 	{
 		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
 	}
+}
+void ABaseCharacter::OnLifeStealChanged(const FOnAttributeChangeData& Data)
+{
+	float lifeSteal = Data.NewValue;
+	UE_LOG(LogTemp, Log, TEXT("Lifesteal Updated to: %f"), lifeSteal);
+	if (lifeSteal > 0) lifeStealEnabled = true;
+	else lifeStealEnabled = false;
 }
 
 void ABaseCharacter::OnPickupRadiusChanged(const FOnAttributeChangeData& Data)
