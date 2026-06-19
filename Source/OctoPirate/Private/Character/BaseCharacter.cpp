@@ -10,7 +10,7 @@
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
-
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit")
 
 ABaseCharacter::ABaseCharacter()
 {

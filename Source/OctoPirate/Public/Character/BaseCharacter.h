@@ -8,6 +8,8 @@
 #include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Combat_Hit)
+
 
 	
 UCLASS()

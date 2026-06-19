@@ -81,12 +81,6 @@ FSlotResult USlotMachineComponent::RollReels()
 
 void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 {
-	int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
-	int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
-	int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
-	int32 SevenCount = Result.GetCount(ESlotSymbol::SEVEN);
-	int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
-	int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
 	if (!PlayerCharacter) return;
 
 	// Three of a kind: with only three reels, a match means every reel shows the same
@@ -120,34 +114,20 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 		PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
 		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount);
 	}
-	if (SevenCount == 3)
-	{
-		// --- Call ApplySevenBuff() ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplySevenBuff();
-		}
-		UE_LOG(LogTemp, Warning, TEXT("GOD MODE!"));
-	}
+
+	const int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
 	if (PoisonCount > 0)
 	{
-		// --- Call Poison(StackCount) ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplyPoisonBuff(PoisonCount);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d"), PoisonCount );
-	}
-	if (LifeStealCount > 0)
-	{
-		// --- Call Poison(StackCount) ---
-		if (PlayerCharacter)
-		{
-			PlayerCharacter->ApplyLifeStealBuff( LifeStealCount);
-		}
-		UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d"), LifeStealCount );
+		PlayerCharacter->ApplyPoisonBuff(PoisonCount);
+		UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d"), PoisonCount);
 	}
 
+	const int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
+	if (LifeStealCount > 0)
+	{
+		PlayerCharacter->ApplyLifeStealBuff(LifeStealCount);
+		UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d"), LifeStealCount);
+	}
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const
