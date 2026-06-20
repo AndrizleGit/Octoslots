@@ -43,6 +43,11 @@ public:
 	FGameplayAttributeData AttackSpeed;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, AttackSpeed)
 	
+	// Pickup Radius Attributes
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Pickup")
+	FGameplayAttributeData PickupRadius;
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, PickupRadius)
+	
 	// Level Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression")
 	FGameplayAttributeData Level;

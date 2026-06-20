@@ -13,6 +13,8 @@ UBasicAttributeSet::UBasicAttributeSet()
 	// --Combat--
 	AttackSpeed = 1.0f;
 	AttackDamage = 10.0f;
+	//  -- Pickup --
+	PickupRadius = 200.0f;
 	// --Progression--
 	Level = 1.0f;
 	Experience = 0.0f;
