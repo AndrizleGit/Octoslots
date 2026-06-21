@@ -1,14 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Character/BaseCharacter.h"
 #include "BaseEnemyCharacter.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class OCTOPIRATE_API ABaseEnemyCharacter : public ABaseCharacter
 {
@@ -37,6 +32,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
 	float HealthPackDropChance = 0.05f;
+	
+	UFUNCTION(BlueprintCallable, Category = "Enemy|Difficulty")
+	void ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier);
 	
 	virtual void OnDeath_Implementation() override;
 	

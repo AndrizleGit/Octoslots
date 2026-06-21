@@ -1,5 +1,6 @@
 #include "Enemy/EnemySpawner.h"
 #include "Enemy/BaseEnemyCharacter.h"
+#include "Enemy/DifficultyManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
@@ -14,22 +15,14 @@ void AEnemySpawner::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (EnemyClass)
+	if (SpawnPool.Num() > 0)
 	{
-		GetWorldTimerManager().SetTimer(SpawnTimerHandle, this, &AEnemySpawner::SpawnEnemy, SpawnInterval, true);
+		GetWorldTimerManager().SetTimer(SpawnTimerHandle, this, &AEnemySpawner::SpawnCycle, SpawnCycleInterval, true);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Spawner: No EnemyClass set!"))
+		UE_LOG(LogTemp, Warning, TEXT("Enemy Spawner: SpawnPool is empty!"))
 	}
-}
-
-void AEnemySpawner::SetSpawnInterval(float NewInterval)
-{
-	SpawnInterval = NewInterval;
-	
-	GetWorldTimerManager().ClearTimer(SpawnTimerHandle);
-	GetWorldTimerManager().SetTimer(SpawnTimerHandle, this, &AEnemySpawner::SpawnEnemy,SpawnInterval,true);
 }
 
 void AEnemySpawner::SetSpawningEnabled(bool bEnabled)
@@ -38,10 +31,8 @@ void AEnemySpawner::SetSpawningEnabled(bool bEnabled)
 	else GetWorldTimerManager().PauseTimer(SpawnTimerHandle);
 }
 
-void AEnemySpawner::SpawnEnemy()
+void AEnemySpawner::SpawnCycle()
 {
-	if (!EnemyClass) return;
-	
 	ActiveEnemies.RemoveAll([](ABaseEnemyCharacter* Enemy)
 	{
 		return !IsValid(Enemy);
@@ -49,17 +40,78 @@ void AEnemySpawner::SpawnEnemy()
 	
 	if (ActiveEnemies.Num() >= MaxEnemies) return;
 	
-	const FVector SpawnLocation = GetSpawnLocationOutsideViewport();
+	ADifficultyManager* DifficultyManager = ADifficultyManager::Get(GetWorld());
+	const float Coefficient = DifficultyManager ? DifficultyManager->GetDifficultyCoefficient() : 0.f;
+	float Budget = DifficultyManager ? DifficultyManager->GetCurrentSpawnBudget() : 4.f;
 	
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	UE_LOG(LogTemp, Error, TEXT("SpawnCycle — DifficultyManager: %s, Coefficient: %.2f, Budget: %.2f"),
+		DifficultyManager ? TEXT("FOUND") : TEXT("NULL"), Coefficient, Budget);
 	
-	ABaseEnemyCharacter* NewEnemy = GetWorld()->SpawnActor<ABaseEnemyCharacter>(EnemyClass,SpawnLocation,FRotator::ZeroRotator,SpawnParams);
-	
-	if (NewEnemy)
+	while (Budget > 0.0f && ActiveEnemies.Num() < MaxEnemies)
 	{
-		ActiveEnemies.Add(NewEnemy);
+		UEnemySpawnData* Choice = PickWeightedEnemy(Coefficient);
+		
+		UE_LOG(LogTemp, Error, TEXT("PickWeightedEnemy returned: %s"), Choice ? TEXT("VALID") : TEXT("NULL"));
+
+		if (!Choice || !Choice->EnemyClass)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Breaking — Choice null or EnemyClass null"));
+			break;
+		}
+		
+		Budget -= Choice->SpawnCost;
+		if (Budget < 0.f)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Breaking — Budget went negative: %.2f"), Budget);
+			break;
+		}
+		
+		const FVector SpawnLocation = GetSpawnLocationOutsideViewport();
+		
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+		
+		ABaseEnemyCharacter* NewEnemy = GetWorld()->SpawnActor<ABaseEnemyCharacter>(Choice->EnemyClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+		
+		UE_LOG(LogTemp, Error, TEXT("SpawnActor result: %s at %s"), NewEnemy ? TEXT("SUCCESS") : TEXT("FAILED"), *SpawnLocation.ToString());
+
+		if (NewEnemy)
+		{
+			ActiveEnemies.Add(NewEnemy);
+			
+			if (DifficultyManager)
+			{
+				NewEnemy->ApplyDifficultyScaling(DifficultyManager->GetHealthMultiplier(), DifficultyManager->GetDamageMultiplier());
+			}
+		}
 	}
+}
+
+UEnemySpawnData* AEnemySpawner::PickWeightedEnemy(float DifficultyCoefficient) const
+{
+	TArray<UEnemySpawnData*> EligiblePool;
+	float TotalWeight = 0.f;
+	
+	for (UEnemySpawnData* Entry : SpawnPool)
+	{
+		if (Entry && DifficultyCoefficient > Entry->MinDifficultyToSpawn)
+		{
+			EligiblePool.Add(Entry);
+			TotalWeight += (1.f / FMath::Max(Entry->SpawnCost, 0.01f));
+		}
+	}
+	
+	if (EligiblePool.Num() == 0) return nullptr;
+	
+	float Roll = FMath::FRandRange(0.f, TotalWeight);
+	for (UEnemySpawnData* Entry : EligiblePool)
+	{
+		const float Weight = 1.f / FMath::Max(Entry->SpawnCost, 0.01f);
+		if (Roll <= Weight) return Entry;
+		Roll -= Weight;
+	}
+	
+	return EligiblePool.Last();
 }
 
 FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
