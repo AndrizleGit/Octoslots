@@ -3,6 +3,9 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "NiagaraFunctionLibrary.h"
+
+#define TRACE_GROUND ECC_GameTraceChannel1
 
 AOctopusPlayerController::AOctopusPlayerController()
 {
@@ -28,6 +31,8 @@ void AOctopusPlayerController::BeginPlay()
 			Subsystem->AddMappingContext(OctopusMappingContext, 0);
 		}
 	}
+	
+
 }
 
 void AOctopusPlayerController::SetupInputComponent()
@@ -55,6 +60,7 @@ void AOctopusPlayerController::OnRightMousePressed()
 {
 	bRightMouseHeld = true;
 	MoveToCursor();
+	SpawnCursorFX();
 }
 
 void AOctopusPlayerController::OnRightMouseReleased()
@@ -65,13 +71,45 @@ void AOctopusPlayerController::OnRightMouseReleased()
 void AOctopusPlayerController::MoveToCursor() const
 {
 	FHitResult HitResult;
-	
-	bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
-	
+
+	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
+
 	if (!bHit) return;
-	
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s at %s"),
+			*HitResult.GetActor()->GetName(),
+			*HitResult.ImpactPoint.ToString());
+	}
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
-	
+
 	OctopusChar->SetMoveDestination(HitResult.ImpactPoint);
+}
+
+void AOctopusPlayerController::SpawnCursorFX()
+{
+	if (!CursorClickFX)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CursorClickFX is not assigned!"));
+		return;
+	}
+
+	FHitResult HitResult;
+	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CursorFX: No hit under cursor"));
+		return;
+	}
+
+	const FVector CursorLocation = HitResult.ImpactPoint;
+
+	UE_LOG(LogTemp, Log, TEXT("Spawning CursorFX at %s"), *CursorLocation.ToString());
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		GetWorld(),
+		CursorClickFX,
+		CursorLocation,
+		FRotator::ZeroRotator
+	);
 }

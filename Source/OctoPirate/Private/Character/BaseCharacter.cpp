@@ -4,19 +4,35 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "DrawDebugHelpers.h"
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "VFX/DamageNumberActor.h"
+#include "Character/AttributeSets/BasicAttributeSet.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit")
 
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	bUseControllerRotationYaw = false;
+	
+	// -- Ability System --
+	AbilitySystemComponent = CreateDefaultSubobject<UAbilitySystemComponent>(TEXT("AbilitySystemComponent"));
+	AbilitySystemComponent->SetIsReplicated(false);
+
+	// -- Attribute Sets --
+	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
 }
 
 void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentHealth = MaxHealth;	
+	
+	AttackDamage = GetAttackDamage();
+	
+	
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -27,47 +43,82 @@ void ABaseCharacter::Tick(float DeltaTime)
 void ABaseCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	if (AbilitySystemComponent)
+	{
+		// Initialize Actor Info
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
+
+		// --- Bind Attribute Change Callbacks ---
+        
+		// Bind Health change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetHealthAttribute())
+			.AddUObject(this, &ABaseCharacter::OnHealthChanged);
+		
+		// Bind AttackDamage change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetAttackDamageAttribute())
+			.AddUObject(this, &ABaseCharacter::OnAttackDamageChanged);
+		// Bind AttackSpeed change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetAttackSpeedAttribute())
+			.AddUObject(this, &ABaseCharacter::OnAttackSpeedChanged);
+		
+		// Bind WalkSpeed change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetWalkSpeedAttribute())
+			.AddUObject(this, &ABaseCharacter::OnWalkSpeedChanged);  
+		
+		// Bind EXP Change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetExperienceAttribute())
+			.AddUObject(this, &ABaseCharacter::OnExperienceChanged);
+		
+		// Bind PickupRadius change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetPickupRadiusAttribute())
+			.AddUObject(this, &ABaseCharacter::OnPickupRadiusChanged);
+		// Bind LifeSteal Change
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(BasicAttributes->GetLifeStealAttribute())
+			.AddUObject(this, &ABaseCharacter::OnLifeStealChanged);
+	}
 	
-	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, AttackInterval, true);
+	GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, GetAttackSpeed(), true);
 }
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
-                                 AActor* DamageCauser)
+								 AActor* DamageCauser)
 {
 	if (bIsDead) return 0.0f;
 	
-	const float ActualDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
-	CurrentHealth -= FMath::Clamp(CurrentHealth - DamageAmount, 0.0f, MaxHealth);
+	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
 	
-	if (CurrentHealth <= 0.0f)
-	{
-		bIsDead = true;
-		OnDeath();
-	}
-	
-	return ActualDamage;
+	return DamageAmount;
 }
 
 void ABaseCharacter::OnDeath_Implementation()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+	
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
 	
+	SetActorTickEnabled(false);
+	
+	UE_LOG(LogTemp, Warning, TEXT("%s has died"), *GetName());
+	
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetMesh()->SetSimulatePhysics(false);
 	//Override this for custom death
 }
 
 float ABaseCharacter::GetHealthPercent() const
 {
-	return CurrentHealth / MaxHealth;
+	if (!BasicAttributes) return 0.f;
+	return BasicAttributes->GetHealth()/ BasicAttributes->GetMaxHealth();
 }
 
 void ABaseCharacter::PerformAttack_Implementation()
 {
 	if (bIsDead) return;
 	
-	ApplyDamageInZone(0.0f, ExtraDamageDistance, AttackDamage);
-	ApplyDamageInZone(ExtraDamageDistance,ConeMaxDistance, ExtraDamage);
+	ApplyDamageInZone(0.0f, ConeMaxDistance, AttackDamage);
 	
 #if ENABLE_DRAW_DEBUG
 	const FVector Origin  = GetActorLocation();
@@ -105,6 +156,7 @@ void ABaseCharacter::PerformAttack_Implementation()
 #endif
 }
 
+
 void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damage)
 {
 	if (bIsDead) return;
@@ -138,6 +190,159 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 		if (AngleToTarget > HalfAngleRad) continue;
 		
 		UGameplayStatics::ApplyDamage(Actor, Damage, GetController(), this, UDamageType::StaticClass());
+		
+		// -- Knockback --
+		if (Cast<AOctopusCharacter>(this))
+		{
+			ACharacter* HitCharacter = Cast<ACharacter>(Actor);
+			if (HitCharacter)
+			{
+				const FVector KnockbackDirection = ToTarget.GetSafeNormal();
+				HitCharacter->LaunchCharacter(KnockbackDirection * KnockbackStrength, true, false);
+			}
+		}
+		
+		SpawnDamageNumber(Actor, Damage);
+		
+		// -- Send OnHitEvent --
+		FGameplayEventData Payload;
+		Payload.Instigator = GetController();
+		Payload.Target = Actor;
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Actor,TAG_Event_Combat_Hit, Payload);
 	}
 
 }
+
+void ABaseCharacter::SpawnDamageNumber(AActor* Target, float DamageAmount) const
+{
+	if (!DamageNumberClass || !Target) return;
+	
+	const FVector SpawnLocation = Target->GetActorLocation() + FVector(0.f,0.f,100.f);
+	
+	ADamageNumberActor* Spawned = GetWorld()->SpawnActor<ADamageNumberActor>(DamageNumberClass, SpawnLocation, FRotator::ZeroRotator);
+	
+	if (Spawned)
+	{
+		Spawned->Setup(DamageAmount);
+	}
+}
+
+// -- Update Attributes -- 
+// Update Attributes on Change
+void ABaseCharacter::OnHealthChanged(const FOnAttributeChangeData& Data)
+{
+	if (!BasicAttributes) return;
+	if (bIsDead) return;
+	// -- Log the Health change or update a UI/HUD --
+	float NewHealth = Data.NewValue;
+	float OldHealth = Data.OldValue;
+    
+	UE_LOG(LogTemp, Warning, TEXT("%s Health Changed! Old: %f, New: %f"), *GetName(), OldHealth, NewHealth);
+    
+	
+	
+	// -- if Health = 0 -> Death --
+	if (NewHealth <= 0)
+	{
+		
+		bIsDead= true;
+		OnDeath();
+	}
+}
+void ABaseCharacter::OnAttackDamageChanged(const FOnAttributeChangeData& Data)
+{
+	// -- Log the AttackDamage change or update a UI/HUD --
+	float NewDamage = Data.NewValue;
+	float OldDamage  = Data.OldValue;
+    
+	UE_LOG(LogTemp, Warning, TEXT("Damage Changed! Old: %f, New: %f"), OldDamage, NewDamage);
+    
+	AttackDamage = BasicAttributes ? NewDamage : 0.f;
+}
+
+void ABaseCharacter::OnAttackSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	// -- Log the AttackSpeed change or update a UI/HUD --
+	float NewAttackSpeed = Data.NewValue;
+    
+	UE_LOG(LogTemp, Log, TEXT("Attack Speed Updated to: %f"), NewAttackSpeed);
+
+	// If you are using a Timer for attacks (like your AttackTimerHandle), 
+	// you need to clear and restart it with the new speed.
+	if (GetWorldTimerManager().IsTimerActive(AttackTimerHandle))	
+	{
+		GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+        
+		// Calculate new interval (e.g., 1 / AttackSpeed)
+		float NewInterval = 1.f / FMath::Max(NewAttackSpeed, 0.01f);
+		GetWorldTimerManager().SetTimer(AttackTimerHandle, this, &ABaseCharacter::PerformAttack_Implementation, NewInterval, true);
+	}
+}
+
+void ABaseCharacter::OnWalkSpeedChanged(const FOnAttributeChangeData& Data)
+{
+	// -- Log the WalkSpeed change or update a UI/HUD --
+	float NewWalkSpeed = Data.NewValue;
+	float OldWalkSpeed  = Data.OldValue;
+    
+	UE_LOG(LogTemp, Warning, TEXT("WalkSpeed Changed! Old: %f, New: %f"), OldWalkSpeed, NewWalkSpeed);
+    
+	GetCharacterMovement()->MaxWalkSpeed = BasicAttributes ? NewWalkSpeed : 400.f;
+}
+
+void ABaseCharacter::OnExperienceChanged(const FOnAttributeChangeData& Data)
+{
+	if (BasicAttributes)
+	{
+		UE_LOG(LogTemp, Verbose, TEXT("[XP] Current: %.1f / Max: %.1f"),
+			BasicAttributes->GetExperience(),
+			BasicAttributes->GetMaxExperience());
+	}
+
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->InRunUpgradeManager)
+	{
+		OctopusChar->InRunUpgradeManager->CheckForLevelUp();
+	}
+}
+void ABaseCharacter::OnLifeStealChanged(const FOnAttributeChangeData& Data)
+{
+	float lifeSteal = Data.NewValue;
+	UE_LOG(LogTemp, Log, TEXT("Lifesteal Updated to: %f"), lifeSteal);
+	if (lifeSteal > 0) lifeStealEnabled = true;
+	else lifeStealEnabled = false;
+}
+
+void ABaseCharacter::OnPickupRadiusChanged(const FOnAttributeChangeData& Data)
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(this);
+	if (OctopusChar && OctopusChar->PickupRadius)
+	{
+		OctopusChar->PickupRadius->UpdateRadius(Data.NewValue);
+	}
+}
+
+// -- Get Attributes -- 
+float ABaseCharacter::GetAttackSpeed() const
+{
+	const float AttackSpeed = BasicAttributes ? BasicAttributes->GetAttackSpeed() : 1.f;
+
+	return 1.f / FMath::Max(AttackSpeed, 0.01f);
+}
+float ABaseCharacter::GetAttackDamage() const
+{
+	const float Health = BasicAttributes ? BasicAttributes->GetAttackDamage() : 15.f;
+ 
+	return Health;
+}
+
+
+
+
+float ABaseCharacter::GetWalkSpeed() const
+{
+	const float WalkSpeed = BasicAttributes ? BasicAttributes->GetWalkSpeed() : 400.f;
+
+	return WalkSpeed;
+}
+
