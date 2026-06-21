@@ -28,14 +28,13 @@ public:
 	AOctopusCharacter();
 	// -- Slot Machine Events -- 
 	// - Buffs -
-	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplyAttackSpeedBuff(int32 StackCount);
+	
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplyAttackDamageBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplyMovementSpeedBuff(int32 StackCount);
+	void ApplySpeedBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplyLifeStealBuff(int32 StackCount);
@@ -119,6 +118,9 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnDeathDelegate OnPlayerDied;
 	
+	// -- Animation -- 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bHelicopterMode = false;
 	
 private:
 	AActor* GetClosestEnemy() const;

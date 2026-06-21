@@ -90,24 +90,22 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	{
 		PlayerCharacter->ApplyThreeOfAKindBuff(Result.Reel1);
 		UE_LOG(LogTemp, Warning, TEXT("JACKPOT! Three of a kind: %s"), *UEnum::GetValueAsString(Result.Reel1));
+		if (Result.Reel1 == ESlotSymbol::Speed)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Helicopter Helicopter !"));
+			PlayerCharacter->bHelicopterMode = true;
+		}
 		return;
 	}
 
 	// Otherwise apply tiered stacking buffs for any symbol that appears once or twice.
-	const int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
-	if (MovementCount > 0)
+	const int32 SpeedCount = Result.GetCount(ESlotSymbol::Speed);
+	if (SpeedCount > 0)
 	{
-		PlayerCharacter->ApplyMovementSpeedBuff(MovementCount);
-		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d"), MovementCount);
+		PlayerCharacter->ApplySpeedBuff(SpeedCount);
+		UE_LOG(LogTemp, Warning, TEXT("Speed Tier: %d"), SpeedCount);
 	}
-
-	const int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
-	if (AttackSpeedCount > 0)
-	{
-		PlayerCharacter->ApplyAttackSpeedBuff(AttackSpeedCount);
-		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d"), AttackSpeedCount);
-	}
-
+	
 	const int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
 	if (AttackDamageCount > 0)
 	{
