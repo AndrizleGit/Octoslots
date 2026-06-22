@@ -114,6 +114,20 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 		PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
 		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount);
 	}
+
+	const int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
+	if (PoisonCount > 0)
+	{
+		PlayerCharacter->ApplyPoisonBuff(PoisonCount);
+		UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d"), PoisonCount);
+	}
+
+	const int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
+	if (LifeStealCount > 0)
+	{
+		PlayerCharacter->ApplyLifeStealBuff(LifeStealCount);
+		UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d"), LifeStealCount);
+	}
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const

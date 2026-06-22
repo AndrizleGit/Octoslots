@@ -8,9 +8,9 @@
 #include "NativeGameplayTags.h"
 #include "BaseCharacter.generated.h"
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Combat_Hit)
 
-// -- Tags -- 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Combat_Hit);
+
 	
 UCLASS()
 class OCTOPIRATE_API ABaseCharacter : public ACharacter
@@ -30,16 +30,12 @@ protected:
 	virtual void OnAttackDamageChanged(const FOnAttributeChangeData& Data);
 	virtual void OnWalkSpeedChanged(const FOnAttributeChangeData& Data);
 	virtual void OnExperienceChanged(const FOnAttributeChangeData& Data);
+	virtual void OnLifeStealChanged(const FOnAttributeChangeData& Data);
 	virtual void OnPickupRadiusChanged(const FOnAttributeChangeData& Data);
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
-	// --- Stats --- 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats")
-	float MaxHealth = 100.f;
 	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats")
-	float CurrentHealth;
 	
 	// -- Ability System Component --
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
@@ -47,6 +43,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
 	class UBasicAttributeSet* BasicAttributes;
+	
+	// --- Damage Numbers ---
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|VFX")
+	TSubclassOf<class ADamageNumberActor> DamageNumberClass;
 	
 	
 	// --- Combat ---
@@ -67,6 +67,21 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float ExtraDamage = 0.f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float KnockbackStrength = 150.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float KnockbackDuration = 0.15f;
+	// --- Joker ---
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
+	bool HasJokerEffect(FName EffectID) const { return ActiveJokerEffects.Contains(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void AddJokerEffect(FName EffectID) { ActiveJokerEffects.AddUnique(EffectID); }
+	
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void RemoveJokerEffect(FName EffectID) { ActiveJokerEffects.Remove(EffectID); }
 	
 	
 	// --- Functions ---
@@ -96,10 +111,15 @@ protected:
 	void PerformAttack();
 	virtual void PerformAttack_Implementation();
 	
-	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage);
+	virtual void ApplyDamageInZone(float MinDist, float MaxDist, float Damage);
 	
 	FTimerHandle AttackTimerHandle;
 	
 	bool bIsDead = false;
+	bool lifeStealEnabled = false;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Jokers")
+	TArray<FName> ActiveJokerEffects;
+private:
+	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };

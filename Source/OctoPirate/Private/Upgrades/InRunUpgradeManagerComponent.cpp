@@ -1,6 +1,7 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -35,6 +36,7 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
     float Experience = Attributes->GetExperience();
     float MaxXP = Attributes->GetMaxExperience();
 
+    UGameplayStatics::SetGamePaused(GetWorld(), true);
     if (MaxXP <= 0.f) return;          // misconfigured; avoids divide-by-zero / runaway leveling
     if (Experience < MaxXP) return;    // not enough XP for a level yet
 
@@ -65,7 +67,18 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
         UE_LOG(LogTemp, Warning, TEXT("Level up reached but no upgrades are configured; skipping upgrade screen."));
     }
 
-    OnLevelUp.Broadcast(CurrentLevel);
+    const bool bIsJokerLevel = (JokerLevelInterval > 0) && (CurrentLevel % JokerLevelInterval == 0);
+
+    if (bIsJokerLevel && AllPossibleJokers.Num() > 0)
+    {
+        RollNewJokerChoices();
+        OnJokerLevelUp.Broadcast(CurrentLevel);
+    }
+    else
+    {
+        RollNewChoices();
+        OnLevelUp.Broadcast(CurrentLevel);
+    }
 }
 
 void UInRunUpgradeManagerComponent::RollNewChoices()
@@ -88,6 +101,26 @@ void UInRunUpgradeManagerComponent::RollNewChoices()
     }
 }
 
+void UInRunUpgradeManagerComponent::RollNewJokerChoices()
+{
+    CurrentJokerChoices.Empty();
+
+    TArray<UJokerData*> AvailablePool;
+    for (UJokerData* Joker : AllPossibleJokers)
+    {
+        if (Joker && !AcquiredJokers.Contains(Joker))
+            AvailablePool.Add(Joker);
+    }
+
+    const int32 ChoiceCount = FMath::Min(3, AvailablePool.Num());
+    for (int32 i = 0; i < ChoiceCount; i++)
+    {
+        const int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
+        CurrentJokerChoices.Add(AvailablePool[RandomIndex]);
+        AvailablePool.RemoveAt(RandomIndex);
+    }
+}
+
 void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
 {
     if (!Upgrade) return;
@@ -104,11 +137,33 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
     UE_LOG(LogTemp, Log, TEXT("In-run upgrade selected: %s"), *Upgrade->UpgradeName.ToString());
 }
 
+void UInRunUpgradeManagerComponent::SelectJoker(UJokerData* Joker)
+{
+    if (!Joker) return;
+
+    AcquiredJokers.Add(Joker);
+
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (Character)
+    {
+        Character->AddJokerEffect(Joker->JokerEffectID);
+    }
+
+    UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+    OnJokerSelected.Broadcast(Joker);
+
+    UE_LOG(LogTemp, Log, TEXT("Joker selected: %s (Effect: %s)"), 
+        *Joker->JokerName.ToString(), *Joker->JokerEffectID.ToString());
+}
+
 void UInRunUpgradeManagerComponent::ResetForNewRun()
 {
     bIsRunActive = true;
     CurrentLevel = 0;
     CurrentChoices.Empty();
+    CurrentJokerChoices.Empty();
+    AcquiredJokers.Empty();
 
     for (auto& Pair : PickedCounts)
         Pair.Value = 0;
