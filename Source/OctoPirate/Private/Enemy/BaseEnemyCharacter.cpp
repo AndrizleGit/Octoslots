@@ -34,6 +34,21 @@ void ABaseEnemyCharacter::BeginPlay()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
+void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier)
+{
+	if (BasicAttributes)
+	{
+		const float ScaledHealth = BasicAttributes->GetMaxHealth() * HealthMultiplier;
+		BasicAttributes->SetMaxHealth(ScaledHealth);
+		BasicAttributes->SetHealth(ScaledHealth);
+		
+		const float ScaledDamage = BasicAttributes->GetAttackDamage() * DamageMultiplier;
+		BasicAttributes->SetAttackDamage(ScaledDamage);
+	}
+	
+	AttackDamage = BasicAttributes ? BasicAttributes->GetAttackDamage() : AttackDamage;
+}
+
 void ABaseEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
