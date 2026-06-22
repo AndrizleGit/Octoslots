@@ -10,6 +10,7 @@
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Debuffs.PlayerPoison")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonWeaponBuff,     "Buffs.PoisonWeapon")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonTrailBuff,     "Buffs.PoisonTrail")
 AOctopusCharacter::AOctopusCharacter()
 {
 	// --- Tentacle Attack Mesh ---
@@ -65,6 +66,9 @@ void AOctopusCharacter::BeginPlay()
 			ContextHandle
 		);
 	}
+	// -- Checking for Poison Trail Tag -- 
+	AbilitySystemComponent->RegisterGameplayTagEvent(TAG_Status_PoisonTrailBuff, EGameplayTagEventType::NewOrRemoved)
+	   .AddUObject(this, &AOctopusCharacter::OnTagChanged);
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()

@@ -19,6 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonTrailBuff)
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -45,6 +46,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
 
+	// -- Check for Tag Changes -- 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnTagChanged(FGameplayTag Tag, int32 NewCount);
+
+	
 	// Fired when all three reels match. Switch on Symbol to give each three-of-a-kind
 	// its own unique payoff. (For SEVEN you can simply call ApplySevenBuff from here.)
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
