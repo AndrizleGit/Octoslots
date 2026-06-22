@@ -70,6 +70,7 @@ void AOctopusPlayerController::OnRightMouseReleased()
 
 void AOctopusPlayerController::MoveToCursor() const
 {
+	UE_LOG(LogTemp, Error, TEXT("MoveToCursor called"));
 	FHitResult HitResult;
 
 	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
