@@ -73,16 +73,31 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float KnockbackDuration = 0.15f;
+	
 	// --- Joker ---
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
 	bool HasJokerEffect(FName EffectID) const { return ActiveJokerEffects.Contains(EffectID); }
 	
 	UFUNCTION(BlueprintCallable, Category = "Jokers")
-	void AddJokerEffect(FName EffectID) { ActiveJokerEffects.AddUnique(EffectID); }
-	
+	void AddJokerEffect(FName EffectID, float Value = 0.0f)
+	{
+		ActiveJokerEffects.AddUnique(EffectID);
+		JokerValues.Add(EffectID, Value);
+	}
+
 	UFUNCTION(BlueprintCallable, Category = "Jokers")
-	void RemoveJokerEffect(FName EffectID) { ActiveJokerEffects.Remove(EffectID); }
+	void RemoveJokerEffect(FName EffectID)
+	{
+		ActiveJokerEffects.Remove(EffectID);
+		JokerValues.Remove(EffectID);
+	}
 	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
+	float GetJokerValue(FName EffectID) const
+	{
+		const float* Found = JokerValues.Find(EffectID);
+		return Found ? *Found : 0.0f;
+	}
 	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -94,8 +109,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	float GetHealthPercent() const;
 	
-	
-	
 	// -- Get Attribute functions -- 
 	float GetAttackSpeed() const;
 	float GetAttackDamage() const;
@@ -105,8 +118,6 @@ public:
 	
 	
 protected:
-	
-	
 	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
 	void PerformAttack();
 	virtual void PerformAttack_Implementation();
@@ -120,6 +131,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Jokers")
 	TArray<FName> ActiveJokerEffects;
+	
+	UPROPERTY()
+	TMap<FName, float> JokerValues;
+	
 private:
 	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };

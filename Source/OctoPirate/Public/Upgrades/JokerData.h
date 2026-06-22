@@ -21,4 +21,8 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joker")
 	FName JokerEffectID;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Joker")
+	float JokerValue = 0.0f;
+	
 };
