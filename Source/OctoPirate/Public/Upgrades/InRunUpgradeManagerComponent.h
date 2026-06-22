@@ -80,7 +80,7 @@ private:
 	void RollNewJokerChoices();
 	void ApplyUpgrade(UInRunUpgradeData* Upgrade);
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
-
+	
 	bool bIsRunActive = true;
 	// Guards against re-entry: writing the Experience attribute re-fires the attribute
 	// change delegate, which calls CheckForLevelUp again synchronously.
