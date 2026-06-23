@@ -2,9 +2,12 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "VFX/BombActor.h"
+#include "Engine/World.h"
 
 // -- Tag Definition --
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
@@ -65,63 +68,80 @@ void AOctopusCharacter::BeginPlay()
 			ContextHandle
 		);
 	}
+
+	// Snapshot the post-init stats (constructor defaults + meta-progression applied during
+	// the components' BeginPlay, plus the base AttackSpeed set above) as the per-run baseline.
+	// ResetForNewRun restores exactly this, so runs no longer inherit the previous run's upgrades.
+	if (InRunUpgradeManager)
+	{
+		InRunUpgradeManager->CaptureBaseline();
+	}
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()
 {
-	if (bIsDead) return;
+    if (bIsDead) return;
 
-	AActor* ClosestEnemy = GetClosestEnemy();
+    // -- Joker: Scrooge --
+    float EffectiveDamage = AttackDamage;
+    if (HasJokerEffect("Scrooge") && BasicAttributes)
+    {
+        const float MinCoins = GetJokerValue("Scrooge");
+        const float CurrentCoins = BasicAttributes->GetCoins();
 
-	if (ClosestEnemy)
-	{
-		// Check if enemy is within attack range
-		const float DistToEnemy = FVector::Dist(GetActorLocation(), ClosestEnemy->GetActorLocation());
-		if (DistToEnemy > ConeMaxDistance)
-		{
-			Super::PerformAttack_Implementation();
-			return;
-		}
+        if (CurrentCoins >= MinCoins)
+        {
+            EffectiveDamage += CurrentCoins * ScroogeDamagePerCoin;
+            UE_LOG(LogTemp, Log, TEXT("Scrooge — Coins: %.0f, Bonus: %.1f, Total: %.1f"),
+                CurrentCoins, CurrentCoins * ScroogeDamagePerCoin, EffectiveDamage);
+        }
+    }
 
-		const FRotator OriginalRotation = GetActorRotation();
+    AActor* ClosestEnemy = GetClosestEnemy();
 
-		FRotator AttackRotation = (ClosestEnemy->GetActorLocation() - GetActorLocation()).GetSafeNormal().Rotation();
-		AttackRotation.Pitch = 0.f;
-		AttackRotation.Roll = 0.f;
+    if (ClosestEnemy)
+    {
+        const float DistToEnemy = FVector::Dist(GetActorLocation(), ClosestEnemy->GetActorLocation());
 
-		SetActorRotation(AttackRotation);
-		Super::PerformAttack_Implementation();
-		SetActorRotation(OriginalRotation);
+        const FRotator OriginalRotation = GetActorRotation();
+        FRotator AttackRotation = (ClosestEnemy->GetActorLocation() - GetActorLocation()).GetSafeNormal().Rotation();
+        AttackRotation.Pitch = 0.f;
+        AttackRotation.Roll = 0.f;
+        SetActorRotation(AttackRotation);
 
-		// --- Show tentacle and play attack animation ---
-		if (TentacleMesh && TentacleAttackMontage)
-		{
-			TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, -90.f, 0.f));
+        ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
 
-			const float RangeRatio = (BaseConeMaxDistance > 0.f) ? ConeMaxDistance / BaseConeMaxDistance : 1.f;
-			const float RangeFactor = FMath::Pow(RangeRatio, 5.f); // Very aggressive scaling
-			const float FinalScale = BaseTentacleScale * RangeFactor;
-			TentacleMesh->SetWorldScale3D(FVector(FinalScale));
-			UE_LOG(LogTemp, Warning, TEXT("Tentacle - ConeMax: %f | Base: %f | RangeFactor: %f | BaseTentacleScale: %f | FinalScale: %f"),
-				ConeMaxDistance, BaseConeMaxDistance, RangeFactor, BaseTentacleScale, FinalScale);
+        SetActorRotation(OriginalRotation);
 
-			TentacleMesh->SetHiddenInGame(false);
+        // --- Show tentacle and play attack animation ---
+        if (TentacleMesh && TentacleAttackMontage)
+        {
+            TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, -90.f, 0.f));
 
-			UAnimInstance* AnimInstance = TentacleMesh->GetAnimInstance();
-			if (AnimInstance)
-			{
-				AnimInstance->Montage_Play(TentacleAttackMontage);
+            const float RangeRatio = (BaseConeMaxDistance > 0.f) ? ConeMaxDistance / BaseConeMaxDistance : 1.f;
+            const float RangeFactor = FMath::Pow(RangeRatio, 5.f);
+            const float FinalScale = BaseTentacleScale * RangeFactor;
+            TentacleMesh->SetWorldScale3D(FVector(FinalScale));
+            UE_LOG(LogTemp, Warning, TEXT("Tentacle - ConeMax: %f | Base: %f | RangeFactor: %f | BaseTentacleScale: %f | FinalScale: %f"),
+                ConeMaxDistance, BaseConeMaxDistance, RangeFactor, BaseTentacleScale, FinalScale);
 
-				FOnMontageEnded EndDelegate;
-				EndDelegate.BindUObject(this, &AOctopusCharacter::OnTentacleMontageEnded);
-				AnimInstance->Montage_SetEndDelegate(EndDelegate, TentacleAttackMontage);
-			}
-		}
-	}
-	else
-	{
-		Super::PerformAttack_Implementation();
-	}
+            TentacleMesh->SetHiddenInGame(false);
+
+            UAnimInstance* AnimInstance = TentacleMesh->GetAnimInstance();
+            if (AnimInstance)
+            {
+                AnimInstance->Montage_Play(TentacleAttackMontage);
+
+                FOnMontageEnded EndDelegate;
+                EndDelegate.BindUObject(this, &AOctopusCharacter::OnTentacleMontageEnded);
+                AnimInstance->Montage_SetEndDelegate(EndDelegate, TentacleAttackMontage);
+            }
+        }
+    }
+    else
+    {
+        ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
+    }
 }
 
 void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
@@ -256,5 +276,50 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 	return TotalStacks;
 }
 
+// -- Joker: Bomb --
+
+void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
+{
+	Super::OnJokerEffectAdded(EffectID, Value);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
+{
+	Super::OnJokerEffectRemoved(EffectID);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::RefreshBombTimer()
+{
+	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	if (bWant && !bActive)
+	{
+		GetWorldTimerManager().SetTimer(BombSpawnTimer, this, &AOctopusCharacter::SpawnBombBehind, BombSpawnInterval, true);
+	}
+	else if (!bWant && bActive)
+	{
+		GetWorldTimerManager().ClearTimer(BombSpawnTimer);
+	}
+}
+
+void AOctopusCharacter::SpawnBombBehind()
+{
+	if (bIsDead || !BombClass) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FVector SpawnLocation = GetActorLocation() - GetActorForwardVector() * BombSpawnDistanceBehind;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+}
 
 

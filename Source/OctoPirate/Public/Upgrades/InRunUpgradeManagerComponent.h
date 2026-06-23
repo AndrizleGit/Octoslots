@@ -29,7 +29,7 @@ public:
 	TArray<TObjectPtr<UJokerData>> AllPossibleJokers;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers")
-	int32 JokerLevelInterval = 5;
+	int32 JokerLevelInterval = 10;
 	
 	// events for widget
 	UPROPERTY(BlueprintAssignable, Category = "InRunUpgrades")
@@ -66,6 +66,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
 	void ResetForNewRun();
 
+	// Snapshots the player's current per-run stats as the baseline that ResetForNewRun
+	// restores. Call once after meta-progression and base-stat init are complete and
+	// before any in-run upgrade or slot buff is applied (see AOctopusCharacter::BeginPlay).
+	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
+	void CaptureBaseline();
+
 	UFUNCTION(BlueprintCallable, Category = "InRunUpgrades")
 	void SetRunActive(bool bActive) { bIsRunActive = bActive; }
 
@@ -80,12 +86,22 @@ private:
 	void RollNewJokerChoices();
 	void ApplyUpgrade(UInRunUpgradeData* Upgrade);
 	void ApplyStatChange(EInRunUpgradeStat Stat, float Value);
-
+	
 	bool bIsRunActive = true;
 	// Guards against re-entry: writing the Experience attribute re-fires the attribute
 	// change delegate, which calls CheckForLevelUp again synchronously.
 	bool bIsProcessingLevelUp = false;
 	int32 CurrentLevel = 0;
+
+	// Per-run stat baseline (base defaults + meta-progression), captured once at spawn so
+	// ResetForNewRun can return these stats to their start-of-run values without touching
+	// meta-progression. Only meaningful once bBaselineCaptured is true.
+	bool bBaselineCaptured = false;
+	float BaselineMaxHealth = 0.f;
+	float BaselineWalkSpeed = 0.f;
+	float BaselineAttackSpeed = 0.f;
+	float BaselineAttackDamage = 0.f;
+	float BaselineConeMaxDistance = 0.f;
 
 	UPROPERTY()
 	TArray<UInRunUpgradeData*> CurrentChoices;
