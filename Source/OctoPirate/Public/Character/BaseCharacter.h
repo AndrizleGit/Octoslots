@@ -73,16 +73,43 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float KnockbackDuration = 0.15f;
+	
 	// --- Joker ---
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
 	bool HasJokerEffect(FName EffectID) const { return ActiveJokerEffects.Contains(EffectID); }
 	
 	UFUNCTION(BlueprintCallable, Category = "Jokers")
-	void AddJokerEffect(FName EffectID) { ActiveJokerEffects.AddUnique(EffectID); }
-	
+	void AddJokerEffect(FName EffectID, float Value = 0.0f)
+	{
+		ActiveJokerEffects.AddUnique(EffectID);
+		JokerValues.Add(EffectID, Value);
+		OnJokerEffectAdded(EffectID, Value);
+	}
+
 	UFUNCTION(BlueprintCallable, Category = "Jokers")
-	void RemoveJokerEffect(FName EffectID) { ActiveJokerEffects.Remove(EffectID); }
+	void RemoveJokerEffect(FName EffectID)
+	{
+		ActiveJokerEffects.Remove(EffectID);
+		JokerValues.Remove(EffectID);
+		OnJokerEffectRemoved(EffectID);
+	}
 	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
+	float GetJokerValue(FName EffectID) const
+	{
+		const float* Found = JokerValues.Find(EffectID);
+		return Found ? *Found : 0.0f;
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void ClearAllJokerEffects()
+	{
+		ActiveJokerEffects.Empty();
+		JokerValues.Empty();
+		// NAME_None signals "re-evaluate all joker-driven behaviour" (e.g. stop the
+		// bomb timer) now that no effects remain.
+		OnJokerEffectRemoved(NAME_None);
+	}
 	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -94,8 +121,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat")
 	float GetHealthPercent() const;
 	
-	
-	
 	// -- Get Attribute functions -- 
 	float GetAttackSpeed() const;
 	float GetAttackDamage() const;
@@ -105,8 +130,11 @@ public:
 	
 	
 protected:
-	
-	
+	// Hooks fired when a joker effect is granted/removed so subclasses can react
+	// (e.g. AOctopusCharacter starts/stops the bomb-drop timer).
+	virtual void OnJokerEffectAdded(FName EffectID, float Value) {}
+	virtual void OnJokerEffectRemoved(FName EffectID) {}
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
 	void PerformAttack();
 	virtual void PerformAttack_Implementation();
@@ -120,6 +148,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Jokers")
 	TArray<FName> ActiveJokerEffects;
+	
+	UPROPERTY()
+	TMap<FName, float> JokerValues;
+	
 private:
 	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };
