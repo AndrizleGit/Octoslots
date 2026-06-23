@@ -68,6 +68,10 @@ public:
 	UPROPERTY()
 	FGameplayEffectSpecHandle CachedPoisonSpecHandle;
 	
+	// - Joker Properties -
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Scrooge")
+	float ScroogeDamagePerCoin = 0.1f;
+	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
 	TObjectPtr<UUpgradeManagerComponent> UpgradeManager;
