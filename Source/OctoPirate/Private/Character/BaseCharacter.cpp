@@ -11,7 +11,7 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit")
-
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_Immortal,     "Buffs.Immortal")
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -89,7 +89,10 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 								 AActor* DamageCauser)
 {
 	if (bIsDead) return 0.0f;
+	// -- Check for Immortallity -- 
+	if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_Immortal)) return 0.0f;
 	
+	// -- Update Health Attribute -- 
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
 	
