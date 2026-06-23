@@ -66,6 +66,14 @@ void AOctopusCharacter::BeginPlay()
 			ContextHandle
 		);
 	}
+
+	// Snapshot the post-init stats (constructor defaults + meta-progression applied during
+	// the components' BeginPlay, plus the base AttackSpeed set above) as the per-run baseline.
+	// ResetForNewRun restores exactly this, so runs no longer inherit the previous run's upgrades.
+	if (InRunUpgradeManager)
+	{
+		InRunUpgradeManager->CaptureBaseline();
+	}
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()

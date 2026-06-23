@@ -98,6 +98,13 @@ public:
 		const float* Found = JokerValues.Find(EffectID);
 		return Found ? *Found : 0.0f;
 	}
+
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void ClearAllJokerEffects()
+	{
+		ActiveJokerEffects.Empty();
+		JokerValues.Empty();
+	}
 	
 	// --- Functions ---
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
