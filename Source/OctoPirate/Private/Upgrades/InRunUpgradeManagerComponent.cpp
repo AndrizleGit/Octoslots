@@ -149,6 +149,23 @@ void UInRunUpgradeManagerComponent::SelectJoker(UJokerData* Joker)
     UE_LOG(LogTemp, Log, TEXT("Joker selected: %s (Effect: %s, Value: %.1f)"), *Joker->JokerName.ToString(), *Joker->JokerEffectID.ToString(), Joker->JokerValue);
 }
 
+void UInRunUpgradeManagerComponent::CaptureBaseline()
+{
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (!Attributes || !Character) return;
+
+    BaselineMaxHealth       = Attributes->GetMaxHealth();
+    BaselineWalkSpeed       = Attributes->GetWalkSpeed();
+    BaselineAttackSpeed     = Attributes->GetAttackSpeed();
+    BaselineAttackDamage    = Attributes->GetAttackDamage();
+    BaselineConeMaxDistance = Character->ConeMaxDistance;
+    bBaselineCaptured = true;
+
+    UE_LOG(LogTemp, Log, TEXT("In-run stat baseline captured (HP %.1f, Dmg %.1f, AtkSpd %.2f, Walk %.0f, Cone %.0f)"),
+        BaselineMaxHealth, BaselineAttackDamage, BaselineAttackSpeed, BaselineWalkSpeed, BaselineConeMaxDistance);
+}
+
 void UInRunUpgradeManagerComponent::ResetForNewRun()
 {
     bIsRunActive = true;
@@ -161,10 +178,29 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
         Pair.Value = 0;
 
     UBasicAttributeSet* Attributes = GetPlayerAttributes();
-    if (Attributes)
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (Attributes && Character)
     {
+        // Roll the per-run stats back to the baseline captured at spawn (base + meta-progression),
+        // undoing everything the previous run's in-run upgrades stacked on. Without this the
+        // stats carry over and keep inflating run after run.
+        if (bBaselineCaptured)
+        {
+            Attributes->SetMaxHealth(BaselineMaxHealth);
+            Attributes->SetHealth(BaselineMaxHealth);   // start each run at full health
+            Attributes->SetWalkSpeed(BaselineWalkSpeed);
+            Attributes->SetAttackSpeed(BaselineAttackSpeed);
+            Attributes->SetAttackDamage(BaselineAttackDamage);
+            Character->ConeMaxDistance = BaselineConeMaxDistance;
+            Character->GetCharacterMovement()->MaxWalkSpeed = BaselineWalkSpeed;
+        }
+
         Attributes->SetExperience(0.0f);
         Attributes->SetMaxExperience(100.0f);
+
+        // Jokers register their effect IDs on the character itself; emptying the manager's
+        // AcquiredJokers list above does not remove them, so clear them here too.
+        Character->ClearAllJokerEffects();
     }
 
     UE_LOG(LogTemp, Log, TEXT("In-run upgrades reset for new run"));

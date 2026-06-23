@@ -6,11 +6,15 @@
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "VFX/BombActor.h"
+#include "Engine/World.h"
 
 // -- Tag Definition --
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
-UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PlayerPoison,     "Debuffs.PlayerPoison")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Debuffs_PlayerPoison,     "Debuffs.PlayerPoison")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonWeaponBuff,     "Buffs.PoisonWeapon")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonTrailBuff,     "Buffs.PoisonTrail")
+UE_DEFINE_GAMEPLAY_TAG(TAG_Debuffs_PoisonTrailDebuff,     "Debuffs.PoisonTrail")
 AOctopusCharacter::AOctopusCharacter()
 {
 	// --- Tentacle Attack Mesh ---
@@ -65,6 +69,29 @@ void AOctopusCharacter::BeginPlay()
 			1.0f,
 			ContextHandle
 		);
+		if (PoisonPathEffectClass)
+		{
+			ContextHandle = 
+				AbilitySystemComponent->MakeEffectContext();
+            
+			CachedPoisonPathSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+				PoisonPathEffectClass,
+				1.0f,
+				ContextHandle
+		
+			);
+		}
+	}
+	// -- Checking for Poison Trail Tag -- 
+	AbilitySystemComponent->RegisterGameplayTagEvent(TAG_Status_PoisonTrailBuff, EGameplayTagEventType::NewOrRemoved)
+	   .AddUObject(this, &AOctopusCharacter::OnTagChanged);
+
+	// Snapshot the post-init stats (constructor defaults + meta-progression applied during
+	// the components' BeginPlay, plus the base AttackSpeed set above) as the per-run baseline.
+	// ResetForNewRun restores exactly this, so runs no longer inherit the previous run's upgrades.
+	if (InRunUpgradeManager)
+	{
+		InRunUpgradeManager->CaptureBaseline();
 	}
 }
 
@@ -226,23 +253,35 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
 		// -- Lifesteal --
 		if (lifeStealEnabled) BasicAttributes->ApplyLifesteal(Damage);
 		// -- Apply Poison --
+		UAbilitySystemComponent* TargetASC = 
+				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
+
+		if (!TargetASC) continue;
+		
 		if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
 		{
 			if (!CachedPoisonSpecHandle.IsValid()) continue;
-			UAbilitySystemComponent* TargetASC = 
-				UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
-
-			if (!TargetASC) continue;
+			
 
 			// Check if target is poisoned/immune
 			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
-			if (TargetASC->HasMatchingGameplayTag(TAG_Status_PlayerPoison)) continue;
+			if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PlayerPoison)) continue;
 
 			// Apply poison to target
 			for (int i = 0 ; i < GetStacksByTag(AbilitySystemComponent,TAG_Status_PoisonWeaponBuff) ; i++)
 			{
 				AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
 			}
+			
+		}
+		// -- Apply 3 Kind Poison -- 
+		if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PoisonTrailDebuff)) continue;
+		if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonTrailBuff))
+		{
+			if (!CachedPoisonPathSpecHandle.IsValid()) continue;
+			AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonPathSpecHandle.Data.Get(), TargetASC);
+			
+			
 		}
 	}
 
@@ -266,5 +305,50 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 	return TotalStacks;
 }
 
+// -- Joker: Bomb --
+
+void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
+{
+	Super::OnJokerEffectAdded(EffectID, Value);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
+{
+	Super::OnJokerEffectRemoved(EffectID);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::RefreshBombTimer()
+{
+	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	if (bWant && !bActive)
+	{
+		GetWorldTimerManager().SetTimer(BombSpawnTimer, this, &AOctopusCharacter::SpawnBombBehind, BombSpawnInterval, true);
+	}
+	else if (!bWant && bActive)
+	{
+		GetWorldTimerManager().ClearTimer(BombSpawnTimer);
+	}
+}
+
+void AOctopusCharacter::SpawnBombBehind()
+{
+	if (bIsDead || !BombClass) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FVector SpawnLocation = GetActorLocation() - GetActorForwardVector() * BombSpawnDistanceBehind;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+}
 
 

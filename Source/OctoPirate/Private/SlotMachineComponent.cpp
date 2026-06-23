@@ -1,8 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SlotMachineComponent.h"
-
+#include "Enemy/BaseEnemyCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -60,6 +58,30 @@ void USlotMachineComponent::Spin()
 	ApplyBuffs(LastResult);
 
 	OnSpinComplete.Broadcast(LastResult);
+	
+	// -- Joker: Fascinating --
+	if (PlayerCharacter && PlayerCharacter->HasJokerEffect("Fascinating"))
+	{
+		const float FreezeDuration = PlayerCharacter->GetJokerValue("Fascinating");
+		const float FreezeRadius = 1500.f;
+
+		TArray<AActor*> NearbyEnemies;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemyCharacter::StaticClass(), NearbyEnemies);
+
+		for (AActor* Actor : NearbyEnemies)
+		{
+			ABaseEnemyCharacter* Enemy = Cast<ABaseEnemyCharacter>(Actor);
+			if (!Enemy) continue;
+
+			const float Dist = FVector::Dist(PlayerCharacter->GetActorLocation(), Enemy->GetActorLocation());
+			if (Dist <= FreezeRadius)
+			{
+				Enemy->Freeze(FreezeDuration);
+			}
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("Fascinating — froze %d nearby enemies for %.1f seconds"), NearbyEnemies.Num(), FreezeDuration);
+	}
 	OnDopamineChanged.Broadcast(GetDopamineNormalized());
 }
 
@@ -90,24 +112,22 @@ void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 	{
 		PlayerCharacter->ApplyThreeOfAKindBuff(Result.Reel1);
 		UE_LOG(LogTemp, Warning, TEXT("JACKPOT! Three of a kind: %s"), *UEnum::GetValueAsString(Result.Reel1));
+		if (Result.Reel1 == ESlotSymbol::Speed)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Helicopter Helicopter !"));
+			PlayerCharacter->bHelicopterMode = true;
+		}
 		return;
 	}
 
 	// Otherwise apply tiered stacking buffs for any symbol that appears once or twice.
-	const int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
-	if (MovementCount > 0)
+	const int32 SpeedCount = Result.GetCount(ESlotSymbol::Speed);
+	if (SpeedCount > 0)
 	{
-		PlayerCharacter->ApplyMovementSpeedBuff(MovementCount);
-		UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d"), MovementCount);
+		PlayerCharacter->ApplySpeedBuff(SpeedCount);
+		UE_LOG(LogTemp, Warning, TEXT("Speed Tier: %d"), SpeedCount);
 	}
-
-	const int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
-	if (AttackSpeedCount > 0)
-	{
-		PlayerCharacter->ApplyAttackSpeedBuff(AttackSpeedCount);
-		UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d"), AttackSpeedCount);
-	}
-
+	
 	const int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
 	if (AttackDamageCount > 0)
 	{
