@@ -20,6 +20,7 @@ void USlotMachineComponent::BeginPlay()
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	//UE_LOG(LogTemp, Warning, TEXT("Current Movement Speed: %f"), PlayerCharacter->GetMovementComponent()->GetMaxSpeed());
 	if (DopamineCurrent > 0.f)
 	{
 		DopamineCurrent = FMath::Max(0.f, DopamineCurrent - (DopamineDrainPerSecond * DeltaTime));
@@ -30,23 +31,6 @@ void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 			RemoveAllBuffs();
 			SetDebuffActive(true);
 			OnDopamineEmpty.Broadcast();
-		}
-	}
-	// -- Joker: I Can Stop Whenever I Want --
-	if (PlayerCharacter && PlayerCharacter->HasJokerEffect("AutoSpin"))
-	{
-		if (AutoSpinCooldownRemaining > 0.f)
-		{
-			AutoSpinCooldownRemaining -= DeltaTime;
-			return;
-		}
-
-		if (CanAffordSpin())
-		{
-			AutoSpinCooldownRemaining = PlayerCharacter->GetJokerValue("AutoSpin");
-			bIsAutoSpinning = true;
-			Spin();
-			bIsAutoSpinning = false;
 		}
 	}
 }
@@ -119,56 +103,51 @@ FSlotResult USlotMachineComponent::RollReels()
 
 void USlotMachineComponent::ApplyBuffs(const FSlotResult& Result) const
 {
-    if (!PlayerCharacter) return;
+	if (!PlayerCharacter) return;
 
-    // Apply stronger buffs when auto-spinning via the joker
-    const float Multiplier = bIsAutoSpinning ? AutoSpinBuffMultiplier : 1.0f;
+	// Three of a kind: with only three reels, a match means every reel shows the same
+	// symbol, so no other symbol can be present. The unique jackpot buff therefore
+	// naturally replaces any stacking buff.
+	if (Result.Reel1 == Result.Reel2 && Result.Reel2 == Result.Reel3)
+	{
+		PlayerCharacter->ApplyThreeOfAKindBuff(Result.Reel1);
+		UE_LOG(LogTemp, Warning, TEXT("JACKPOT! Three of a kind: %s"), *UEnum::GetValueAsString(Result.Reel1));
+		if (Result.Reel1 == ESlotSymbol::Speed)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Helicopter Helicopter !"));
+			PlayerCharacter->bHelicopterMode = true;
+		}
+		return;
+	}
 
-    // Three of a kind: with only three reels, a match means every reel shows the same
-    // symbol, so no other symbol can be present. The unique jackpot buff therefore
-    // naturally replaces any stacking buff.
-    if (Result.Reel1 == Result.Reel2 && Result.Reel2 == Result.Reel3)
-    {
-        PlayerCharacter->ApplyThreeOfAKindBuff(Result.Reel1);
-        UE_LOG(LogTemp, Warning, TEXT("JACKPOT! Three of a kind: %s"), *UEnum::GetValueAsString(Result.Reel1));
-        return;
-    }
+	// Otherwise apply tiered stacking buffs for any symbol that appears once or twice.
+	const int32 SpeedCount = Result.GetCount(ESlotSymbol::Speed);
+	if (SpeedCount > 0)
+	{
+		PlayerCharacter->ApplySpeedBuff(SpeedCount);
+		UE_LOG(LogTemp, Warning, TEXT("Speed Tier: %d"), SpeedCount);
+	}
+	
+	const int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
+	if (AttackDamageCount > 0)
+	{
+		PlayerCharacter->ApplyAttackDamageBuff(AttackDamageCount);
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d"), AttackDamageCount);
+	}
 
-    // Otherwise apply tiered stacking buffs for any symbol that appears once or twice.
-    const int32 MovementCount = Result.GetCount(ESlotSymbol::MovementSpeed);
-    if (MovementCount > 0)
-    {
-        PlayerCharacter->ApplyMovementSpeedBuff(FMath::RoundToInt(MovementCount * Multiplier));
-        UE_LOG(LogTemp, Warning, TEXT("MovementSpeed Tier: %d (Multiplier: %.1f)"), MovementCount, Multiplier);
-    }
+	const int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
+	if (PoisonCount > 0)
+	{
+		PlayerCharacter->ApplyPoisonBuff(PoisonCount);
+		UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d"), PoisonCount);
+	}
 
-    const int32 AttackSpeedCount = Result.GetCount(ESlotSymbol::AttackSpeed);
-    if (AttackSpeedCount > 0)
-    {
-        PlayerCharacter->ApplyAttackSpeedBuff(FMath::RoundToInt(AttackSpeedCount * Multiplier));
-        UE_LOG(LogTemp, Warning, TEXT("AttackSpeed Tier: %d (Multiplier: %.1f)"), AttackSpeedCount, Multiplier);
-    }
-
-    const int32 AttackDamageCount = Result.GetCount(ESlotSymbol::AttackDamage);
-    if (AttackDamageCount > 0)
-    {
-        PlayerCharacter->ApplyAttackDamageBuff(FMath::RoundToInt(AttackDamageCount * Multiplier));
-        UE_LOG(LogTemp, Warning, TEXT("AttackDamage Tier: %d (Multiplier: %.1f)"), AttackDamageCount, Multiplier);
-    }
-
-    const int32 PoisonCount = Result.GetCount(ESlotSymbol::Poison);
-    if (PoisonCount > 0)
-    {
-        PlayerCharacter->ApplyPoisonBuff(FMath::RoundToInt(PoisonCount * Multiplier));
-        UE_LOG(LogTemp, Warning, TEXT("Poison Tier: %d (Multiplier: %.1f)"), PoisonCount, Multiplier);
-    }
-
-    const int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
-    if (LifeStealCount > 0)
-    {
-        PlayerCharacter->ApplyLifeStealBuff(FMath::RoundToInt(LifeStealCount * Multiplier));
-        UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d (Multiplier: %.1f)"), LifeStealCount, Multiplier);
-    }
+	const int32 LifeStealCount = Result.GetCount(ESlotSymbol::LifeSteal);
+	if (LifeStealCount > 0)
+	{
+		PlayerCharacter->ApplyLifeStealBuff(LifeStealCount);
+		UE_LOG(LogTemp, Warning, TEXT("LifeSteal Tier: %d"), LifeStealCount);
+	}
 }
 
 void USlotMachineComponent::RemoveAllBuffs() const

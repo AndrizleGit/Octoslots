@@ -49,9 +49,8 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
     bIsProcessingLevelUp = false;
 
     const bool bIsJokerLevel = (JokerLevelInterval > 0) && (CurrentLevel % JokerLevelInterval == 0);
-    const bool bCanGetJoker = AcquiredJokers.Num() < MaxJokers && AllPossibleJokers.Num() > 0;
 
-    if (bIsJokerLevel && bCanGetJoker)
+    if (bIsJokerLevel && AllPossibleJokers.Num() > 0)
     {
         RollNewJokerChoices();
         if (CurrentJokerChoices.Num() > 0)

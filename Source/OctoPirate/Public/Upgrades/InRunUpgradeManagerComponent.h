@@ -31,9 +31,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers")
 	int32 JokerLevelInterval = 10;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers")
-	int32 MaxJokers = 2;
-	
 	// events for widget
 	UPROPERTY(BlueprintAssignable, Category = "InRunUpgrades")
 	FOnLevelUp OnLevelUp;
