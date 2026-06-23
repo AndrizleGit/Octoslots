@@ -12,6 +12,7 @@
 #include "TaskSyncManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
+#include "VFX/ExplosionStatics.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -122,4 +123,24 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
+
+	// -- Joker: Explode on Death --
+	// If the player owns the DeathExplosion joker, detonate at this enemy's location
+	// using the player's independently-tuned values. Kills are credited to the player.
+	// The shared routine only hits enemies, so dying enemies can chain-react.
+	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		if (Player->HasJokerEffect("DeathExplosion"))
+		{
+			UExplosionStatics::Explode(
+				this,
+				GetActorLocation(),
+				Player->DeathExplosionRadius,
+				Player->DeathExplosionDamage,
+				Player->DeathExplosionVFX,
+				Player->GetController(),
+				this,
+				{ this });
+		}
+	}
 }

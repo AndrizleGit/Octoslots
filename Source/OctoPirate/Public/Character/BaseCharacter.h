@@ -83,6 +83,7 @@ public:
 	{
 		ActiveJokerEffects.AddUnique(EffectID);
 		JokerValues.Add(EffectID, Value);
+		OnJokerEffectAdded(EffectID, Value);
 	}
 
 	UFUNCTION(BlueprintCallable, Category = "Jokers")
@@ -90,6 +91,7 @@ public:
 	{
 		ActiveJokerEffects.Remove(EffectID);
 		JokerValues.Remove(EffectID);
+		OnJokerEffectRemoved(EffectID);
 	}
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Jokers")
@@ -97,6 +99,16 @@ public:
 	{
 		const float* Found = JokerValues.Find(EffectID);
 		return Found ? *Found : 0.0f;
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Jokers")
+	void ClearAllJokerEffects()
+	{
+		ActiveJokerEffects.Empty();
+		JokerValues.Empty();
+		// NAME_None signals "re-evaluate all joker-driven behaviour" (e.g. stop the
+		// bomb timer) now that no effects remain.
+		OnJokerEffectRemoved(NAME_None);
 	}
 	
 	// --- Functions ---
@@ -118,6 +130,11 @@ public:
 	
 	
 protected:
+	// Hooks fired when a joker effect is granted/removed so subclasses can react
+	// (e.g. AOctopusCharacter starts/stops the bomb-drop timer).
+	virtual void OnJokerEffectAdded(FName EffectID, float Value) {}
+	virtual void OnJokerEffectRemoved(FName EffectID) {}
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Combat")
 	void PerformAttack();
 	virtual void PerformAttack_Implementation();
