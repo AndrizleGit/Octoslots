@@ -57,13 +57,45 @@ void ABaseEnemyCharacter::Tick(float DeltaTime)
 
 void ABaseEnemyCharacter::ChasePlayer()
 {
-	if (bIsDead || !PlayerCharacter) return;
+	if (bIsDead || bIsFrozen || !PlayerCharacter) return;
 	
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	
 	if (DistanceToPlayer <= AttackRange) return;
 	
 	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), PlayerCharacter);
+}
+
+void ABaseEnemyCharacter::Freeze(float Duration)
+{
+	if (bIsDead || bIsFrozen) return;
+
+	bIsFrozen = true;
+
+	GetCharacterMovement()->DisableMovement();
+	GetWorldTimerManager().PauseTimer(AttackTimerHandle);
+
+	UE_LOG(LogTemp, Log, TEXT("%s is frozen for %.1f seconds"), *GetName(), Duration);
+
+	GetWorldTimerManager().SetTimer(
+		FreezeTimerHandle,
+		this,
+		&ABaseEnemyCharacter::UnFreeze,
+		Duration,
+		false
+	);
+}
+
+void ABaseEnemyCharacter::UnFreeze()
+{
+	if (bIsDead) return;
+
+	bIsFrozen = false;
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	GetWorldTimerManager().UnPauseTimer(AttackTimerHandle);
+
+	UE_LOG(LogTemp, Log, TEXT("%s is unfrozen"), *GetName());
 }
 
 void ABaseEnemyCharacter::PerformAttack_Implementation()
