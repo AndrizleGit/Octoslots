@@ -6,6 +6,7 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "Enemy/BaseEnemyCharacter.h"
 #include "VFX/DamageNumberActor.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
@@ -180,6 +181,11 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 	for (AActor* Actor : OverlappingActors)
 	{
 		if (!Actor) continue;
+		
+		// -- Skip friendly fire between enemies --
+		ABaseEnemyCharacter* SelfAsEnemy = Cast<ABaseEnemyCharacter>(this);
+		ABaseEnemyCharacter* TargetAsEnemy = Cast<ABaseEnemyCharacter>(Actor);
+		if (SelfAsEnemy && TargetAsEnemy) continue;
 		
 		FVector ToTarget = Actor->GetActorLocation() - Origin;
 		ToTarget.Z = 0.0f;
