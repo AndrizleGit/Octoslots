@@ -30,11 +30,6 @@ void ABaseCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (BasicAttributes)
-	{
-		BasicAttributes->SetHealth(BasicAttributes->GetMaxHealth());
-	}
-
 	AttackDamage = GetAttackDamage();
 	
 	
