@@ -29,7 +29,7 @@ public:
 	TArray<TObjectPtr<UJokerData>> AllPossibleJokers;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers")
-	int32 JokerLevelInterval = 5;
+	int32 JokerLevelInterval = 10;
 	
 	// events for widget
 	UPROPERTY(BlueprintAssignable, Category = "InRunUpgrades")

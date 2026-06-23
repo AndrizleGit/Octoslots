@@ -6,6 +6,8 @@
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "VFX/BombActor.h"
+#include "Engine/World.h"
 
 // -- Tag Definition --
 UE_DEFINE_GAMEPLAY_TAG(TAG_Status_PoisonImmune, "Status.PoisonImmune")
@@ -274,5 +276,50 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 	return TotalStacks;
 }
 
+// -- Joker: Bomb --
+
+void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
+{
+	Super::OnJokerEffectAdded(EffectID, Value);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
+{
+	Super::OnJokerEffectRemoved(EffectID);
+	RefreshBombTimer();
+}
+
+void AOctopusCharacter::RefreshBombTimer()
+{
+	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	if (bWant && !bActive)
+	{
+		GetWorldTimerManager().SetTimer(BombSpawnTimer, this, &AOctopusCharacter::SpawnBombBehind, BombSpawnInterval, true);
+	}
+	else if (!bWant && bActive)
+	{
+		GetWorldTimerManager().ClearTimer(BombSpawnTimer);
+	}
+}
+
+void AOctopusCharacter::SpawnBombBehind()
+{
+	if (bIsDead || !BombClass) return;
+
+	UWorld* World = GetWorld();
+	if (!World) return;
+
+	const FVector SpawnLocation = GetActorLocation() - GetActorForwardVector() * BombSpawnDistanceBehind;
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = this;
+
+	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+}
 
 

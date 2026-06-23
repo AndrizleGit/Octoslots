@@ -71,6 +71,31 @@ public:
 	// - Joker Properties -
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Scrooge")
 	float ScroogeDamagePerCoin = 0.1f;
+
+	// - Joker: Bomb (EffectID "BombDrop") -
+	// While this joker is active a BombClass actor is dropped behind the player
+	// every BombSpawnInterval seconds. Per-bomb Damage/Radius/FuseDelay/VFX live
+	// on the BombClass (BP_Bomb) itself.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	TSubclassOf<class ABombActor> BombClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	float BombSpawnInterval = 5.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	float BombSpawnDistanceBehind = 150.f;
+
+	// - Joker: Explode on Death (EffectID "DeathExplosion") -
+	// Independent values from the Bomb joker; read by ABaseEnemyCharacter::OnDeath
+	// when this joker is active.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	float DeathExplosionDamage = 30.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	float DeathExplosionRadius = 250.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	TObjectPtr<class UNiagaraSystem> DeathExplosionVFX;
 	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
@@ -91,6 +116,10 @@ protected:
 	virtual void PerformAttack_Implementation() override;
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
 	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
+
+	// React to the bomb joker being granted/removed.
+	virtual void OnJokerEffectAdded(FName EffectID, float Value) override;
+	virtual void OnJokerEffectRemoved(FName EffectID) override;
 
 public:	
 	// --- Tentacle Attack ---
@@ -126,6 +155,14 @@ public:
 	
 private:
 	AActor* GetClosestEnemy() const;
+
+	// Starts the bomb-drop timer when the "BombDrop" joker is active, stops it otherwise.
+	void RefreshBombTimer();
+
+	UFUNCTION()
+	void SpawnBombBehind();
+
+	FTimerHandle BombSpawnTimer;
 
 	UFUNCTION()
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
