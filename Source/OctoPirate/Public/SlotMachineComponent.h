@@ -20,6 +20,10 @@ class OCTOPIRATE_API USlotMachineComponent : public UActorComponent
 public:	
 	USlotMachineComponent();
 
+	// --- Joker: I Can Stop Whenever I Want ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Joker")
+	float AutoSpinBuffMultiplier = 1.5f; // how much stronger buffs are when auto-spinning
+	
 	// --- Config ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Dopamine")
 	float DopamineMax = 100.f;
@@ -78,10 +82,17 @@ public:
 private:
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
+	
 	float DopamineCurrent = 100.f;
+	
 	bool bDebuffActive = false;
+	
 	FSlotResult LastResult;
 
+	mutable bool bIsAutoSpinning = false;
+	
+	float AutoSpinCooldownRemaining = 0.0f;
+	
 	static FSlotResult RollReels();
 	void ApplyBuffs(const FSlotResult& Result) const;
 	void RemoveAllBuffs() const;
