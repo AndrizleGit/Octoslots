@@ -138,12 +138,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
 	TObjectPtr<UAnimMontage> TentacleAttackMontage;
 
-	// The default scale of the tentacle mesh (tweak this in the editor to get the right base size)
+	// Yaw correction (degrees) applied on top of the aim rotation, to align the
+	// tentacle mesh's authored forward axis with the attack direction. Tune live
+	// in BP_OctopusCharacter; try ±90 if the tentacle points sideways.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Tentacle")
-	float BaseTentacleScale = 2.f;
-
-	// Base range used to calculate tentacle scale (set automatically from ConeMaxDistance at BeginPlay)
-	float BaseConeMaxDistance = 0.f;
+	float TentacleYawOffset = -45.f;
 
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")

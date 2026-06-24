@@ -152,6 +152,5 @@ protected:
 	UPROPERTY()
 	TMap<FName, float> JokerValues;
 	
-private:
 	void SpawnDamageNumber(AActor* Target, float DamageAmount) const;
 };
