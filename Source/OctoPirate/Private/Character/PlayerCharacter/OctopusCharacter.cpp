@@ -327,6 +327,7 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
 {
 	Super::OnJokerEffectAdded(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] OnJokerEffectAdded: '%s' (value %.1f)"), *EffectID.ToString(), Value);
 	RefreshBombTimer();
 }
 
@@ -338,8 +339,17 @@ void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
 
 void AOctopusCharacter::RefreshBombTimer()
 {
-	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bHasJoker = HasJokerEffect("BombDrop");
+	const bool bWant = bHasJoker && BombClass != nullptr && BombSpawnInterval > 0.f;
 	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] RefreshBombTimer: HasJoker=%d BombClassSet=%d Interval=%.1f -> want=%d (alreadyActive=%d)"),
+		bHasJoker, BombClass != nullptr, BombSpawnInterval, bWant, bActive);
+
+	if (bHasJoker && !BombClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Bomb] BombDrop joker is active but BombClass is NOT set on BP_OctopusCharacter — no bombs will spawn."));
+	}
 
 	if (bWant && !bActive)
 	{
@@ -365,7 +375,23 @@ void AOctopusCharacter::SpawnBombBehind()
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = this;
 
-	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	ABombActor* Bomb = World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] SpawnBombBehind at %s -> %s"), *SpawnLocation.ToString(), Bomb ? TEXT("spawned") : TEXT("FAILED"));
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Bomb dropped: %s"), Bomb ? TEXT("OK") : TEXT("FAILED")));
+	}
+}
+
+void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
+{
+	// Console cheat for testing: `GrantJoker BombDrop` or `GrantJoker DeathExplosion`
+	AddJokerEffect(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] GrantJoker cheat: granted '%s'"), *EffectID.ToString());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Granted joker: %s"), *EffectID.ToString()));
+	}
 }
 
 

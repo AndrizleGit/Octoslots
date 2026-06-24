@@ -146,6 +146,7 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] ABaseEnemyCharacter::OnDeath_Implementation reached for %s"), *GetName());
 	Super::OnDeath_Implementation();
 	
 	const FVector SpawnLocation = GetActorLocation();
@@ -178,7 +179,9 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	// The shared routine only hits enemies, so dying enemies can chain-react.
 	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 	{
-		if (Player->HasJokerEffect("DeathExplosion"))
+		const bool bHasDeathExplosion = Player->HasJokerEffect("DeathExplosion");
+		UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] enemy %s died; player has joker=%d"), *GetName(), bHasDeathExplosion);
+		if (bHasDeathExplosion)
 		{
 			UExplosionStatics::Explode(
 				this,

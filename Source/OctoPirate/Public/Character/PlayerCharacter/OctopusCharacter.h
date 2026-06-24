@@ -170,6 +170,15 @@ private:
 	// Starts the bomb-drop timer when the "BombDrop" joker is active, stops it otherwise.
 	void RefreshBombTimer();
 
+public:
+	// Console test cheat: grant a joker effect immediately, e.g. `GrantJoker BombDrop`
+	// or `GrantJoker DeathExplosion` in the PIE console (~). Lets you test without
+	// grinding to level 10. Remove before shipping.
+	UFUNCTION(Exec)
+	void GrantJoker(FName EffectID, float Value = 0.f);
+
+private:
+
 	UFUNCTION()
 	void SpawnBombBehind();
 
