@@ -138,6 +138,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
 	TObjectPtr<UAnimMontage> TentacleAttackMontage;
 
+	// Yaw correction (degrees) applied on top of the aim rotation, to align the
+	// tentacle mesh's authored forward axis with the attack direction. Tune live
+	// in BP_OctopusCharacter; try ±90 if the tentacle points sideways.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Tentacle")
+	float TentacleYawOffset = -45.f;
+
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;

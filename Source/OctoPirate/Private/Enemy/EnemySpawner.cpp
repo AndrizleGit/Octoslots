@@ -119,45 +119,38 @@ FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
     UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
     if (!NavSys) return FVector::ZeroVector;
 
-	for (int32 Attempt = 0; Attempt < 20; Attempt++)
-	{
-		const float RandomAngle = FMath::RandRange(0.f, 360.f);
-		FVector CandidateLocation = PlayerLocation + FVector(
-			FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
-			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
-			0.f
-		);
+    for (int32 Attempt = 0; Attempt < 20; Attempt++)
+    {
+        const float RandomAngle = FMath::RandRange(0.f, 360.f);
+        FVector CandidateLocation = PlayerLocation + FVector(
+            FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
+            FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
+            0.f
+        );
 
-		CandidateLocation.Z = PlayerLocation.Z + 200.f;
+        CandidateLocation.Z = PlayerLocation.Z + 200.f;
 
-		FNavLocation NavLocation;
-		if (!NavSys->ProjectPointToNavigation(
-			CandidateLocation, NavLocation, FVector(500.f, 500.f, 2000.f)))
-		{
-			continue; 
-		}
+        FNavLocation NavLocation;
+        if (!NavSys->ProjectPointToNavigation(
+            CandidateLocation, NavLocation, FVector(500.f, 500.f, 2000.f)))
+        {
+            continue; 
+        }
 
-		const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
-		if (HorizontalDist < SpawnDistance * 0.5f)
-		{
-			continue; 
-		}
-		
-		const float HeightDiff = NavLocation.Location.Z - PlayerLocation.Z;
-		if (HeightDiff < -StairHeightTolerance)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Rejecting spawn at Z=%.1f (player Z=%.1f, diff=%.1f)"),
-				NavLocation.Location.Z, PlayerLocation.Z, HeightDiff);
-			continue;
-		}
-
-        // Skip if projection snapped too close to the player
         const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
-        if (HorizontalDist < SpawnDistance * 0.5f) continue;
-        
-        // Skip points significantly below the player (under elevated floors)
+        if (HorizontalDist < SpawnDistance * 0.5f)
+        {
+            continue; 
+        }
+
+
         const float HeightDiff = NavLocation.Location.Z - PlayerLocation.Z;
-        if (HeightDiff < -StairHeightTolerance) continue;
+        if (HeightDiff < -StairHeightTolerance)
+        {
+            UE_LOG(LogTemp, Verbose, TEXT("Rejecting spawn at Z=%.1f (player Z=%.1f, diff=%.1f)"),
+                NavLocation.Location.Z, PlayerLocation.Z, HeightDiff);
+            continue;
+        }
 
         return NavLocation.Location;
     }
