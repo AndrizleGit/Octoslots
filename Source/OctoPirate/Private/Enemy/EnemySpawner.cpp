@@ -130,19 +130,27 @@ FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
 			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
 			0.f
 		);
-		
-		CandidateLocation.Z = PlayerLocation.Z + 5000.f;
+
+		CandidateLocation.Z = PlayerLocation.Z + 200.f;
 
 		FNavLocation NavLocation;
 		if (!NavSys->ProjectPointToNavigation(
-			CandidateLocation, NavLocation, FVector(500.f, 500.f, 5000.f)))
+			CandidateLocation, NavLocation, FVector(500.f, 500.f, 2000.f)))
 		{
-			continue;
+			continue; 
 		}
 
 		const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
 		if (HorizontalDist < SpawnDistance * 0.5f)
 		{
+			continue; 
+		}
+		
+		const float HeightDiff = NavLocation.Location.Z - PlayerLocation.Z;
+		if (HeightDiff < -StairHeightTolerance)
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Rejecting spawn at Z=%.1f (player Z=%.1f, diff=%.1f)"),
+				NavLocation.Location.Z, PlayerLocation.Z, HeightDiff);
 			continue;
 		}
 
