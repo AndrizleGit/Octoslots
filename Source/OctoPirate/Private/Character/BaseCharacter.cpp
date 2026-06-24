@@ -33,7 +33,11 @@ void ABaseCharacter::BeginPlay()
 	
 	AttackDamage = GetAttackDamage();
 	
-	
+	// ensure health starts full — respects meta progression max health
+	if (BasicAttributes)
+	{
+		BasicAttributes->SetHealth(BasicAttributes->GetMaxHealth());
+	}
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
