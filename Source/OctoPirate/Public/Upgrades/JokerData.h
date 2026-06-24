@@ -4,7 +4,7 @@
 #include "Engine/DataAsset.h"
 #include "JokerData.generated.h"
 
-UCLASS()
+UCLASS(BlueprintType)
 class OCTOPIRATE_API UJokerData : public UDataAsset
 {
 	GENERATED_BODY()
