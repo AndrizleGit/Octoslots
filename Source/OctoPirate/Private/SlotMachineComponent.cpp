@@ -1,8 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "SlotMachineComponent.h"
-
+#include "Enemy/BaseEnemyCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "GameFramework/PawnMovementComponent.h"
@@ -16,7 +14,7 @@ void USlotMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	DopamineCurrent = DopamineMax;
-		PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
+	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
 }
 
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -39,6 +37,12 @@ void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 void USlotMachineComponent::Spin()
 {
+	if (bSpinOnCooldown)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spin blocked — on cooldown"));
+		return;
+	}
+	
 	UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
 	if (!Attributes) return;
 
@@ -46,9 +50,11 @@ void USlotMachineComponent::Spin()
 	if (Attributes->GetCoins() < SpinCost)
 	{
 		OnSpinFailed.Broadcast();
-		UE_LOG(LogTemp, Log, TEXT("Spin denied: costs %.0f coins, player has %.0f"), SpinCost, Attributes->GetCoins());
 		return;
 	}
+	
+	bSpinOnCooldown = true;
+	
 	Attributes->SetCoins(Attributes->GetCoins() - SpinCost);
 
 	DopamineCurrent = DopamineMax;
@@ -60,6 +66,30 @@ void USlotMachineComponent::Spin()
 	ApplyBuffs(LastResult);
 
 	OnSpinComplete.Broadcast(LastResult);
+	
+	// -- Joker: Fascinating --
+	if (PlayerCharacter && PlayerCharacter->HasJokerEffect("Fascinating"))
+	{
+		const float FreezeDuration = PlayerCharacter->GetJokerValue("Fascinating");
+		const float FreezeRadius = 1500.f;
+
+		TArray<AActor*> NearbyEnemies;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemyCharacter::StaticClass(), NearbyEnemies);
+
+		for (AActor* Actor : NearbyEnemies)
+		{
+			ABaseEnemyCharacter* Enemy = Cast<ABaseEnemyCharacter>(Actor);
+			if (!Enemy) continue;
+
+			const float Dist = FVector::Dist(PlayerCharacter->GetActorLocation(), Enemy->GetActorLocation());
+			if (Dist <= FreezeRadius)
+			{
+				Enemy->Freeze(FreezeDuration);
+			}
+		}
+
+		UE_LOG(LogTemp, Log, TEXT("Fascinating — froze %d nearby enemies for %.1f seconds"), NearbyEnemies.Num(), FreezeDuration);
+	}
 	OnDopamineChanged.Broadcast(GetDopamineNormalized());
 }
 
@@ -164,4 +194,10 @@ void USlotMachineComponent::SetDebuffActive(bool bActive)
 	}
 	
 	OnDebuffStateChanged.Broadcast(bActive);
+}
+
+void USlotMachineComponent::OnSpinAnimationFinished()
+{
+	bSpinOnCooldown = false;
+	UE_LOG(LogTemp, Log, TEXT("Spin animation finished — ready to spin again"));
 }
