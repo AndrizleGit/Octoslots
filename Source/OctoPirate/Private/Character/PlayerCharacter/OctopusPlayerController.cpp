@@ -5,6 +5,8 @@
 #include "InputActionValue.h"
 #include "NiagaraFunctionLibrary.h"
 
+#define TRACE_GROUND ECC_GameTraceChannel1
+
 AOctopusPlayerController::AOctopusPlayerController()
 {
 	bShowMouseCursor = true;
@@ -29,6 +31,10 @@ void AOctopusPlayerController::BeginPlay()
 			Subsystem->AddMappingContext(OctopusMappingContext, 0);
 		}
 	}
+	
+	
+	
+
 }
 
 void AOctopusPlayerController::SetupInputComponent()
@@ -39,6 +45,11 @@ void AOctopusPlayerController::SetupInputComponent()
 	{
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnRightMousePressed);
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnRightMouseReleased);
+	}
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
+	{
+		EnhancedInput->BindAction(ScrollDownAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnScrollDown);
+		
 	}
 }
 
@@ -51,7 +62,12 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 		MoveToCursor();
 	}
 }
-
+void AOctopusPlayerController::OnScrollDown()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Scroll Down"));
+	SlotMachine->Spin();
+	
+}
 void AOctopusPlayerController::OnRightMousePressed()
 {
 	bRightMouseHeld = true;
@@ -66,12 +82,18 @@ void AOctopusPlayerController::OnRightMouseReleased()
 
 void AOctopusPlayerController::MoveToCursor() const
 {
+	UE_LOG(LogTemp, Error, TEXT("MoveToCursor called"));
 	FHitResult HitResult;
 
-	bool bHit = GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
 
 	if (!bHit) return;
-
+	if (bHit)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Hit: %s at %s"),
+			*HitResult.GetActor()->GetName(),
+			*HitResult.ImpactPoint.ToString());
+	}
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
@@ -87,7 +109,7 @@ void AOctopusPlayerController::SpawnCursorFX()
 	}
 
 	FHitResult HitResult;
-	if (!GetHitResultUnderCursor(ECC_Visibility, false, HitResult))
+	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("CursorFX: No hit under cursor"));
 		return;

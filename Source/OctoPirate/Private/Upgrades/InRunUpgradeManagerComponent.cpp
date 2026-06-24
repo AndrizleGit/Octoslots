@@ -1,6 +1,7 @@
 #include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -24,24 +25,53 @@ void UInRunUpgradeManagerComponent::BeginPlay()
 void UInRunUpgradeManagerComponent::CheckForLevelUp()
 {
     if (!bIsRunActive) return;
+    if (bIsProcessingLevelUp) return;
 
     UBasicAttributeSet* Attributes = GetPlayerAttributes();
     if (!Attributes) return;
 
-    if (Attributes->GetExperience() <= 0.f) return;
-    if (Attributes->GetExperience() < Attributes->GetMaxExperience()) return;
-    
-    CurrentLevel++;
-    
-    const float NewMaxXP = Attributes->GetMaxExperience() * 1.5f;
-    Attributes->SetExperience(0.0f);
-    Attributes->SetMaxExperience(NewMaxXP);
+    float Experience = Attributes->GetExperience();
+    float MaxXP = Attributes->GetMaxExperience();
 
-    RollNewChoices();
+    if (MaxXP <= 0.f) return;
+    if (Experience < MaxXP) return;
 
-    UGameplayStatics::SetGamePaused(GetWorld(), true);
+    while (Experience >= MaxXP && MaxXP > 0.f)
+    {
+        Experience -= MaxXP;
+        MaxXP *= 1.5f;
+        CurrentLevel++;
+    }
 
-    OnLevelUp.Broadcast(CurrentLevel);
+    bIsProcessingLevelUp = true;
+    Attributes->SetMaxExperience(MaxXP);
+    Attributes->SetExperience(Experience);
+    bIsProcessingLevelUp = false;
+
+    const bool bIsJokerLevel = (JokerLevelInterval > 0) && (CurrentLevel % JokerLevelInterval == 0);
+
+    if (bIsJokerLevel && AllPossibleJokers.Num() > 0)
+    {
+        RollNewJokerChoices();
+        if (CurrentJokerChoices.Num() > 0)
+        {
+            UGameplayStatics::SetGamePaused(GetWorld(), true);
+            OnJokerLevelUp.Broadcast(CurrentLevel);
+        }
+    }
+    else
+    {
+        RollNewChoices();
+        if (CurrentChoices.Num() > 0)
+        {
+            UGameplayStatics::SetGamePaused(GetWorld(), true);
+            OnLevelUp.Broadcast(CurrentLevel);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Level up to %d but no upgrades configured — skipping pause"), CurrentLevel);
+        }
+    }
 }
 
 void UInRunUpgradeManagerComponent::RollNewChoices()
@@ -64,6 +94,26 @@ void UInRunUpgradeManagerComponent::RollNewChoices()
     }
 }
 
+void UInRunUpgradeManagerComponent::RollNewJokerChoices()
+{
+    CurrentJokerChoices.Empty();
+
+    TArray<UJokerData*> AvailablePool;
+    for (UJokerData* Joker : AllPossibleJokers)
+    {
+        if (Joker && !AcquiredJokers.Contains(Joker))
+            AvailablePool.Add(Joker);
+    }
+
+    const int32 ChoiceCount = FMath::Min(3, AvailablePool.Num());
+    for (int32 i = 0; i < ChoiceCount; i++)
+    {
+        const int32 RandomIndex = FMath::RandRange(0, AvailablePool.Num() - 1);
+        CurrentJokerChoices.Add(AvailablePool[RandomIndex]);
+        AvailablePool.RemoveAt(RandomIndex);
+    }
+}
+
 void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
 {
     if (!Upgrade) return;
@@ -80,20 +130,77 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
     UE_LOG(LogTemp, Log, TEXT("In-run upgrade selected: %s"), *Upgrade->UpgradeName.ToString());
 }
 
+void UInRunUpgradeManagerComponent::SelectJoker(UJokerData* Joker)
+{
+    if (!Joker) return;
+
+    AcquiredJokers.Add(Joker);
+
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (Character)
+    {
+        Character->AddJokerEffect(Joker->JokerEffectID, Joker->JokerValue);
+    }
+
+    UGameplayStatics::SetGamePaused(GetWorld(), false);
+
+    OnJokerSelected.Broadcast(Joker);
+
+    UE_LOG(LogTemp, Log, TEXT("Joker selected: %s (Effect: %s, Value: %.1f)"), *Joker->JokerName.ToString(), *Joker->JokerEffectID.ToString(), Joker->JokerValue);
+}
+
+void UInRunUpgradeManagerComponent::CaptureBaseline()
+{
+    UBasicAttributeSet* Attributes = GetPlayerAttributes();
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (!Attributes || !Character) return;
+
+    BaselineMaxHealth       = Attributes->GetMaxHealth();
+    BaselineWalkSpeed       = Attributes->GetWalkSpeed();
+    BaselineAttackSpeed     = Attributes->GetAttackSpeed();
+    BaselineAttackDamage    = Attributes->GetAttackDamage();
+    BaselineConeMaxDistance = Character->ConeMaxDistance;
+    bBaselineCaptured = true;
+
+    UE_LOG(LogTemp, Log, TEXT("In-run stat baseline captured (HP %.1f, Dmg %.1f, AtkSpd %.2f, Walk %.0f, Cone %.0f)"),
+        BaselineMaxHealth, BaselineAttackDamage, BaselineAttackSpeed, BaselineWalkSpeed, BaselineConeMaxDistance);
+}
+
 void UInRunUpgradeManagerComponent::ResetForNewRun()
 {
     bIsRunActive = true;
     CurrentLevel = 0;
     CurrentChoices.Empty();
+    CurrentJokerChoices.Empty();
+    AcquiredJokers.Empty();
 
     for (auto& Pair : PickedCounts)
         Pair.Value = 0;
 
     UBasicAttributeSet* Attributes = GetPlayerAttributes();
-    if (Attributes)
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (Attributes && Character)
     {
+        // Roll the per-run stats back to the baseline captured at spawn (base + meta-progression),
+        // undoing everything the previous run's in-run upgrades stacked on. Without this the
+        // stats carry over and keep inflating run after run.
+        if (bBaselineCaptured)
+        {
+            Attributes->SetMaxHealth(BaselineMaxHealth);
+            Attributes->SetHealth(BaselineMaxHealth);   // start each run at full health
+            Attributes->SetWalkSpeed(BaselineWalkSpeed);
+            Attributes->SetAttackSpeed(BaselineAttackSpeed);
+            Attributes->SetAttackDamage(BaselineAttackDamage);
+            Character->ConeMaxDistance = BaselineConeMaxDistance;
+            Character->GetCharacterMovement()->MaxWalkSpeed = BaselineWalkSpeed;
+        }
+
         Attributes->SetExperience(0.0f);
         Attributes->SetMaxExperience(100.0f);
+
+        // Jokers register their effect IDs on the character itself; emptying the manager's
+        // AcquiredJokers list above does not remove them, so clear them here too.
+        Character->ClearAllJokerEffects();
     }
 
     UE_LOG(LogTemp, Log, TEXT("In-run upgrades reset for new run"));

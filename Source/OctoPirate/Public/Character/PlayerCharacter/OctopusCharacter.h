@@ -10,10 +10,17 @@
 #include "Upgrades/UpgradeManagerComponent.h"
 #include "Animation/AnimMontage.h"
 #include "Components/PickupRadiusComponent.h"
+#include "SlotMachineTypes.h"
 #include "OctopusCharacter.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathDelegate);
 
+// -- Tags --
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonImmune)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonTrailBuff)
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Debuffs_PoisonTrailDebuff)
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -23,14 +30,13 @@ public:
 	AOctopusCharacter();
 	// -- Slot Machine Events -- 
 	// - Buffs -
-	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplyAttackSpeedBuff(int32 StackCount);
+	
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplyAttackDamageBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
-	void ApplyMovementSpeedBuff(int32 StackCount);
+	void ApplySpeedBuff(int32 StackCount);
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplyLifeStealBuff(int32 StackCount);
@@ -40,8 +46,18 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
+
+	// -- Check for Tag Changes -- 
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnTagChanged(FGameplayTag Tag, int32 NewCount);
+
 	
-	// - Debuffs - 
+	// Fired when all three reels match. Switch on Symbol to give each three-of-a-kind
+	// its own unique payoff. (For SEVEN you can simply call ApplySevenBuff from here.)
+	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
+	void ApplyThreeOfAKindBuff(ESlotSymbol Symbol);
+
+	// - Debuffs -
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void RemoveBuffs();
 
@@ -50,6 +66,45 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ClearDebuff(); 
+	
+	// -- Extra abilities -- 
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> PoisonEffectClass;
+	UPROPERTY()
+	FGameplayEffectSpecHandle CachedPoisonSpecHandle;
+	UPROPERTY(EditDefaultsOnly, Category = "Effects")
+	TSubclassOf<UGameplayEffect> PoisonPathEffectClass;
+	UPROPERTY()
+	FGameplayEffectSpecHandle CachedPoisonPathSpecHandle;
+	
+	// - Joker Properties -
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Scrooge")
+	float ScroogeDamagePerCoin = 0.1f;
+
+	// - Joker: Bomb (EffectID "BombDrop") -
+	// While this joker is active a BombClass actor is dropped behind the player
+	// every BombSpawnInterval seconds. Per-bomb Damage/Radius/FuseDelay/VFX live
+	// on the BombClass (BP_Bomb) itself.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	TSubclassOf<class ABombActor> BombClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	float BombSpawnInterval = 5.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|Bomb")
+	float BombSpawnDistanceBehind = 150.f;
+
+	// - Joker: Explode on Death (EffectID "DeathExplosion") -
+	// Independent values from the Bomb joker; read by ABaseEnemyCharacter::OnDeath
+	// when this joker is active.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	float DeathExplosionDamage = 30.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	float DeathExplosionRadius = 250.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	TObjectPtr<class UNiagaraSystem> DeathExplosionVFX;
 	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
@@ -68,6 +123,12 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PerformAttack_Implementation() override;
+	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
+	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
+
+	// React to the bomb joker being granted/removed.
+	virtual void OnJokerEffectAdded(FName EffectID, float Value) override;
+	virtual void OnJokerEffectRemoved(FName EffectID) override;
 
 public:	
 	// --- Tentacle Attack ---
@@ -99,8 +160,21 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Combat")
 	FOnDeathDelegate OnPlayerDied;
+	
+	// -- Animation -- 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Animation")
+	bool bHelicopterMode = false;
+	
 private:
 	AActor* GetClosestEnemy() const;
+
+	// Starts the bomb-drop timer when the "BombDrop" joker is active, stops it otherwise.
+	void RefreshBombTimer();
+
+	UFUNCTION()
+	void SpawnBombBehind();
+
+	FTimerHandle BombSpawnTimer;
 
 	UFUNCTION()
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);

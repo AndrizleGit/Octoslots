@@ -6,10 +6,12 @@
 UENUM(BlueprintType)
 enum class ESlotSymbol : uint8
 {
-	MovementSpeed UMETA(DisplayName = "Movement Speed"),
-	AttackSpeed UMETA(DisplayName = "Attack Speed"),
+	Speed UMETA(DisplayName = "Speed"),
+	
 	AttackDamage UMETA(DisplayName = "Attack Damage"),
 	SEVEN UMETA(DisplayName = "SEVEN"),
+	Poison UMETA(DisplayName = "Poison"),
+	LifeSteal UMETA(DisplayName = "Life Steal"),
 	
 };
 
@@ -18,9 +20,9 @@ struct FSlotResult
 {
 	GENERATED_BODY()
 	
-	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel1 = ESlotSymbol::MovementSpeed;
-	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel2 = ESlotSymbol::MovementSpeed;
-	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel3 = ESlotSymbol::MovementSpeed;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel1 = ESlotSymbol::Speed;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel2 = ESlotSymbol::Speed;
+	UPROPERTY(BlueprintReadOnly) ESlotSymbol Reel3 = ESlotSymbol::Speed;
 	
 	int32 GetCount(ESlotSymbol Symbol) const
 	{

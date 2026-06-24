@@ -16,8 +16,9 @@ class OCTOPIRATE_API UBasicAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 	
 public:
-	
 	UBasicAttributeSet();
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+	
 	
 	//Health Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Health")
@@ -33,12 +34,11 @@ public:
 	FGameplayAttributeData WalkSpeed;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, WalkSpeed)
 	
-	// Attack Damage Attributes
+	// Combat Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Combat")
 	FGameplayAttributeData AttackDamage;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, AttackDamage)
 	
-	// Attack Speed Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Combat")
 	FGameplayAttributeData AttackSpeed;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, AttackSpeed)
@@ -47,6 +47,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Pickup")
 	FGameplayAttributeData PickupRadius;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, PickupRadius)
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Atrributes|Combat")
+	FGameplayAttributeData LifeSteal;
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, LifeSteal)
 	
 	// Level Attributes
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression")
@@ -64,5 +68,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData Coins;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Coins)
+	
+public:
+	void ApplyLifesteal(float Damage);
 };
 	

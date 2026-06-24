@@ -12,6 +12,7 @@
 #include "TaskSyncManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
+#include "VFX/ExplosionStatics.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -34,6 +35,21 @@ void ABaseEnemyCharacter::BeginPlay()
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 }
 
+void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier)
+{
+	if (BasicAttributes)
+	{
+		const float ScaledHealth = BasicAttributes->GetMaxHealth() * HealthMultiplier;
+		BasicAttributes->SetMaxHealth(ScaledHealth);
+		BasicAttributes->SetHealth(ScaledHealth);
+		
+		const float ScaledDamage = BasicAttributes->GetAttackDamage() * DamageMultiplier;
+		BasicAttributes->SetAttackDamage(ScaledDamage);
+	}
+	
+	AttackDamage = BasicAttributes ? BasicAttributes->GetAttackDamage() : AttackDamage;
+}
+
 void ABaseEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -42,13 +58,45 @@ void ABaseEnemyCharacter::Tick(float DeltaTime)
 
 void ABaseEnemyCharacter::ChasePlayer()
 {
-	if (bIsDead || !PlayerCharacter) return;
+	if (bIsDead || bIsFrozen || !PlayerCharacter) return;
 	
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	
 	if (DistanceToPlayer <= AttackRange) return;
 	
 	UAIBlueprintHelperLibrary::SimpleMoveToActor(GetController(), PlayerCharacter);
+}
+
+void ABaseEnemyCharacter::Freeze(float Duration)
+{
+	if (bIsDead || bIsFrozen) return;
+
+	bIsFrozen = true;
+
+	GetCharacterMovement()->DisableMovement();
+	GetWorldTimerManager().PauseTimer(AttackTimerHandle);
+
+	UE_LOG(LogTemp, Log, TEXT("%s is frozen for %.1f seconds"), *GetName(), Duration);
+
+	GetWorldTimerManager().SetTimer(
+		FreezeTimerHandle,
+		this,
+		&ABaseEnemyCharacter::UnFreeze,
+		Duration,
+		false
+	);
+}
+
+void ABaseEnemyCharacter::UnFreeze()
+{
+	if (bIsDead) return;
+
+	bIsFrozen = false;
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	GetWorldTimerManager().UnPauseTimer(AttackTimerHandle);
+
+	UE_LOG(LogTemp, Log, TEXT("%s is unfrozen"), *GetName());
 }
 
 void ABaseEnemyCharacter::PerformAttack_Implementation()
@@ -107,4 +155,24 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
+
+	// -- Joker: Explode on Death --
+	// If the player owns the DeathExplosion joker, detonate at this enemy's location
+	// using the player's independently-tuned values. Kills are credited to the player.
+	// The shared routine only hits enemies, so dying enemies can chain-react.
+	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+	{
+		if (Player->HasJokerEffect("DeathExplosion"))
+		{
+			UExplosionStatics::Explode(
+				this,
+				GetActorLocation(),
+				Player->DeathExplosionRadius,
+				Player->DeathExplosionDamage,
+				Player->DeathExplosionVFX,
+				Player->GetController(),
+				this,
+				{ this });
+		}
+	}
 }

@@ -54,3 +54,8 @@ void ABasePickup::OnPickedUp_Implementation(AActor* PickedUpBy)
 {
 	//Destruction handled by Tick function
 }
+
+void ABasePickup::StopPull()
+{
+	bBeingPulled = false;
+}

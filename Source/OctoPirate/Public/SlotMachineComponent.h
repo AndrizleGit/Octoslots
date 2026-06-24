@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,6 +10,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSpinComplete, FSlotResult, Result
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDopamineChanged, float, NormalizedValue);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDopamineEmpty);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDebuffStateChanged, bool, bIsDebuffed);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnSpinFailed);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OCTOPIRATE_API USlotMachineComponent : public UActorComponent
@@ -27,7 +26,11 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Dopamine")
 	float DopamineDrainPerSecond = 5.f;
-	
+
+	// Coins deducted from the player each time they spin.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Cost")
+	float SpinCost = 10.f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Buff")
 	FSlotBuffConfig BuffConfig;
 	
@@ -46,6 +49,10 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Slot Machine|Events")
 	FOnDebuffStateChanged OnDebuffStateChanged;
+
+	// Broadcast when a spin is attempted but the player can't afford the cost.
+	UPROPERTY(BlueprintAssignable, Category = "Slot Machine|Events")
+	FOnSpinFailed OnSpinFailed;
 	
 	// --- Public API ---
 	UFUNCTION(BlueprintCallable, Category = "Slot Machine")
@@ -59,10 +66,29 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "Slot Machine")
 	FSlotResult GetLastResult() const { return LastResult; }
+
+	// True if the player currently has enough coins to spin.
+	UFUNCTION(BlueprintPure, Category = "Slot Machine")
+	bool CanAffordSpin() const;
 	
 	// --- Overrides ---
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Cost")
+	float SpinCooldown = 0.5f; // seconds between allowed spins
+
+	UFUNCTION(BlueprintPure, Category = "Slot Machine")
+	bool IsOnCooldown() const { return bSpinOnCooldown; }
+
+	UFUNCTION(BlueprintCallable, Category = "Slot Machine")
+	void OnSpinAnimationFinished();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Slot Machine")
+	static FText GetSymbolDisplayName(ESlotSymbol Symbol)
+	{
+		return FText::FromString(UEnum::GetDisplayValueAsText(Symbol).ToString());
+	}
 	
 private:
 	UPROPERTY()
@@ -75,4 +101,6 @@ private:
 	void ApplyBuffs(const FSlotResult& Result) const;
 	void RemoveAllBuffs() const;
 	void SetDebuffActive(bool bActive);
+	
+	bool bSpinOnCooldown = false;
 };
