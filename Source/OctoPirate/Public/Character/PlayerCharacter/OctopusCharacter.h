@@ -138,13 +138,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
 	TObjectPtr<UAnimMontage> TentacleAttackMontage;
 
-	// The default scale of the tentacle mesh (tweak this in the editor to get the right base size)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Tentacle")
-	float BaseTentacleScale = 2.f;
-
-	// Base range used to calculate tentacle scale (set automatically from ConeMaxDistance at BeginPlay)
-	float BaseConeMaxDistance = 0.f;
-
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;

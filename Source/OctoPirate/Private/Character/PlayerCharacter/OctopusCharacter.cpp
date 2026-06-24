@@ -46,7 +46,6 @@ AOctopusCharacter::AOctopusCharacter()
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	BaseConeMaxDistance = ConeMaxDistance;
 
 	// Force absolute rotation & scale AFTER Blueprint init so the BP can't override it
 	if (TentacleMesh)
@@ -134,13 +133,7 @@ void AOctopusCharacter::PerformAttack_Implementation()
         if (TentacleMesh && TentacleAttackMontage)
         {
             TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, -90.f, 0.f));
-
-            const float RangeRatio = (BaseConeMaxDistance > 0.f) ? ConeMaxDistance / BaseConeMaxDistance : 1.f;
-            const float RangeFactor = FMath::Pow(RangeRatio, 5.f);
-            const float FinalScale = BaseTentacleScale * RangeFactor;
-            TentacleMesh->SetWorldScale3D(FVector(FinalScale));
-            UE_LOG(LogTemp, Warning, TEXT("Tentacle - ConeMax: %f | Base: %f | RangeFactor: %f | BaseTentacleScale: %f | FinalScale: %f"),
-                ConeMaxDistance, BaseConeMaxDistance, RangeFactor, BaseTentacleScale, FinalScale);
+            TentacleMesh->SetWorldScale3D(FVector(1.f));
 
             TentacleMesh->SetHiddenInGame(false);
 
