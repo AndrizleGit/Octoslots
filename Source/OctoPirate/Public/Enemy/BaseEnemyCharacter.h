@@ -23,6 +23,11 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Combat")
 	float AttackRange = 350.f;
+
+	// Montage played on the character mesh each time this enemy attacks in range.
+	// Assign per-enemy in the Blueprint (e.g. the monkey's attack montage).
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Combat")
+	TObjectPtr<class UAnimMontage> AttackMontage;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
 	TSubclassOf<AActor> CoinClass;

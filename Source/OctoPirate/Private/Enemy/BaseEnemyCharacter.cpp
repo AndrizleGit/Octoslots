@@ -13,6 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "VFX/ExplosionStatics.h"
+#include "Animation/AnimInstance.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -125,6 +126,19 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 	{
 		AttackDamage = BasicAttributes->GetAttackDamage();
 		AttackInterval = BasicAttributes->GetAttackSpeed();
+	}
+
+	// --- Play the attack animation montage (if assigned in the Blueprint) ---
+	if (AttackMontage)
+	{
+		if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		{
+			AnimInstance->Montage_Play(AttackMontage);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Enemy %s: AttackMontage set but mesh has no AnimInstance — assign an Anim Blueprint to the mesh."), *GetName());
+		}
 	}
 
 	Super::PerformAttack_Implementation();
