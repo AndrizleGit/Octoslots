@@ -122,7 +122,7 @@ FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
 	if (!NavSys) return FVector::ZeroVector;
 
-	for (int32 Attempt = 0; Attempt < 10; Attempt++)
+	for (int32 Attempt = 0; Attempt < 20; Attempt++)
 	{
 		const float RandomAngle = FMath::RandRange(0.f, 360.f);
 		FVector CandidateLocation = PlayerLocation + FVector(
@@ -130,24 +130,25 @@ FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
 			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
 			0.f
 		);
-
-		CandidateLocation.Z = PlayerLocation.Z + 200.f;
+		
+		CandidateLocation.Z = PlayerLocation.Z + 5000.f;
 
 		FNavLocation NavLocation;
-		if (NavSys->ProjectPointToNavigation(
-			CandidateLocation,
-			NavLocation,
-			FVector(500.f, 500.f, 2000.f)))
+		if (!NavSys->ProjectPointToNavigation(
+			CandidateLocation, NavLocation, FVector(500.f, 500.f, 5000.f)))
 		{
-			
-			const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
-			if (HorizontalDist >= SpawnDistance * 0.5f)
-			{
-				return NavLocation.Location;
-			}
+			continue;
 		}
+
+		const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
+		if (HorizontalDist < SpawnDistance * 0.5f)
+		{
+			continue;
+		}
+
+		return NavLocation.Location;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: Failed to find valid NavMesh location"));
+	UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: Failed to find valid spawn location"));
 	return FVector::ZeroVector;
 }
