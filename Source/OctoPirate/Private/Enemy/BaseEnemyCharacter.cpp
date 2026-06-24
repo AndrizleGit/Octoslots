@@ -26,6 +26,8 @@ void ABaseEnemyCharacter::BeginPlay()
 	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{
+		BasicAttributes->SetMaxHealth(45.f);
+		BasicAttributes->SetHealth(45.f);
 		BasicAttributes->SetAttackDamage(7.f);
 		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
