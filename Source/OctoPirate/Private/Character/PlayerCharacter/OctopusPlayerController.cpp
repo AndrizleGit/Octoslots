@@ -32,8 +32,6 @@ void AOctopusPlayerController::BeginPlay()
 		}
 	}
 	
-	
-	
 
 }
 
@@ -46,11 +44,6 @@ void AOctopusPlayerController::SetupInputComponent()
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnRightMousePressed);
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnRightMouseReleased);
 	}
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		EnhancedInput->BindAction(ScrollDownAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnScrollDown);
-		
-	}
 }
 
 void AOctopusPlayerController::PlayerTick(float DeltaTime)
@@ -62,12 +55,7 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 		MoveToCursor();
 	}
 }
-void AOctopusPlayerController::OnScrollDown()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Scroll Down"));
-	SlotMachine->Spin();
-	
-}
+
 void AOctopusPlayerController::OnRightMousePressed()
 {
 	bRightMouseHeld = true;
