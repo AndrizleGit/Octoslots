@@ -118,24 +118,45 @@ FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
 {
 	ACharacter* Player = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
 	const FVector PlayerLocation = Player ? Player->GetActorLocation() : FVector::ZeroVector;
-	
-	const float RandomAngle = FMath::RandRange(0.f,360.f);
-	FVector SpawnLocation = PlayerLocation + FVector(
-		FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
-		FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance, 0.f
-		);
-	
-	SpawnLocation.Z = PlayerLocation.Z;
-	
+
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	if (NavSys)
+	if (!NavSys) return FVector::ZeroVector;
+
+	for (int32 Attempt = 0; Attempt < 20; Attempt++)
 	{
+		const float RandomAngle = FMath::RandRange(0.f, 360.f);
+		FVector CandidateLocation = PlayerLocation + FVector(
+			FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
+			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
+			0.f
+		);
+
+		CandidateLocation.Z = PlayerLocation.Z + 200.f;
+
 		FNavLocation NavLocation;
-		if (NavSys->ProjectPointToNavigation(SpawnLocation, NavLocation, FVector(200.f,200.f,200.f)))
+		if (!NavSys->ProjectPointToNavigation(
+			CandidateLocation, NavLocation, FVector(500.f, 500.f, 2000.f)))
 		{
-			SpawnLocation = NavLocation.Location;
+			continue; 
 		}
+
+		const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
+		if (HorizontalDist < SpawnDistance * 0.5f)
+		{
+			continue; 
+		}
+		
+		const float HeightDiff = NavLocation.Location.Z - PlayerLocation.Z;
+		if (HeightDiff < -StairHeightTolerance)
+		{
+			UE_LOG(LogTemp, Verbose, TEXT("Rejecting spawn at Z=%.1f (player Z=%.1f, diff=%.1f)"),
+				NavLocation.Location.Z, PlayerLocation.Z, HeightDiff);
+			continue;
+		}
+
+		return NavLocation.Location;
 	}
-	
-	return SpawnLocation;
+
+	UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: Failed to find valid spawn location"));
+	return FVector::ZeroVector;
 }
