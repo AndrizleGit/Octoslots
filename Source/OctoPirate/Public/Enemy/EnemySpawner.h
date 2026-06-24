@@ -36,6 +36,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Spawner")
 	void SetSpawningEnabled(bool bEnabled);
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawner")
+	float StairHeightTolerance = 200.f;
+	
 private:
 	void SpawnCycle();
 	UEnemySpawnData* PickWeightedEnemy(float DifficultyCoefficient) const;
