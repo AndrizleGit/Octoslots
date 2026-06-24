@@ -14,7 +14,7 @@ void USlotMachineComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	DopamineCurrent = DopamineMax;
-		PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
+	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
 }
 
 void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -37,6 +37,12 @@ void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 void USlotMachineComponent::Spin()
 {
+	if (bSpinOnCooldown)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Spin blocked — on cooldown"));
+		return;
+	}
+	
 	UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
 	if (!Attributes) return;
 
@@ -44,9 +50,11 @@ void USlotMachineComponent::Spin()
 	if (Attributes->GetCoins() < SpinCost)
 	{
 		OnSpinFailed.Broadcast();
-		UE_LOG(LogTemp, Log, TEXT("Spin denied: costs %.0f coins, player has %.0f"), SpinCost, Attributes->GetCoins());
 		return;
 	}
+	
+	bSpinOnCooldown = true;
+	
 	Attributes->SetCoins(Attributes->GetCoins() - SpinCost);
 
 	DopamineCurrent = DopamineMax;
@@ -186,4 +194,10 @@ void USlotMachineComponent::SetDebuffActive(bool bActive)
 	}
 	
 	OnDebuffStateChanged.Broadcast(bActive);
+}
+
+void USlotMachineComponent::OnSpinAnimationFinished()
+{
+	bSpinOnCooldown = false;
+	UE_LOG(LogTemp, Log, TEXT("Spin animation finished — ready to spin again"));
 }

@@ -75,6 +75,21 @@ public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Slot Machine|Cost")
+	float SpinCooldown = 0.5f; // seconds between allowed spins
+
+	UFUNCTION(BlueprintPure, Category = "Slot Machine")
+	bool IsOnCooldown() const { return bSpinOnCooldown; }
+
+	UFUNCTION(BlueprintCallable, Category = "Slot Machine")
+	void OnSpinAnimationFinished();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Slot Machine")
+	static FText GetSymbolDisplayName(ESlotSymbol Symbol)
+	{
+		return FText::FromString(UEnum::GetDisplayValueAsText(Symbol).ToString());
+	}
+	
 private:
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
@@ -86,4 +101,6 @@ private:
 	void ApplyBuffs(const FSlotResult& Result) const;
 	void RemoveAllBuffs() const;
 	void SetDebuffActive(bool bActive);
+	
+	bool bSpinOnCooldown = false;
 };
