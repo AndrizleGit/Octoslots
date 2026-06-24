@@ -6,12 +6,13 @@
 //#include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
+#include "Enemy/BaseEnemyCharacter.h"
 #include "VFX/DamageNumberActor.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Event_Combat_Hit, "Event.Combat.Hit")
-
+UE_DEFINE_GAMEPLAY_TAG(TAG_Status_Immortal,     "Buffs.Immortal")
 ABaseCharacter::ABaseCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -84,7 +85,10 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 								 AActor* DamageCauser)
 {
 	if (bIsDead) return 0.0f;
+	// -- Check for Immortallity -- 
+	if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_Immortal)) return 0.0f;
 	
+	// -- Update Health Attribute -- 
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
 	
@@ -177,6 +181,11 @@ void ABaseCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Damag
 	for (AActor* Actor : OverlappingActors)
 	{
 		if (!Actor) continue;
+		
+		// -- Skip friendly fire between enemies --
+		ABaseEnemyCharacter* SelfAsEnemy = Cast<ABaseEnemyCharacter>(this);
+		ABaseEnemyCharacter* TargetAsEnemy = Cast<ABaseEnemyCharacter>(Actor);
+		if (SelfAsEnemy && TargetAsEnemy) continue;
 		
 		FVector ToTarget = Actor->GetActorLocation() - Origin;
 		ToTarget.Z = 0.0f;

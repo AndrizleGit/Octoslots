@@ -36,12 +36,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Difficulty")
 	void ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier);
 	
+	UFUNCTION(BlueprintCallable, Category = "Enemy|Status")
+	void Freeze(float Duration);
+	
 	virtual void OnDeath_Implementation() override;
 	
 protected:
 	virtual void PerformAttack_Implementation() override;
 	
 private:
+	void UnFreeze();
+	FTimerHandle FreezeTimerHandle;
+	bool bIsFrozen = false;
 	void ChasePlayer();
 	
 	UPROPERTY()
