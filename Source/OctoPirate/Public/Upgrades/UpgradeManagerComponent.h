@@ -30,6 +30,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
 	TArray<TObjectPtr<UUpgradeData>> AvailableUpgrades;
 	
+	// --- booleen ---
+	UPROPERTY(BlueprintReadWrite, Category = "Config")
+    bool bIsMetaProgressionMode = false;
+
 	/// Die Events kannst du an das widget binden
 	UPROPERTY(BlueprintAssignable, Category = "Upgrades")
 	FOnUpgradePurchased OnUpgradePurchased;
