@@ -7,6 +7,7 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "NiagaraSystem.h"
+#include "NavigationSystem.h"
 #include "OctopusPlayerController.generated.h"
 
 /**

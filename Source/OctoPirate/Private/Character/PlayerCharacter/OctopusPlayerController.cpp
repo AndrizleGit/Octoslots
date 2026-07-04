@@ -84,8 +84,29 @@ void AOctopusPlayerController::MoveToCursor() const
 	}
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
+	
+	// -- find nearest navmesh under cursor -- 
+	FVector Destination = HitResult.ImpactPoint;
 
-	OctopusChar->SetMoveDestination(HitResult.ImpactPoint);
+	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation ProjectedLocation;
+
+		// Search radius around the click point for the nearest valid navmesh spot.
+		// Increase this if your environment objects are large.
+		const FVector QueryExtent(500.f, 500.f, 700.f);
+
+		if (NavSys->ProjectPointToNavigation(Destination, ProjectedLocation, QueryExtent))
+		{
+			Destination = ProjectedLocation.Location;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("MoveToCursor: No valid nav point found near click, ignoring."));
+			return;
+		}
+	}
+	OctopusChar->SetMoveDestination(Destination);
 }
 
 void AOctopusPlayerController::SpawnCursorFX()
