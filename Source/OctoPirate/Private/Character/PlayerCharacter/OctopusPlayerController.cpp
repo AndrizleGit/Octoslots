@@ -83,7 +83,7 @@ void AOctopusPlayerController::MoveToCursor() const
 	{
 		return;
 	}
-
+	// Find nearest available Navmesh
 	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
 	{
 		FNavLocation ProjectedLocation;
