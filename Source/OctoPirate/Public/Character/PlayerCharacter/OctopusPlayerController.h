@@ -17,7 +17,6 @@ UCLASS()
 class OCTOPIRATE_API AOctopusPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
 public:
 	AOctopusPlayerController();
 	
