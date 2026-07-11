@@ -41,5 +41,5 @@ private:
 	void MoveToCursor() const;
 	void SpawnCursorFX();
 	
-	bool bRightMouseHeld = false;
+	bool bToggle = false;
 };

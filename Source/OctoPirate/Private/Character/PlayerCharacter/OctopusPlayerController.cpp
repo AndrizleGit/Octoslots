@@ -9,7 +9,7 @@
 
 AOctopusPlayerController::AOctopusPlayerController()
 {
-	bShowMouseCursor = true;
+	bToggle = true;
 	bEnableClickEvents = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	bEnableMouseOverEvents = true;
@@ -50,7 +50,7 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 	
-	if (!bRightMouseHeld)
+	if (bToggle)
 	{
 		MoveToCursor();
 	}
@@ -58,7 +58,7 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 
 void AOctopusPlayerController::OnRightMousePressed()
 {
-	bRightMouseHeld = !bRightMouseHeld;
+	bToggle = !bToggle;
 	SpawnCursorFX();
 }
 
