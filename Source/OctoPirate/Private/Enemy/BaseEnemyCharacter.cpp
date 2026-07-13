@@ -56,7 +56,7 @@ void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float D
 void ABaseEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	ChasePlayer();
+	
 }
 
 void ABaseEnemyCharacter::ChasePlayer()

@@ -69,7 +69,10 @@ public:
 	FGameplayAttributeData Coins;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Coins)
 	
+	
 public:
 	void ApplyLifesteal(float Damage);
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	float GetAttackDamageValue() const { return AttackDamage.GetCurrentValue(); }
 };
 	
