@@ -7,6 +7,7 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "NiagaraSystem.h"
+#include "NavigationSystem.h"
 #include "OctopusPlayerController.generated.h"
 
 /**
@@ -40,5 +41,5 @@ private:
 	void MoveToCursor() const;
 	void SpawnCursorFX();
 	
-	bool bRightMouseHeld = false;
+	bool bToggle = false;
 };
