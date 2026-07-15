@@ -113,7 +113,7 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	if (DistanceToPlayer > AttackRange)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
+		UE_LOG(LogTemp, Verbose, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
 		return;
 	}
 

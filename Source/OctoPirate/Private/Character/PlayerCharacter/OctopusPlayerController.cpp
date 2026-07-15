@@ -72,6 +72,10 @@ void AOctopusPlayerController::MoveToCursor() const
 	FHitResult HitResult;
 	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult)) return;
 
+	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
+
+	if (!bHit) return;
+	
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
