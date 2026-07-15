@@ -1,6 +1,5 @@
 #include "Enemy/DifficultyManager.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
-#include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
 
@@ -20,23 +19,25 @@ void ADifficultyManager::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	ElapsedTime += DeltaTime;
-	
+    
 	// base coefficient from time
 	float NewCoefficient = ElapsedTime * CoefficientPerSecond;
-	
+    
+	// add player level contribution (higher level pushes difficulty up faster)
 	if (PlayerCharacter && PlayerCharacter->InRunUpgradeManager)
 	{
 		const int32 PlayerLevel = PlayerCharacter->InRunUpgradeManager->GetCurrentLevel();
 		NewCoefficient += PlayerLevel * CoefficientPerPlayerLevel;
 	}
-	
+    
 	DifficultyCoefficient = NewCoefficient;
 }
 
+// iterates all actors in the world to find the placed DifficultyManager instance
 ADifficultyManager* ADifficultyManager::Get(UWorld* World)
 {
 	if (!World) return nullptr;
-	
+    
 	for (TActorIterator<ADifficultyManager> It(World); It; ++It)
 	{
 		return *It;
