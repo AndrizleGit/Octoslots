@@ -119,6 +119,26 @@ public:
 	// - Pickup Component -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup")
 	TObjectPtr<UPickupRadiusComponent> PickupRadius;
+	
+	// --- Deflect System ---
+
+	// activates/deactivates the deflect window — can be set from slot machine buff or input
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void SetDeflectActive(bool bActive);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool IsDeflectActive() const { return bDeflectActive; }
+
+	// how long the deflect window stays open on left click
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectDuration = 0.5f;
+
+	// placeholder — replace with actual animation call when ready
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectStarted();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectEnded();
 	    
 protected:
 	virtual void BeginPlay() override;
@@ -129,7 +149,6 @@ protected:
 	// React to the bomb joker being granted/removed.
 	virtual void OnJokerEffectAdded(FName EffectID, float Value) override;
 	virtual void OnJokerEffectRemoved(FName EffectID) override;
-
 public:	
 	// --- Tentacle Attack ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
@@ -183,7 +202,11 @@ private:
 	void SpawnBombBehind();
 
 	FTimerHandle BombSpawnTimer;
-
+	bool bDeflectActive = false;
+	FTimerHandle DeflectTimer;
+	
 	UFUNCTION()
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	void DeactivateDeflect();
 };
