@@ -13,6 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "VFX/ExplosionStatics.h"
+#include "Animation/AnimInstance.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -55,7 +56,7 @@ void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float D
 void ABaseEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	ChasePlayer();
+	
 }
 
 void ABaseEnemyCharacter::ChasePlayer()
@@ -127,11 +128,25 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 		AttackInterval = BasicAttributes->GetAttackSpeed();
 	}
 
+	// --- Play the attack animation montage (if assigned in the Blueprint) ---
+	if (AttackMontage)
+	{
+		if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		{
+			AnimInstance->Montage_Play(AttackMontage);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Enemy %s: AttackMontage set but mesh has no AnimInstance — assign an Anim Blueprint to the mesh."), *GetName());
+		}
+	}
+
 	Super::PerformAttack_Implementation();
 }
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] ABaseEnemyCharacter::OnDeath_Implementation reached for %s"), *GetName());
 	Super::OnDeath_Implementation();
 	
 	const FVector SpawnLocation = GetActorLocation();
@@ -164,7 +179,9 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	// The shared routine only hits enemies, so dying enemies can chain-react.
 	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
 	{
-		if (Player->HasJokerEffect("DeathExplosion"))
+		const bool bHasDeathExplosion = Player->HasJokerEffect("DeathExplosion");
+		UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] enemy %s died; player has joker=%d"), *GetName(), bHasDeathExplosion);
+		if (bHasDeathExplosion)
 		{
 			UExplosionStatics::Explode(
 				this,

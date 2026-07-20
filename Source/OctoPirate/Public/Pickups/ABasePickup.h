@@ -30,6 +30,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pickup")
 	float PickupTriggerDistance = 50.f;
 	
+	void StopPull();
+	
 private:
 	bool bBeingPulled = false;
 	bool bPickedUp = false;

@@ -6,66 +6,90 @@
 
 UPickupRadiusComponent::UPickupRadiusComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UPickupRadiusComponent::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	SphereCollision = NewObject<USphereComponent>(GetOwner(), TEXT("PickupRadiusSphere"));
-	SphereCollision->RegisterComponent();
-	SphereCollision->AttachToComponent(GetOwner()->GetRootComponent(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-	
-	ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
-	if (Character && Character->BasicAttributes)
-	{
-		SphereCollision->SetSphereRadius(Character->BasicAttributes->GetPickupRadius());
-	}
-	else
-	{
-		SphereCollision->SetSphereRadius(200.f);
-	}
-	
-	SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SphereCollision->SetCollisionObjectType(ECC_WorldDynamic);
-	SphereCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
-	UE_LOG(LogTemp, Warning, TEXT("PickupRadiusComponent BeginPlay fired on %s"), *GetOwner()->GetName());
-	SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &UPickupRadiusComponent::OnSphereBeginOverlap);
+    Super::BeginPlay();
+    
+    SphereCollision = NewObject<USphereComponent>(GetOwner(), TEXT("PickupRadiusSphere"));
+    SphereCollision->RegisterComponent();
+    SphereCollision->AttachToComponent(GetOwner()->GetRootComponent(),
+        FAttachmentTransformRules::SnapToTargetNotIncludingScale);
+    
+    ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
+    if (Character && Character->BasicAttributes)
+    {
+        SphereCollision->SetSphereRadius(Character->BasicAttributes->GetPickupRadius());
+    }
+    else
+    {
+        SphereCollision->SetSphereRadius(200.f);
+    }
+    
+    SphereCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+    SphereCollision->SetCollisionObjectType(ECC_WorldDynamic);
+    SphereCollision->SetCollisionResponseToAllChannels(ECR_Overlap);
+
+    SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &UPickupRadiusComponent::OnSphereBeginOverlap);
+    SphereCollision->OnComponentEndOverlap.AddDynamic(this, &UPickupRadiusComponent::OnSphereEndOverlap);
 }
 
 void UPickupRadiusComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	const FVector PlayerLocation = GetOwner()->GetActorLocation();
-	
-	ActivePickups.RemoveAll([](ABasePickup* Pickup)
-	{
-		return !IsValid(Pickup);
-	});
-	
-	for (ABasePickup* Pickup : ActivePickups)
-	{
-		Pickup->PullToward(PlayerLocation, Pickup->PullSpeed, GetOwner());
-	}
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    
+    const FVector PlayerLocation = GetOwner()->GetActorLocation();
+    const float Radius = SphereCollision ? SphereCollision->GetScaledSphereRadius() : 200.f;
+
+    ActivePickups.RemoveAll([](ABasePickup* Pickup)
+    {
+        return !IsValid(Pickup);
+    });
+    
+    for (ABasePickup* Pickup : ActivePickups)
+    {
+        const float Dist = FVector::Dist(PlayerLocation, Pickup->GetActorLocation());
+
+        if (Dist <= Radius)
+        {
+            // Still in range — keep pulling
+            Pickup->PullToward(PlayerLocation, Pickup->PullSpeed, GetOwner());
+        }
+        else
+        {
+            // Left the range — stop pulling
+            Pickup->StopPull();
+        }
+    }
 }
 
 void UPickupRadiusComponent::UpdateRadius(float NewRadius)
 {
-	if (SphereCollision)
-	{
-		SphereCollision->SetSphereRadius(NewRadius);
-	}
+    if (SphereCollision)
+    {
+        SphereCollision->SetSphereRadius(NewRadius);
+    }
 }
 
-void UPickupRadiusComponent::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherOverlappedComponent, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void UPickupRadiusComponent::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor, UPrimitiveComponent* OtherOverlappedComponent, int32 OtherBodyIndex,
+    bool bFromSweep, const FHitResult& SweepResult)
 {
-	ABasePickup* Pickup = Cast<ABasePickup>(OtherActor);
-	if (!Pickup) return;
-	if (ActivePickups.Contains(Pickup)) return;
-	
-	ActivePickups.Add(Pickup);
-	UE_LOG(LogTemp, Warning, TEXT("Overlap detected with %s"), *OtherActor->GetName());
+    ABasePickup* Pickup = Cast<ABasePickup>(OtherActor);
+    if (!Pickup) return;
+    if (ActivePickups.Contains(Pickup)) return;
+    
+    ActivePickups.Add(Pickup);
 }
 
+void UPickupRadiusComponent::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,
+    AActor* OtherActor, UPrimitiveComponent* OtherOverlappedComponent, int32 OtherBodyIndex)
+{
+    ABasePickup* Pickup = Cast<ABasePickup>(OtherActor);
+    if (!Pickup) return;
+
+    Pickup->StopPull();
+    ActivePickups.Remove(Pickup);
+}

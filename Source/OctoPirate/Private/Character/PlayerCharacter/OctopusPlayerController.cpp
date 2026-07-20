@@ -9,7 +9,7 @@
 
 AOctopusPlayerController::AOctopusPlayerController()
 {
-	bShowMouseCursor = true;
+	bToggle = true;
 	bEnableClickEvents = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	bEnableMouseOverEvents = true;
@@ -50,7 +50,7 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
 	
-	if (bRightMouseHeld)
+	if (bToggle)
 	{
 		MoveToCursor();
 	}
@@ -58,34 +58,49 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 
 void AOctopusPlayerController::OnRightMousePressed()
 {
-	bRightMouseHeld = true;
-	MoveToCursor();
+	bToggle = !bToggle;
 	SpawnCursorFX();
 }
 
 void AOctopusPlayerController::OnRightMouseReleased()
 {
-	bRightMouseHeld = false;
+	
 }
 
 void AOctopusPlayerController::MoveToCursor() const
 {
-	UE_LOG(LogTemp, Error, TEXT("MoveToCursor called"));
 	FHitResult HitResult;
+	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult)) return;
 
-	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
-
-	if (!bHit) return;
-	if (bHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit: %s at %s"),
-			*HitResult.GetActor()->GetName(),
-			*HitResult.ImpactPoint.ToString());
-	}
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
-	OctopusChar->SetMoveDestination(HitResult.ImpactPoint);
+	FVector Destination = HitResult.ImpactPoint;
+
+	// Skip redundant nav queries/moves if cursor hasn't moved much
+	static FVector LastDestination = FVector::ZeroVector;
+	if (FVector::DistSquared(Destination, LastDestination) < FMath::Square(25.f))
+	{
+		return;
+	}
+	// Find nearest available Navmesh
+	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation ProjectedLocation;
+		const FVector QueryExtent(500.f, 500.f, 700.f);
+
+		if (NavSys->ProjectPointToNavigation(Destination, ProjectedLocation, QueryExtent))
+		{
+			Destination = ProjectedLocation.Location;
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	LastDestination = Destination;
+	OctopusChar->SetMoveDestination(Destination);
 }
 
 void AOctopusPlayerController::SpawnCursorFX()

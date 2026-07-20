@@ -40,6 +40,14 @@ void UExplosionStatics::Explode(
 		World, Location, Radius, ObjectTypes,
 		ABaseEnemyCharacter::StaticClass(), IgnoreActors, Overlapped);
 
+	UE_LOG(LogTemp, Warning, TEXT("[Explosion] at %s radius=%.0f dmg=%.0f -> %d enemies hit"),
+		*Location.ToString(), Radius, Damage, Overlapped.Num());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red,
+			FString::Printf(TEXT("Explosion: %d enemies hit"), Overlapped.Num()));
+	}
+
 	for (AActor* Actor : Overlapped)
 	{
 		if (!Actor) continue;

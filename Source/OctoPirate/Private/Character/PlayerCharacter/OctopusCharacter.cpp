@@ -46,7 +46,6 @@ AOctopusCharacter::AOctopusCharacter()
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	BaseConeMaxDistance = ConeMaxDistance;
 
 	// Force absolute rotation & scale AFTER Blueprint init so the BP can't override it
 	if (TentacleMesh)
@@ -133,16 +132,15 @@ void AOctopusCharacter::PerformAttack_Implementation()
         // --- Show tentacle and play attack animation ---
         if (TentacleMesh && TentacleAttackMontage)
         {
-            TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, -90.f, 0.f));
-
-            const float RangeRatio = (BaseConeMaxDistance > 0.f) ? ConeMaxDistance / BaseConeMaxDistance : 1.f;
-            const float RangeFactor = FMath::Pow(RangeRatio, 5.f);
-            const float FinalScale = BaseTentacleScale * RangeFactor;
-            TentacleMesh->SetWorldScale3D(FVector(FinalScale));
-            UE_LOG(LogTemp, Warning, TEXT("Tentacle - ConeMax: %f | Base: %f | RangeFactor: %f | BaseTentacleScale: %f | FinalScale: %f"),
-                ConeMaxDistance, BaseConeMaxDistance, RangeFactor, BaseTentacleScale, FinalScale);
+            TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, TentacleYawOffset, 0.f));
+            TentacleMesh->SetWorldScale3D(FVector(1.f));
 
             TentacleMesh->SetHiddenInGame(false);
+
+            if (!TentacleMesh->GetSkeletalMeshAsset())
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Tentacle] TentacleMesh has no Skeletal Mesh asset assigned in BP_OctopusCharacter — nothing will render."));
+            }
 
             UAnimInstance* AnimInstance = TentacleMesh->GetAnimInstance();
             if (AnimInstance)
@@ -153,10 +151,23 @@ void AOctopusCharacter::PerformAttack_Implementation()
                 EndDelegate.BindUObject(this, &AOctopusCharacter::OnTentacleMontageEnded);
                 AnimInstance->Montage_SetEndDelegate(EndDelegate, TentacleAttackMontage);
             }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Tentacle] TentacleMesh->GetAnimInstance() is null — set the component's Anim Class (Anim Blueprint) in BP_OctopusCharacter, or the montage cannot play."));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[Tentacle] Skipped: TentacleMesh=%s, TentacleAttackMontage=%s. Assign the montage in BP_OctopusCharacter (Combat|Tentacle)."),
+                TentacleMesh ? TEXT("OK") : TEXT("NULL"),
+                TentacleAttackMontage ? TEXT("OK") : TEXT("NULL"));
         }
     }
     else
     {
+        // No target found — damage still applies in the facing direction, but the
+        // tentacle visual only plays when there is an enemy to orient toward.
+        UE_LOG(LogTemp, Verbose, TEXT("[Tentacle] No closest enemy — tentacle visual skipped this attack."));
         ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
     }
 }
@@ -258,7 +269,9 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
             const FVector KnockbackDirection = ToTarget.GetSafeNormal();
             HitCharacter->LaunchCharacter(KnockbackDirection * KnockbackStrength, true, false);
         }
-        
+    	
+    	SpawnDamageNumber(Actor, Damage);
+    	
         // -- Lifesteal --
         if (lifeStealEnabled) BasicAttributes->ApplyLifesteal(Damage);
 
@@ -314,6 +327,7 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
 {
 	Super::OnJokerEffectAdded(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] OnJokerEffectAdded: '%s' (value %.1f)"), *EffectID.ToString(), Value);
 	RefreshBombTimer();
 }
 
@@ -325,8 +339,17 @@ void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
 
 void AOctopusCharacter::RefreshBombTimer()
 {
-	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bHasJoker = HasJokerEffect("BombDrop");
+	const bool bWant = bHasJoker && BombClass != nullptr && BombSpawnInterval > 0.f;
 	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] RefreshBombTimer: HasJoker=%d BombClassSet=%d Interval=%.1f -> want=%d (alreadyActive=%d)"),
+		bHasJoker, BombClass != nullptr, BombSpawnInterval, bWant, bActive);
+
+	if (bHasJoker && !BombClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Bomb] BombDrop joker is active but BombClass is NOT set on BP_OctopusCharacter — no bombs will spawn."));
+	}
 
 	if (bWant && !bActive)
 	{
@@ -352,7 +375,23 @@ void AOctopusCharacter::SpawnBombBehind()
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = this;
 
-	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	ABombActor* Bomb = World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] SpawnBombBehind at %s -> %s"), *SpawnLocation.ToString(), Bomb ? TEXT("spawned") : TEXT("FAILED"));
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Bomb dropped: %s"), Bomb ? TEXT("OK") : TEXT("FAILED")));
+	}
+}
+
+void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
+{
+	// Console cheat for testing: `GrantJoker BombDrop` or `GrantJoker DeathExplosion`
+	AddJokerEffect(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] GrantJoker cheat: granted '%s'"), *EffectID.ToString());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Granted joker: %s"), *EffectID.ToString()));
+	}
 }
 
 
