@@ -43,6 +43,12 @@ void AOctopusPlayerController::SetupInputComponent()
 	{
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnRightMousePressed);
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnRightMouseReleased);
+		
+		if (LeftClickAction)
+		{
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnLeftClickPressed);
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnLeftClickReleased);
+		}
 	}
 }
 
@@ -61,6 +67,20 @@ void AOctopusPlayerController::OnRightMousePressed()
 	bToggle = !bToggle;
 	SpawnCursorFX();
 }
+
+void AOctopusPlayerController::OnLeftClickPressed()
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
+	if (!OctopusChar) return;
+	OctopusChar->SetDeflectActive(true);
+}
+
+void AOctopusPlayerController::OnLeftClickReleased()
+{
+	// nothing for now
+	// deflect stays active until DeflectDuration expires
+}
+
 
 void AOctopusPlayerController::OnRightMouseReleased()
 {
