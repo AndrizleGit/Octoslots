@@ -47,7 +47,9 @@ protected:
 	// whether this projectile has already been deflected
 	bool bIsDeflected = false;
 	
+	float SpawnZ = 0.f;
 private:
+	
 	FVector LastFrameVelocity = FVector::ZeroVector;
 	
 	UFUNCTION()

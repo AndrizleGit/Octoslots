@@ -72,7 +72,10 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Mortar")
     bool IsDestroyed() const { return bIsDestroyed; }
-
+    
+    UFUNCTION(BlueprintCallable, Category = "Mortar")
+    void StartFiring();
+    
 private:
     bool bIsDestroyed = false;
 
@@ -86,7 +89,6 @@ private:
     UPROPERTY()
     TObjectPtr<UDecalComponent> ActiveWarningDecal;
 
-    void StartFiring();
     void FireCycle();
     void SpawnWarningDecal(const FVector& TargetLocation);
     void Impact();

@@ -6,6 +6,8 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
+#include "Boss/BossMonkey.h"
+#include "Character/PlayerCharacter/OctopusCharacter.h"
 
 ACannon::ACannon()
 {
@@ -46,14 +48,29 @@ void ACannon::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* O
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
     bool bFromSweep, const FHitResult& SweepResult)
 {
+    if (!OtherActor) return;
+    if (Cast<AOctopusCharacter>(OtherActor)) return;
     if (bHasFired) return;
 
-    // only accept deflected cannonballs
     ABaseProjectile* Projectile = Cast<ABaseProjectile>(OtherActor);
-    if (!Projectile || !Projectile->WasDeflected()) return;
-    
-    // non-deflected cannonball
-    TriggerCannon();
+    if (!Projectile) return;
+
+    if (Projectile->WasDeflected())
+    {
+        // deflected cannonball (trigger cannon and destroy ball)
+        TriggerCannon();
+        Projectile->Destroy();
+    }
+    else
+    {
+        // non-deflected cannonball (small explosion VFX but no effect)
+        if (FireVFX)
+        {
+            UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+                GetWorld(), FireVFX, Projectile->GetActorLocation());
+        }
+        Projectile->Destroy();
+    }
 }
 
 void ACannon::TriggerCannon()
@@ -74,17 +91,19 @@ void ACannon::Fire()
 {
     if (!LinkedMortar || LinkedMortar->IsDestroyed()) return;
 
-    // play fire VFX
     if (FireVFX)
     {
-        UNiagaraFunctionLibrary::SpawnSystemAtLocation(
-            GetWorld(), FireVFX, GetActorLocation());
+        UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), FireVFX, GetActorLocation());
     }
 
-    // destroy the linked mortar
     LinkedMortar->DestroyMortar();
-
     bHasFired = true;
+
+    // notify boss monkey to check win condition
+    if (BossMonkey)
+    {
+        BossMonkey->CheckAllMortarsDestroyed();
+    }
 
     UE_LOG(LogTemp, Log, TEXT("Cannon %s fired — destroyed mortar %s"),*GetName(), *LinkedMortar->GetName());
 }

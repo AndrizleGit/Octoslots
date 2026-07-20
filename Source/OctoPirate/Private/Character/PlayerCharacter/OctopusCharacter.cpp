@@ -99,6 +99,24 @@ void AOctopusCharacter::BeginPlay()
 	
 }
 
+void AOctopusCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!bCanDeflect && CooldownRemaining > 0.f)
+	{
+		CooldownRemaining -= DeltaTime;
+		OnDeflectCooldownChanged.Broadcast(1.f - (CooldownRemaining / DeflectCooldown));
+
+		if (CooldownRemaining <= 0.f)
+		{
+			CooldownRemaining = 0.f;
+			bCanDeflect = true;
+			OnDeflectCooldownChanged.Broadcast(1.f);
+		}
+	}
+}
+
 void AOctopusCharacter::PerformAttack_Implementation()
 {
     if (bIsDead) return;
@@ -401,23 +419,40 @@ void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
 
 void AOctopusCharacter::SetDeflectActive(bool bActive)
 {
-	UE_LOG(LogTemp, Error, TEXT("SetDeflectActive called — bActive: %d, current: %d"), bActive, bDeflectActive);
-    
 	if (bActive == bDeflectActive) return;
-
 	bDeflectActive = bActive;
-	UE_LOG(LogTemp, Error, TEXT("bDeflectActive is now: %d"), bDeflectActive);
 
 	if (bActive)
 	{
-		GetWorldTimerManager().SetTimer(DeflectTimer, this, &AOctopusCharacter::DeactivateDeflect, DeflectDuration, false);
 		OnDeflectStarted();
 	}
 	else
 	{
-		GetWorldTimerManager().ClearTimer(DeflectTimer);
 		OnDeflectEnded();
 	}
+}
+
+void AOctopusCharacter::TriggerDeflect()
+{
+	if (!bCanDeflect || bDeflectActive) return;
+
+	// start cooldown instantly
+	bCanDeflect = false;
+	CooldownRemaining = DeflectCooldown;
+	OnDeflectCooldownChanged.Broadcast(0.f);
+
+	SetDeflectActive(true);
+
+	// deactivate deflect window after short time
+	GetWorldTimerManager().SetTimer(
+		DeflectTimer,
+		[this]()
+		{
+			SetDeflectActive(false);
+		},
+		0.2f,
+		false
+	);
 }
 
 void AOctopusCharacter::DeactivateDeflect()

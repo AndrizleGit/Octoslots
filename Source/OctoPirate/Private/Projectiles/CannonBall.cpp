@@ -5,13 +5,13 @@
 
 ACannonBall::ACannonBall()
 {
-	// cannonball specific defaults
 	bCanBeDeflected = true;
 	bDealDamageOnHit = true;
 	ProjectileDamage = 25.f;
 	ProjectileMovement->InitialSpeed = 1500.f;
 	ProjectileMovement->MaxSpeed = 3000.f;
-	ProjectileMovement->ProjectileGravityScale = 0.3f; // slight arc
+	ProjectileMovement->ProjectileGravityScale = 0.0f;
+	ProjectileMovement->bShouldBounce = false; 
 }
 
 void ACannonBall::OnDeflected_Implementation(const FVector& ReflectedVelocity, AActor* Deflector)
@@ -22,12 +22,16 @@ void ACannonBall::OnDeflected_Implementation(const FVector& ReflectedVelocity, A
 	SetOwner(Deflector);
 	SetInstigator(Cast<APawn>(Deflector));
 	CollisionSphere->IgnoreActorWhenMoving(Deflector, true);
-
-	// disable collision with pawns after deflection so it cant hit enemies
 	CollisionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 
-	// apply half speed after deflection
-	const FVector SlowedVelocity = ReflectedVelocity * PostDeflectSpeedMultiplier;
+	// update spawn Z to current height after deflection
+	SpawnZ = GetActorLocation().Z;
+
+	const FVector FlatVelocity = FVector(ReflectedVelocity.X, ReflectedVelocity.Y, 0.f);
+	const FVector SlowedVelocity = FlatVelocity.GetSafeNormal() * FlatVelocity.Size() * PostDeflectSpeedMultiplier;
+
+	ProjectileMovement->SetActive(false);
+	ProjectileMovement->SetActive(true);
 	ProjectileMovement->Velocity = SlowedVelocity;
 	ProjectileMovement->UpdateComponentVelocity();
 

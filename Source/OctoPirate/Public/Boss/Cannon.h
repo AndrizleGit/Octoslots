@@ -20,6 +20,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	// reference to the boss monkey (assign in editor)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cannon")
+	TObjectPtr<class ABossMonkey> BossMonkey;
+	
 	// the mortar this cannon is linked to and will destroy when fired
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cannon")
 	TObjectPtr<AMortar> LinkedMortar;
