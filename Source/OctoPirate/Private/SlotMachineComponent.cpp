@@ -178,6 +178,7 @@ void USlotMachineComponent::RemoveAllBuffs() const
     if (PlayerCharacter)
     {
         PlayerCharacter->RemoveBuffs();
+         PlayerCharacter->bHelicopterMode = false;
     }
 }
 
