@@ -450,7 +450,7 @@ void AOctopusCharacter::TriggerDeflect()
 		{
 			SetDeflectActive(false);
 		},
-		0.2f,
+		0.5f,
 		false
 	);
 }

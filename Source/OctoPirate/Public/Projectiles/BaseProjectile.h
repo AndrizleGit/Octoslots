@@ -47,6 +47,12 @@ protected:
 	// whether this projectile has already been deflected
 	bool bIsDeflected = false;
 	
+	virtual void HandleImpact(AActor* OtherActor, const FHitResult& Hit);
+	
+	// Computes the velocity to apply after a deflect
+	virtual FVector ComputeDeflectedVelocity(const FVector& ReflectedVelocity, AActor* Deflector) const { return ReflectedVelocity; }
+	
+	bool bLockToSpawnHeight = true;
 	float SpawnZ = 0.f;
 private:
 	
