@@ -32,9 +32,16 @@ void UTreasureMapComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	// ...
 }
 
-void UTreasureMapComponent::AddDigCount()
+void UTreasureMapComponent::AddCannonFragment()
 {
-	TreasureDug += 1.f; 
+	CannonFragment += 1; 
+}
+
+int UTreasureMapComponent::SubmitCannonFragment()
+{
+	int currentCannonFragment = CannonFragment;
+	CannonFragment = 0;
+	return currentCannonFragment;
 }
 
 void UTreasureMapComponent::SpawnTreasure()

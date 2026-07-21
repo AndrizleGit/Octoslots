@@ -38,9 +38,11 @@ public:
 	
 	// --- Public API ---
 	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
-	void AddDigCount();
+	void AddCannonFragment();
 	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
 	void SpawnTreasure();
+	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
+	int SubmitCannonFragment();
 	// -- Treasure Actor -- 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
 	TSubclassOf<AActor> TreasureClass;
@@ -53,7 +55,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 private:
-	float TreasureDug = 0.f;
+	int CannonFragment = 0;
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
 	
