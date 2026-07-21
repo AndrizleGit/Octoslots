@@ -19,6 +19,7 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	
 }
 
 void ABaseEnemyCharacter::BeginPlay()
@@ -146,7 +147,12 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] ABaseEnemyCharacter::OnDeath_Implementation reached for %s"), *GetName());
+
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
+	
 	Super::OnDeath_Implementation();
 	
 	const FVector SpawnLocation = GetActorLocation();
