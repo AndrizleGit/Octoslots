@@ -1,7 +1,10 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Projectiles/BaseProjectile.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -46,7 +49,7 @@ AOctopusCharacter::AOctopusCharacter()
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// Force absolute rotation & scale AFTER Blueprint init so the BP can't override it
 	if (TentacleMesh)
 	{
@@ -91,6 +94,26 @@ void AOctopusCharacter::BeginPlay()
 	if (InRunUpgradeManager)
 	{
 		InRunUpgradeManager->CaptureBaseline();
+	}
+	
+	
+}
+
+void AOctopusCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!bCanDeflect && CooldownRemaining > 0.f)
+	{
+		CooldownRemaining -= DeltaTime;
+		OnDeflectCooldownChanged.Broadcast(1.f - (CooldownRemaining / DeflectCooldown));
+
+		if (CooldownRemaining <= 0.f)
+		{
+			CooldownRemaining = 0.f;
+			bCanDeflect = true;
+			OnDeflectCooldownChanged.Broadcast(1.f);
+		}
 	}
 }
 
@@ -394,4 +417,45 @@ void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
 	}
 }
 
+void AOctopusCharacter::SetDeflectActive(bool bActive)
+{
+	if (bActive == bDeflectActive) return;
+	bDeflectActive = bActive;
 
+	if (bActive)
+	{
+		OnDeflectStarted();
+	}
+	else
+	{
+		OnDeflectEnded();
+	}
+}
+
+void AOctopusCharacter::TriggerDeflect()
+{
+	if (!bCanDeflect || bDeflectActive) return;
+
+	// start cooldown instantly
+	bCanDeflect = false;
+	CooldownRemaining = DeflectCooldown;
+	OnDeflectCooldownChanged.Broadcast(0.f);
+
+	SetDeflectActive(true);
+
+	// deactivate deflect window after short time
+	GetWorldTimerManager().SetTimer(
+		DeflectTimer,
+		[this]()
+		{
+			SetDeflectActive(false);
+		},
+		0.2f,
+		false
+	);
+}
+
+void AOctopusCharacter::DeactivateDeflect()
+{
+	SetDeflectActive(false);
+}

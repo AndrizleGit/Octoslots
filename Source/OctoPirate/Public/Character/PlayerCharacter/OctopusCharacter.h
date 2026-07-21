@@ -21,6 +21,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonTrailBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Debuffs_PoisonTrailDebuff)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeflectCooldownChanged, float, NormalizedValue);
+
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -119,9 +121,42 @@ public:
 	// - Pickup Component -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup")
 	TObjectPtr<UPickupRadiusComponent> PickupRadius;
+	
+	// --- Deflect System ---
+
+	// activates/deactivates the deflect window — can be set from slot machine buff or input
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void SetDeflectActive(bool bActive);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool IsDeflectActive() const { return bDeflectActive; }
+
+	// how long the deflect window stays open on left click
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectDuration = 0.5f;
+
+	// placeholder — replace with actual animation call when ready
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectStarted();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectEnded();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectCooldown = 3.f;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool CanDeflect() const { return bCanDeflect; }
 	    
+	UPROPERTY(BlueprintAssignable, Category = "Combat|Deflect")
+	FOnDeflectCooldownChanged OnDeflectCooldownChanged;
+	
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void TriggerDeflect();
+	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PerformAttack_Implementation() override;
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
 	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
@@ -129,7 +164,6 @@ protected:
 	// React to the bomb joker being granted/removed.
 	virtual void OnJokerEffectAdded(FName EffectID, float Value) override;
 	virtual void OnJokerEffectRemoved(FName EffectID) override;
-
 public:	
 	// --- Tentacle Attack ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
@@ -183,7 +217,14 @@ private:
 	void SpawnBombBehind();
 
 	FTimerHandle BombSpawnTimer;
-
+	bool bDeflectActive = false;
+	FTimerHandle DeflectTimer;
+	
 	UFUNCTION()
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	void DeactivateDeflect();
+	
+	bool bCanDeflect = true;
+	float CooldownRemaining = 0.f;
 };
