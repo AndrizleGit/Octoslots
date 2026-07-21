@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TaskSyncManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
@@ -33,6 +34,11 @@ void ABaseEnemyCharacter::BeginPlay()
 		BasicAttributes->SetAttackDamage(7.f);
 		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
+	}
+	
+	if (SpawnVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnVFX, GetActorLocation());
 	}
 	
 	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));

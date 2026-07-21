@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/BaseCharacter.h"
+#include "NiagaraSystem.h"
 #include "Components/WidgetComponent.h"
 #include "BaseEnemyCharacter.generated.h"
 
@@ -44,6 +45,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Status")
 	void Freeze(float Duration);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|VFX")
+	TObjectPtr<UNiagaraSystem> SpawnVFX;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> HealthBarWidget;
