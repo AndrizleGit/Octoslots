@@ -46,7 +46,8 @@ public:
 	// -- Treasure Actor -- 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
 	TSubclassOf<AActor> TreasureClass;
-	
+	7
+	int CannonFragment = 0;
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -55,7 +56,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 private:
-	int CannonFragment = 0;
+	
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
 	

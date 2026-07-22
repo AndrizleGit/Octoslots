@@ -186,7 +186,12 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	{
 		const FVector TreasureMapLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f);
 		
-		GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+		const float Roll = FMath::RandRange(0.0f, 1.0f);
+		if (Roll <= TreasuremapDropChance)
+		{
+			GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+		}
+		
 	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
