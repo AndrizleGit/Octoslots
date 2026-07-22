@@ -20,8 +20,19 @@ protected:
     virtual void BeginPlay() override;
 
 public:
-    // --- Config ---
+    
+    // --- Audio ---
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mortar|Audio")
+    TObjectPtr<class USoundBase> FireSound;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mortar|Audio")
+    TObjectPtr<class USoundBase> ImpactSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mortar|Audio")
+    TObjectPtr<class USoundBase> DestructionSound;
+    
+    // --- Config ---
+    
     // time between each shot cycle
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mortar")
     float FireInterval = 6.f;
