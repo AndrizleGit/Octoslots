@@ -118,6 +118,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
 	TObjectPtr<class UNiagaraSystem> DeathExplosionVFX;
+
+	// Sound played at the dying enemy's location. Leave empty for silence.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	TObjectPtr<USoundBase> DeathExplosionSound;
+
+	// Volume multiplier applied to DeathExplosionSound.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion", meta = (ClampMin = "0.0"))
+	float DeathExplosionSoundVolume = 1.f;
 	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
