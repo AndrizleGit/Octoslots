@@ -43,6 +43,12 @@ void AOctopusPlayerController::SetupInputComponent()
 	{
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnRightMousePressed);
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnRightMouseReleased);
+		
+		if (LeftClickAction)
+		{
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnLeftClickPressed);
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnLeftClickReleased);
+		}
 	}
 }
 
@@ -62,6 +68,20 @@ void AOctopusPlayerController::OnRightMousePressed()
 	SpawnCursorFX();
 }
 
+void AOctopusPlayerController::OnLeftClickPressed()
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
+	if (!OctopusChar) return;
+	OctopusChar->TriggerDeflect();
+}
+
+void AOctopusPlayerController::OnLeftClickReleased()
+{
+	// nothing for now
+	// deflect stays active until DeflectDuration expires
+}
+
+
 void AOctopusPlayerController::OnRightMouseReleased()
 {
 	
@@ -72,6 +92,10 @@ void AOctopusPlayerController::MoveToCursor() const
 	FHitResult HitResult;
 	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult)) return;
 
+	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
+
+	if (!bHit) return;
+	
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
