@@ -31,11 +31,15 @@ void ACrabThrower::Tick(float DeltaTime)
     {
         if (DistToPlayer > PanicRange)
         {
-            EnterChasing(); 
+            if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+            {
+                AnimInstance->Montage_Stop(0.f, PanicMontage);
+            }
+            EnterChasing();
         }
         else
         {
-            return; // stay panicking
+            return; 
         }
     }
 
@@ -165,14 +169,16 @@ void ACrabThrower::EnterPanicking()
     CurrentState = ECrabThrowerState::Panicking;
     GetCharacterMovement()->StopMovementImmediately();
 
+    if (AAIController* AICon = Cast<AAIController>(GetController()))
+    {
+        AICon->StopMovement();
+    }
+
     if (PanicMontage)
     {
         if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
         {
-            AnimInstance->Montage_Play(PanicMontage);
-            FOnMontageEnded EndDelegate;
-            EndDelegate.BindUObject(this, &ACrabThrower::OnPanicMontageEnded);
-            AnimInstance->Montage_SetEndDelegate(EndDelegate, PanicMontage);
+            AnimInstance->Montage_Play(PanicMontage, 1.f, EMontagePlayReturnType::MontageLength, 0.f, true); // bLoop = true
         }
     }
 }
