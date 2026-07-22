@@ -19,6 +19,12 @@ protected:
     virtual void PerformAttack_Implementation() override;
 
 public:
+	
+	// --- Sound ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> ExplosionSound;
+	
+	// --- Explosion ---
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SuicideCrab")
 	float ExplosionTriggerRange = 150.f;
 

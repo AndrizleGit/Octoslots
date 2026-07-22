@@ -5,9 +5,9 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "VFX/BombActor.h"
 #include "Engine/World.h"
@@ -149,6 +149,8 @@ void AOctopusCharacter::PerformAttack_Implementation()
         SetActorRotation(AttackRotation);
 
         ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
+    	
+    	PlaySFX(this, AttackSound, GetActorLocation());
 
         SetActorRotation(OriginalRotation);
 
@@ -206,6 +208,8 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 void AOctopusCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
+	
+	PlaySFX(this, DeathSound, GetActorLocation());
 	
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC)
@@ -442,6 +446,8 @@ void AOctopusCharacter::TriggerDeflect()
 	OnDeflectCooldownChanged.Broadcast(0.f);
 
 	SetDeflectActive(true);
+	
+	PlaySFX(this, DeflectSound, GetActorLocation());
 
 	// deactivate deflect window after short time
 	GetWorldTimerManager().SetTimer(
@@ -450,7 +456,7 @@ void AOctopusCharacter::TriggerDeflect()
 		{
 			SetDeflectActive(false);
 		},
-		0.2f,
+		0.5f,
 		false
 	);
 }

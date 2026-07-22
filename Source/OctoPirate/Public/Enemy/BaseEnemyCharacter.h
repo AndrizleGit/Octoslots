@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/BaseCharacter.h"
+#include "NiagaraSystem.h"
 #include "Components/WidgetComponent.h"
 #include "BaseEnemyCharacter.generated.h"
 
@@ -12,11 +13,7 @@ class OCTOPIRATE_API ABaseEnemyCharacter : public ABaseCharacter
 	
 public:
 	ABaseEnemyCharacter();
-	
-protected:
-	virtual void BeginPlay() override;
-	
-public:
+
 	virtual void Tick(float DeltaTime) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Progression")
@@ -45,20 +42,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Status")
 	void Freeze(float Duration);
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|VFX")
+	TObjectPtr<UNiagaraSystem> SpawnVFX;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> HealthBarWidget;
 	
 	virtual void OnDeath_Implementation() override;
 	
 protected:
+	virtual void BeginPlay() override;
+
 	virtual void PerformAttack_Implementation() override;
 	
-private:
-	void UnFreeze();
-	FTimerHandle FreezeTimerHandle;
-	bool bIsFrozen = false;
 	void ChasePlayer();
 	
 	UPROPERTY()
 	ACharacter* PlayerCharacter;
+	
+	void UnFreeze();
+	
+	FTimerHandle FreezeTimerHandle;
+	
+	bool bIsFrozen = false;
 };
