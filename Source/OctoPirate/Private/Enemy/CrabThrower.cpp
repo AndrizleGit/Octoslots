@@ -11,6 +11,12 @@ ACrabThrower::ACrabThrower()
     PrimaryActorTick.bCanEverTick = true;
 }
 
+void ACrabThrower::BeginPlay()
+{
+    Super::BeginPlay();
+    AttachCarriedBomb(); // crab spawns already holding a bomb on its back
+}
+
 void ACrabThrower::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -65,6 +71,7 @@ void ACrabThrower::EnterDiggingUp()
 {
     CurrentState = ECrabThrowerState::DiggingUp;
     GetCharacterMovement()->StopMovementImmediately();
+    AttachCarriedBomb();
 
     if (DigUpMontage)
     {
@@ -127,6 +134,8 @@ void ACrabThrower::ThrowBomb()
 {
     if (!BombProjectileClass || !PlayerCharacter) return;
 
+    DetachAndDestroyCarriedBomb();
+    
     UWorld* World = GetWorld();
     if (!World) return;
 
@@ -187,5 +196,31 @@ void ACrabThrower::MoveTowardPlayer()
     if (AAIController* AICon = Cast<AAIController>(GetController()))
     {
         AICon->MoveToActor(PlayerCharacter, ThrowRange - 100.f); 
+    }
+}
+
+void ACrabThrower::AttachCarriedBomb()
+{
+    if (!CarriedBombVisualClass || CarriedBombActor) return;
+
+    UWorld* World = GetWorld();
+    if (!World || !GetMesh()) return;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+
+    CarriedBombActor = World->SpawnActor<AActor>(CarriedBombVisualClass, GetMesh()->GetSocketLocation(BombThrowSocketName), FRotator::ZeroRotator, SpawnParams);
+    if (CarriedBombActor)
+    {
+        CarriedBombActor->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, BombThrowSocketName);
+    }
+}
+
+void ACrabThrower::DetachAndDestroyCarriedBomb()
+{
+    if (CarriedBombActor)
+    {
+        CarriedBombActor->Destroy();
+        CarriedBombActor = nullptr;
     }
 }

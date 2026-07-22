@@ -22,6 +22,8 @@ public:
     ACrabThrower();
 
 protected:
+    virtual void BeginPlay() override;
+
     virtual void Tick(float DeltaTime) override;
     
     virtual void PerformAttack_Implementation() override;
@@ -31,6 +33,9 @@ public:
     // -- sound --
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
     TObjectPtr<USoundBase> ThrowSound;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CrabThrower|Bomb")
+    TSubclassOf<AActor> CarriedBombVisualClass;
     
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CrabThrower|Ranges")
     float ThrowRange = 600.f;
@@ -73,6 +78,12 @@ private:
     void EnterPanicking();
     void ThrowBomb();
 
+    UPROPERTY()
+    TObjectPtr<AActor> CarriedBombActor;
+
+    void AttachCarriedBomb();
+    void DetachAndDestroyCarriedBomb();
+    
     FTimerHandle ThrowCooldownTimer;
     bool bThrowOnCooldown = false;
     
