@@ -46,5 +46,5 @@ private:
     void OnLeftClickPressed();
     void OnLeftClickReleased();
 	
-	bool bToggle = false;
+	bool bRightMouseHold  = false;
 };
