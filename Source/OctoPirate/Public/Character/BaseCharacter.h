@@ -35,7 +35,9 @@ protected:
 public:	
 	virtual void Tick(float DeltaTime) override;
 	
-	
+	// -- Sound --
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	static void PlaySFX(UObject* WorldContext, USoundBase* Sound, FVector Location, float VolumeMultiplier = 1.f);
 	
 	// -- Ability System Component --
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AbilitySystem")
