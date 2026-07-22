@@ -75,6 +75,10 @@ void ACrabThrower::EnterDiggingUp()
 {
     CurrentState = ECrabThrowerState::DiggingUp;
     GetCharacterMovement()->StopMovementImmediately();
+    if (AAIController* AICon = Cast<AAIController>(GetController()))
+    {
+        AICon->StopMovement();
+    }
     AttachCarriedBomb();
 
     if (DigUpMontage)
