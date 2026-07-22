@@ -21,6 +21,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonTrailBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Debuffs_PoisonTrailDebuff)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeflectCooldownChanged, float, NormalizedValue);
+
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -139,9 +141,22 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
 	void OnDeflectEnded();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectCooldown = 3.f;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool CanDeflect() const { return bCanDeflect; }
 	    
+	UPROPERTY(BlueprintAssignable, Category = "Combat|Deflect")
+	FOnDeflectCooldownChanged OnDeflectCooldownChanged;
+	
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void TriggerDeflect();
+	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PerformAttack_Implementation() override;
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
 	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
@@ -209,4 +224,7 @@ private:
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	
 	void DeactivateDeflect();
+	
+	bool bCanDeflect = true;
+	float CooldownRemaining = 0.f;
 };

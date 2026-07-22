@@ -72,7 +72,7 @@ void AOctopusPlayerController::OnLeftClickPressed()
 {
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
-	OctopusChar->SetDeflectActive(true);
+	OctopusChar->TriggerDeflect();
 }
 
 void AOctopusPlayerController::OnLeftClickReleased()

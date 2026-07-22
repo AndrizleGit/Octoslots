@@ -13,7 +13,6 @@ AMortar::AMortar()
 void AMortar::BeginPlay()
 {
     Super::BeginPlay();
-    StartFiring();
 }
 
 void AMortar::StartFiring()

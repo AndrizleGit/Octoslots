@@ -37,13 +37,19 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<USphereComponent> CollisionSphere;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
+	bool WasDeflected() const { return bIsDeflected; }
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
+	
 	// whether this projectile has already been deflected
 	bool bIsDeflected = false;
 	
+	float SpawnZ = 0.f;
 private:
+	
 	FVector LastFrameVelocity = FVector::ZeroVector;
 	
 	UFUNCTION()
