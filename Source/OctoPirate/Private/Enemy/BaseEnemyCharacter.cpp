@@ -212,9 +212,11 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 				Player->DeathExplosionRadius,
 				Player->DeathExplosionDamage,
 				Player->DeathExplosionVFX,
+				Player->DeathExplosionSound,
 				Player->GetController(),
 				this,
-				{ this });
+				{ this },
+				Player->DeathExplosionSoundVolume);
 		}
 	}
 }
