@@ -1,7 +1,10 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Projectiles/BaseProjectile.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Kismet/GameplayStatics.h"
@@ -46,7 +49,7 @@ AOctopusCharacter::AOctopusCharacter()
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	// Force absolute rotation & scale AFTER Blueprint init so the BP can't override it
 	if (TentacleMesh)
 	{
@@ -92,6 +95,8 @@ void AOctopusCharacter::BeginPlay()
 	{
 		InRunUpgradeManager->CaptureBaseline();
 	}
+	
+	
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()
@@ -394,4 +399,28 @@ void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
 	}
 }
 
+void AOctopusCharacter::SetDeflectActive(bool bActive)
+{
+	UE_LOG(LogTemp, Error, TEXT("SetDeflectActive called — bActive: %d, current: %d"), bActive, bDeflectActive);
+    
+	if (bActive == bDeflectActive) return;
 
+	bDeflectActive = bActive;
+	UE_LOG(LogTemp, Error, TEXT("bDeflectActive is now: %d"), bDeflectActive);
+
+	if (bActive)
+	{
+		GetWorldTimerManager().SetTimer(DeflectTimer, this, &AOctopusCharacter::DeactivateDeflect, DeflectDuration, false);
+		OnDeflectStarted();
+	}
+	else
+	{
+		GetWorldTimerManager().ClearTimer(DeflectTimer);
+		OnDeflectEnded();
+	}
+}
+
+void AOctopusCharacter::DeactivateDeflect()
+{
+	SetDeflectActive(false);
+}
