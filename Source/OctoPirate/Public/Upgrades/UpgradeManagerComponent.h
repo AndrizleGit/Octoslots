@@ -40,10 +40,13 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Upgrades")
 	FOnAllUpgradesRefunded OnAllUpgradesRefunded;
-
+    
 	// Die Functions kannst du vom widget callen
 	UFUNCTION(BlueprintCallable, Category = "Upgrades")
 	bool PurchaseUpgrade(UUpgradeData* Upgrade);
+	
+	UFUNCTION(BlueprintCallable, Category = "Upgrades")
+    bool SellSingleUpgrade(UUpgradeData* Upgrade);
 
 	UFUNCTION(BlueprintCallable, Category = "Upgrades")
 	void RefundAllUpgrades();
