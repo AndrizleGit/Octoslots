@@ -84,48 +84,29 @@ void UUpgradeManagerComponent::LoadUpgrades()
 
 bool UUpgradeManagerComponent::PurchaseUpgrade(UUpgradeData* Upgrade)
 {
-    if (!Upgrade) 
-    {
-        UE_LOG(LogTemp, Error, TEXT("Purchase aborted: Upgrade data is NULL!"));
-        return false;
-    }
+    if (!Upgrade) return false;
     
-    if (IsUpgradeMaxLevel(Upgrade)) 
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Purchase aborted: Max level (%d) already reached!"), Upgrade->MaxLevel);
-        return false;
-    }
+    if (IsUpgradeMaxLevel(Upgrade)) return false;
     
-    if (!CanAffordUpgrade(Upgrade)) 
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Purchase aborted: Not enough coins! Upgrade costs %d"), GetUpgradeCost(Upgrade));
-        return false;
-    }
-    
-    const int32 Cost = GetUpgradeCost(Upgrade);
-    
-    if (bIsMetaProgressionMode)
-    {
-        UOctopirateGameInstance* GI = Cast<UOctopirateGameInstance>(GetWorld()->GetGameInstance());
-        if (GI) GI->TotalMetaCoins -= Cost;
-    }
-    else
-    {
-        UBasicAttributeSet* Attributes = GetPlayerAttributes();
-        if (Attributes) 
-        {
-            Attributes->SetCoins(Attributes->GetCoins() - Cost);
-        }
-    }
-    
-    TotalCoinsSpent += Cost;
-    UpgradeLevels[Upgrade]++;
-
+    UpgradeLevels.FindOrAdd(Upgrade)++;
     ApplyUpgrade(Upgrade);
 
-    OnUpgradePurchased.Broadcast(Upgrade, UpgradeLevels[Upgrade]);
+    SaveUpgrades();
+    return true;
+}
 
-    UE_LOG(LogTemp, Log, TEXT("Purchased %s - Level %d"), *Upgrade->UpgradeName.ToString(), UpgradeLevels[Upgrade]);
+bool UUpgradeManagerComponent::SellSingleUpgrade(UUpgradeData* Upgrade)
+{
+    if (!Upgrade) return false;
+    
+    int32* CurrentLevel = UpgradeLevels.Find(Upgrade);
+    if (!CurrentLevel || *CurrentLevel <= 0) 
+    {
+        return false; 
+    }
+
+    (*CurrentLevel)--;
+    RemoveUpgrade(Upgrade, 1);
 
     SaveUpgrades();
     return true;
