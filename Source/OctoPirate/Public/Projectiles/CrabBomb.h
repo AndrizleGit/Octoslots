@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Sound/SoundBase.h"
 #include "Projectiles/BaseProjectile.h"
 #include "CrabBomb.generated.h"
 
@@ -11,7 +12,11 @@ class OCTOPIRATE_API ACrabBomb : public ABaseProjectile
 
 public:
 	ACrabBomb();
-
+	
+	// -- Sound --
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> ExplosionSound;
+	
 	UFUNCTION(BlueprintCallable, Category = "Projectile|Bomb")
 	void LaunchAtTarget(const FVector& TargetLocation, float ArcParam = 0.5f);
 

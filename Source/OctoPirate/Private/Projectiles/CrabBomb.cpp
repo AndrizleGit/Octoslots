@@ -4,6 +4,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
+#include "Character/BaseCharacter.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -102,6 +103,8 @@ void ACrabBomb::Explode()
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionVFX, GetActorLocation());
     }
 
+    ABaseCharacter::PlaySFX(this, ExplosionSound, GetActorLocation());
+    
     TArray<AActor*> OverlappingActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));

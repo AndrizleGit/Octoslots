@@ -144,6 +144,8 @@ void ACrabThrower::ThrowBomb()
     {
         Bomb->LaunchAtTarget(PlayerCharacter->GetActorLocation(), ThrowArcParam);
     }
+    
+    PlaySFX(this, ThrowSound, GetActorLocation());
 
     bThrowOnCooldown = true;
     GetWorldTimerManager().SetTimer(ThrowCooldownTimer, [this]() { bThrowOnCooldown = false; }, ThrowCooldown, false);

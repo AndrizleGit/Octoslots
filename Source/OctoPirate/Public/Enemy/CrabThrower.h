@@ -27,6 +27,11 @@ protected:
     virtual void PerformAttack_Implementation() override;
 
 public:
+    
+    // -- sound --
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+    TObjectPtr<USoundBase> ThrowSound;
+    
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CrabThrower|Ranges")
     float ThrowRange = 600.f;
 
