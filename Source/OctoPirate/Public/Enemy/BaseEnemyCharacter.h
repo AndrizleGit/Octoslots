@@ -48,6 +48,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> HealthBarWidget;
 	
+	UFUNCTION(BlueprintCallable, Category = "Enemy|Movement")
+	void SetMovementLocked(bool bLocked) { bMovementLocked = bLocked; }
+
+	
 	virtual void OnDeath_Implementation() override;
 	
 protected:
@@ -65,4 +69,6 @@ protected:
 	FTimerHandle FreezeTimerHandle;
 	
 	bool bIsFrozen = false;
+	
+	bool bMovementLocked = false;
 };
