@@ -46,7 +46,6 @@ public:
 	// -- Treasure Actor -- 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
 	TSubclassOf<AActor> TreasureClass;
-	7
 	int CannonFragment = 0;
 protected:
 	// Called when the game starts
