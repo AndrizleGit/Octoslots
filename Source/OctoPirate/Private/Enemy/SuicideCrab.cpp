@@ -79,6 +79,8 @@ void ASuicideCrab::Explode()
             GetWorld(), ExplosionVFX, GetActorLocation());
     }
 
+    PlaySFX(this, ExplosionSound, GetActorLocation());
+
     // get all actors in explosion radius
     TArray<AActor*> OverlappingActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
