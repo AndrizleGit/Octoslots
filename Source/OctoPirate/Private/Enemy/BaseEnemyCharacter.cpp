@@ -68,7 +68,7 @@ void ABaseEnemyCharacter::Tick(float DeltaTime)
 
 void ABaseEnemyCharacter::ChasePlayer()
 {
-	if (bIsDead || bIsFrozen || !PlayerCharacter) return;
+	if (bIsDead || bIsFrozen || bMovementLocked || !PlayerCharacter) return;
 	
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	
