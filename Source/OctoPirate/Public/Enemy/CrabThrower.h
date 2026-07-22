@@ -63,6 +63,8 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CrabThrower|Animation")
     TObjectPtr<UAnimMontage> PanicMontage;
+    
+    virtual void OnDeath_Implementation() override;
 
 private:
     ECrabThrowerState CurrentState = ECrabThrowerState::Chasing;

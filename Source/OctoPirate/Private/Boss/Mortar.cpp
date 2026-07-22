@@ -2,6 +2,7 @@
 #include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
+#include "Character/BaseCharacter.h"
 #include "NiagaraComponent.h"
 #include "GameFramework/Character.h"
 
@@ -38,6 +39,8 @@ void AMortar::FireCycle()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(),FireVFX,GetActorLocation(),FRotator(90.f, 0.f, 0.f)); // pointing upward
     }
+    
+    ABaseCharacter::PlaySFX(this, FireSound, GetActorLocation());
     
     // debug explosion radius
     DrawDebugSphere(GetWorld(), CurrentTargetLocation, ExplosionRadius, 16, FColor::Red, false, WarningDuration);
@@ -89,6 +92,8 @@ void AMortar::Impact()
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionVFX, CurrentTargetLocation);
     }
+    
+    ABaseCharacter::PlaySFX(this, ImpactSound, CurrentTargetLocation);
 
     // manually check distance to player before applying damage
     ACharacter* Player = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
@@ -128,6 +133,8 @@ void AMortar::DestroyMortar()
             GetActorLocation()
         );
     }
+    
+    ABaseCharacter::PlaySFX(this, DestructionSound, GetActorLocation());
 
     UE_LOG(LogTemp, Log, TEXT("Mortar %s destroyed"), *GetName());
 

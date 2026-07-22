@@ -5,6 +5,7 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "AIController.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "Components/SphereComponent.h"
 
 ACrabThrower::ACrabThrower()
 {
@@ -159,6 +160,8 @@ void ACrabThrower::ThrowBomb()
     ACrabBomb* Bomb = World->SpawnActor<ACrabBomb>(BombProjectileClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
     if (Bomb)
     {
+        Bomb->CollisionSphere->IgnoreActorWhenMoving(this, true);
+        Bomb->CollisionSphere->MoveIgnoreActors.AddUnique(this);
         Bomb->LaunchAtTarget(PlayerCharacter->GetActorLocation(), ThrowArcParam);
     }
     
@@ -182,7 +185,11 @@ void ACrabThrower::EnterPanicking()
     {
         if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
         {
-            AnimInstance->Montage_Play(PanicMontage, 1.f, EMontagePlayReturnType::MontageLength, 0.f, true); // bLoop = true
+            AnimInstance->Montage_Play(PanicMontage, 1.f);
+
+            FOnMontageEnded EndDelegate;
+            EndDelegate.BindUObject(this, &ACrabThrower::OnPanicMontageEnded);
+            AnimInstance->Montage_SetEndDelegate(EndDelegate, PanicMontage);
         }
     }
 }
@@ -233,4 +240,10 @@ void ACrabThrower::DetachAndDestroyCarriedBomb()
         CarriedBombActor->Destroy();
         CarriedBombActor = nullptr;
     }
+}
+
+void ACrabThrower::OnDeath_Implementation()
+{
+    DetachAndDestroyCarriedBomb();
+    Super::OnDeath_Implementation();
 }
