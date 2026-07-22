@@ -36,6 +36,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
 	float HealthPackDropChance = 0.05f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	TSubclassOf<AActor> TreasuremapClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
+	float TreasuremapDropChance = 0.1f;
+	
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Difficulty")
 	void ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier);
 	
