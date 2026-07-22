@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TaskSyncManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
@@ -19,6 +20,7 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	
 }
 
 void ABaseEnemyCharacter::BeginPlay()
@@ -32,6 +34,11 @@ void ABaseEnemyCharacter::BeginPlay()
 		BasicAttributes->SetAttackDamage(7.f);
 		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
+	}
+	
+	if (SpawnVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnVFX, GetActorLocation());
 	}
 	
 	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -61,7 +68,7 @@ void ABaseEnemyCharacter::Tick(float DeltaTime)
 
 void ABaseEnemyCharacter::ChasePlayer()
 {
-	if (bIsDead || bIsFrozen || !PlayerCharacter) return;
+	if (bIsDead || bIsFrozen || bMovementLocked || !PlayerCharacter) return;
 	
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	
@@ -146,7 +153,12 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
-	UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] ABaseEnemyCharacter::OnDeath_Implementation reached for %s"), *GetName());
+
+	if (HealthBarWidget)
+	{
+		HealthBarWidget->SetVisibility(false);
+	}
+	
 	Super::OnDeath_Implementation();
 	
 	const FVector SpawnLocation = GetActorLocation();

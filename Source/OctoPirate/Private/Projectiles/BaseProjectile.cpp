@@ -45,12 +45,14 @@ void ABaseProjectile::Tick(float DeltaTime)
 	if (ProjectileMovement->IsActive())
 	{
 		LastFrameVelocity = ProjectileMovement->Velocity;
-        
-		// lock Z position and velocity to prevent falling
-		ProjectileMovement->Velocity.Z = 0.f;
-		FVector LockedLocation = GetActorLocation();
-		LockedLocation.Z = SpawnZ;
-		SetActorLocation(LockedLocation);
+
+		if (bLockToSpawnHeight)
+		{
+			ProjectileMovement->Velocity.Z = 0.f;
+			FVector LockedLocation = GetActorLocation();
+			LockedLocation.Z = SpawnZ;
+			SetActorLocation(LockedLocation);
+		}
 	}
 }
 
@@ -62,11 +64,16 @@ void ABaseProjectile::OnDeflected_Implementation(const FVector& ReflectedVelocit
 	SetOwner(Deflector);
 	SetInstigator(Cast<APawn>(Deflector));
 	CollisionSphere->IgnoreActorWhenMoving(Deflector, true);
-    
-	// with bShouldBounce=true the movement component stays active after hit
-	// so we can directly override the velocity
-	ProjectileMovement->Velocity = ReflectedVelocity;
-	ProjectileMovement->UpdateComponentVelocity();
+	CollisionSphere->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore); // stop blocking the player post-deflect
+	
+	GetWorld()->GetTimerManager().SetTimerForNextTick([this, ReflectedVelocity, Deflector]()
+	{
+		ProjectileMovement->SetUpdatedComponent(CollisionSphere);
+		ProjectileMovement->Velocity = ComputeDeflectedVelocity(ReflectedVelocity, Deflector);
+		ProjectileMovement->SetComponentTickEnabled(true);
+		ProjectileMovement->Activate(true);
+		ProjectileMovement->UpdateComponentVelocity();
+	});
 }
 
 void ABaseProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, 
@@ -83,11 +90,15 @@ void ABaseProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActo
 		OnDeflected(ReflectedVelocity, Player);
 		return;
 	}
+	
+	HandleImpact(OtherActor, Hit);
+}
 
+void ABaseProjectile::HandleImpact(AActor* OtherActor, const FHitResult& Hit)
+{
 	if (bDealDamageOnHit)
 	{
-		UGameplayStatics::ApplyDamage(OtherActor, ProjectileDamage, 
-			GetInstigatorController(), this, UDamageType::StaticClass());
+		UGameplayStatics::ApplyDamage(OtherActor, ProjectileDamage, GetInstigatorController(), this, UDamageType::StaticClass());
 		Destroy();
 	}
 }

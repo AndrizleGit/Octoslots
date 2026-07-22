@@ -30,6 +30,17 @@ class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 
 public:
 	AOctopusCharacter();
+	
+	// --- Audio ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> AttackSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> DeflectSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> DeathSound;
+	
 	// -- Slot Machine Events -- 
 	// - Buffs -
 	

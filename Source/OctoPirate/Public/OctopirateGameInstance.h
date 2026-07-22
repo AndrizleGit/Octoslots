@@ -12,6 +12,6 @@ class OCTOPIRATE_API UOctopirateGameInstance : public UGameInstance
 	GENERATED_BODY()
     
 public:
-	UPROPERTY(BlueprintReadWrite, Category = "MetaProgression")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Meta Progression")
 	float TotalMetaCoins = 0.0f;
 };
