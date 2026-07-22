@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Character/BaseCharacter.h"
+#include "Components/WidgetComponent.h"
 #include "BaseEnemyCharacter.generated.h"
 
 UCLASS()
@@ -43,6 +44,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Status")
 	void Freeze(float Duration);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	TObjectPtr<UWidgetComponent> HealthBarWidget;
 	
 	virtual void OnDeath_Implementation() override;
 	
