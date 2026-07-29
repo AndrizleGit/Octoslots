@@ -26,6 +26,8 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	this->GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel2);
+	
 	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{

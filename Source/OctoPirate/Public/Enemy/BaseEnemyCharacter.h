@@ -4,6 +4,7 @@
 #include "Character/BaseCharacter.h"
 #include "NiagaraSystem.h"
 #include "Components/WidgetComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "BaseEnemyCharacter.generated.h"
 
 UCLASS()
