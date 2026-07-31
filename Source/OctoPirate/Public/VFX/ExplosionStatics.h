@@ -7,6 +7,7 @@
 #include "ExplosionStatics.generated.h"
 
 class UNiagaraSystem;
+class USoundBase;
 
 /**
  * Shared explosion routine reused by the Bomb joker (ABombActor) and the
@@ -18,9 +19,10 @@ class OCTOPIRATE_API UExplosionStatics : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-	// Spawns NiagaraSystem at Location (if set) and deals Damage to every enemy
-	// pawn within Radius. InstigatorController/DamageCauser are credited for the
-	// kill (XP, drops); pass the player's controller so explosion kills count.
+	// Spawns NiagaraSystem and plays ExplosionSound at Location (both optional),
+	// then deals Damage to every enemy pawn within Radius.
+	// InstigatorController/DamageCauser are credited for the kill (XP, drops);
+	// pass the player's controller so explosion kills count.
 	UFUNCTION(BlueprintCallable, Category = "Explosion", meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "IgnoreActors"))
 	static void Explode(
 		const UObject* WorldContextObject,
@@ -28,7 +30,9 @@ public:
 		float Radius,
 		float Damage,
 		UNiagaraSystem* NiagaraSystem,
+		USoundBase* ExplosionSound,
 		AController* InstigatorController,
 		AActor* DamageCauser,
-		const TArray<AActor*>& IgnoreActors);
+		const TArray<AActor*>& IgnoreActors,
+		float SoundVolumeMultiplier = 1.f);
 };

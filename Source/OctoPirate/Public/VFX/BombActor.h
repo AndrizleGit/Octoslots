@@ -7,6 +7,7 @@
 #include "BombActor.generated.h"
 
 class UNiagaraSystem;
+class USoundBase;
 
 /**
  * A bomb dropped by the Bomb joker. After FuseDelay it explodes once (shared
@@ -36,6 +37,14 @@ public:
 	// Niagara system played at the bomb's location on explosion.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bomb")
 	TObjectPtr<UNiagaraSystem> ExplosionVFX;
+
+	// Sound played at the bomb's location on explosion. Leave empty for silence.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bomb")
+	TObjectPtr<USoundBase> ExplosionSound;
+
+	// Volume multiplier applied to ExplosionSound.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Bomb", meta = (ClampMin = "0.0"))
+	float ExplosionSoundVolume = 1.f;
 
 	// Detonate now: deal AOE damage, play VFX, destroy self. Called by the fuse
 	// timer but also exposed so the bomb can be triggered early from Blueprint.

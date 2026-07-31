@@ -26,6 +26,8 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	this->GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel2);
+	
 	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{
@@ -186,7 +188,12 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	{
 		const FVector TreasureMapLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f);
 		
-		GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+		const float Roll = FMath::RandRange(0.0f, 1.0f);
+		if (Roll <= TreasuremapDropChance)
+		{
+			GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+		}
+		
 	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
@@ -207,9 +214,11 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 				Player->DeathExplosionRadius,
 				Player->DeathExplosionDamage,
 				Player->DeathExplosionVFX,
+				Player->DeathExplosionSound,
 				Player->GetController(),
 				this,
-				{ this });
+				{ this },
+				Player->DeathExplosionSoundVolume);
 		}
 	}
 }
