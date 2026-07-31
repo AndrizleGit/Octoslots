@@ -21,28 +21,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctoSlotsSaveGame.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctopirateGameInstance.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/Materials/UI_Materials/MI_ChipArea.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MetaProgressionScreenChips.uasset" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MetaProgressionScreenText.uasset" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_BaseEnemyCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/Enemies/BaseEnemy/BP_BaseEnemyCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/GI_Octopirate.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/GI_Octopirate.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/UI/BP_MenuOctopus.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/UI/BP_MenuOctopus.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Levels/UI/L_MetaProgression.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Levels/UI/L_MetaProgression.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Materials/UI_Materials/M_ChipArea.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Materials/UI_Materials/M_ChipArea.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/MetaProgression/BP_ChipStack.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/MetaProgression/BP_ChipStack.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/MetaProgression/BP_DraggedChip.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/MetaProgression/BP_DraggedChip.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/SlotMachine/BP_3DSlotMachine.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/SlotMachine/BP_3DSlotMachine.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/WBP_DeathScreen.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_DeathScreen.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MetaProgressionScreen.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_MetaProgressionScreen.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/UI/Widgets/WBP_PCHealthBar.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/UI/Widgets/WBP_PCHealthBar.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Private/Upgrades/UpgradeManagerComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Private/Upgrades/UpgradeManagerComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/OctopirateGameInstance.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/OctopirateGameInstance.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/Upgrades/UpgradeManagerComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/Upgrades/UpgradeManagerComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_Blockade.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_Blockade.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_BrokenCannon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_BrokenCannon.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Levels/Level_FC3.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Levels/Level_FC3.umap" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,7 +58,7 @@
     <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Public/Pickups/ABasePickup.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Public/SlotMachineComponent.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/OctoPirate/Public/Upgrades/UpgradeManagerComponent.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/Shared/EpicGames.Serialization/EpicGames.Serialization.csproj" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$USER_HOME$/Program Files/Epic Games/UE_5.7/Engine/Source/Programs/Shared/EpicGames.Serialization/EpicGames.Serialization.csproj" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -107,7 +89,7 @@
     &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/meta-progression-ui&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;feature/treasure-map&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
@@ -154,14 +136,12 @@
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="" />
       <option name="PASS_PARENT_ENVS" value="1" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="ENV_FILE_PATHS" value="" />
       <option name="REDIRECT_INPUT_PATH" value="" />
-      <option name="PTY_MODE" value="Auto" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
       <option name="AUTO_ATTACH_CHILDREN" value="0" />
-      <option name="MIXED_MODE_DEBUG" value="0" />
       <option name="PROJECT_PATH" value="$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/AutomationTool/AutomationTool.csproj" />
       <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
       <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
@@ -177,14 +157,12 @@
       <option name="PROGRAM_PARAMETERS" value="" />
       <option name="WORKING_DIRECTORY" value="" />
       <option name="PASS_PARENT_ENVS" value="1" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="ENV_FILE_PATHS" value="" />
       <option name="REDIRECT_INPUT_PATH" value="" />
-      <option name="PTY_MODE" value="Auto" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
       <option name="AUTO_ATTACH_CHILDREN" value="0" />
-      <option name="MIXED_MODE_DEBUG" value="0" />
       <option name="PROJECT_PATH" value="$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/UnrealBuildTool/UnrealBuildTool.csproj" />
       <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
       <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
@@ -199,13 +177,14 @@
       <option name="LAUNCH_PROFILE_PROJECT_FILE_PATH" value="$PROJECT_DIR$/../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/Shared/EpicGames.AspNet/EpicGames.AspNet.csproj" />
       <option name="LAUNCH_PROFILE_TFM" value="net8.0" />
       <option name="LAUNCH_PROFILE_NAME" value="EpicGames.AspNet" />
-      <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <option name="USE_MONO" value="0" />
       <option name="RUNTIME_ARGUMENTS" value="" />
       <option name="GENERATE_APPLICATIONHOST_CONFIG" value="1" />
       <option name="SHOW_IIS_EXPRESS_OUTPUT" value="0" />
       <option name="SEND_DEBUG_REQUEST" value="1" />
       <option name="ADDITIONAL_IIS_EXPRESS_ARGUMENTS" value="" />
+      <option name="AUTO_ATTACH_CHILDREN" value="0" />
+      <option name="MIXED_MODE_DEBUG" value="0" />
       <method v="2">
         <option name="Build" />
       </method>
@@ -294,6 +273,8 @@
       <workItem from="1784684172136" duration="421000" />
       <workItem from="1784684638568" duration="142000" />
       <workItem from="1784685039933" duration="196000" />
+      <workItem from="1785488746773" duration="186000" />
+      <workItem from="1785489706633" duration="17000" />
     </task>
     <servers />
   </component>
