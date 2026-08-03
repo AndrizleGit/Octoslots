@@ -87,6 +87,7 @@ void UTreasureMapComponent::SpawnTreasure()
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 		UE_LOG(LogTemp, Warning, TEXT("Treasure Spawned !!"));
 		World->SpawnActor<AActor>(TreasureClass, NavLocation.Location, FRotator::ZeroRotator, SpawnParams);
+		PlayerCharacter->OnTreasureSpawn();
 		return;
 	}
 
