@@ -176,6 +176,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
 	void TriggerDeflect();
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float AttackTriggerBuffer = 100.f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
+	TObjectPtr<class UDecalComponent> AttackRangeDecal;
+	
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaSeconds) override;
