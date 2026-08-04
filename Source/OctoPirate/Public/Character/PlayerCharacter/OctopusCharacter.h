@@ -59,7 +59,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
-
+	// -- Treasuremap Events --
+	UFUNCTION(BlueprintImplementableEvent, Category = "Treasure Map")
+	void OnTreasureSpawn();
+	
 	// -- Check for Tag Changes -- 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnTagChanged(FGameplayTag Tag, int32 NewCount);
