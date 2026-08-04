@@ -150,7 +150,7 @@ void AOctopusCharacter::PerformAttack_Implementation()
 
         ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
     	
-    	PlaySFX(this, AttackSound, GetActorLocation());
+    	//PlaySFX(this, AttackSound, GetActorLocation());
 
         SetActorRotation(OriginalRotation);
 
