@@ -184,6 +184,17 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
 		}
 	}
+	
+	if (MagnetClass)
+	{
+		const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+		if (MagnetRoll <= MagnetDropChance)
+		{
+			const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+			GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+		}
+	}
+	
 	if (TreasuremapClass)
 	{
 		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
