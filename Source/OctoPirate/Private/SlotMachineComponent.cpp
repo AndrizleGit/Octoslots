@@ -59,7 +59,7 @@ void USlotMachineComponent::Spin()
         UE_LOG(LogTemp, Log, TEXT("Spin blocked — on cooldown"));
         return;
     }
-    
+
     UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
     if (!Attributes) return;
 
@@ -68,17 +68,12 @@ void USlotMachineComponent::Spin()
         OnSpinFailed.Broadcast();
         return;
     }
-    
+
     bSpinOnCooldown = true;
     Attributes->SetCoins(Attributes->GetCoins() - SpinCost);
-    DopamineCurrent = DopamineMax;
-    RemoveAllBuffs();
-    SetDebuffActive(false);
     LastResult = RollReels();
-    ApplyBuffs(LastResult);
-    OnSpinComplete.Broadcast(LastResult);
-    
-    // Joker: Fascinating — freeze nearby enemies on spin
+
+    // Joker: Fascinating
     if (PlayerCharacter && PlayerCharacter->HasJokerEffect("Fascinating"))
     {
         const float FreezeDuration = PlayerCharacter->GetJokerValue("Fascinating");
@@ -100,13 +95,20 @@ void USlotMachineComponent::Spin()
         }
     }
 
-    OnDopamineChanged.Broadcast(GetDopamineNormalized());
+    OnSpinComplete.Broadcast(LastResult);
 }
 
 void USlotMachineComponent::OnSpinAnimationFinished()
 {
     bSpinOnCooldown = false;
-    UE_LOG(LogTemp, Log, TEXT("Spin animation finished — ready to spin again"));
+
+    DopamineCurrent = DopamineMax;
+    RemoveAllBuffs();
+    SetDebuffActive(false);
+    ApplyBuffs(LastResult);
+    OnDopamineChanged.Broadcast(GetDopamineNormalized());
+
+    UE_LOG(LogTemp, Log, TEXT("Spin animation finished — result applied"));
 }
 
 bool USlotMachineComponent::CanAffordSpin() const

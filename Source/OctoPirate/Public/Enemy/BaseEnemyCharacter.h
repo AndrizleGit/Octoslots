@@ -55,9 +55,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UWidgetComponent> HealthBarWidget;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stats")
+	float BaseMaxHealth = 45.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stats")
+	float BaseAttackDamage = 7.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Stats")
+	float WalkSpeedMultiplier = 1.2f;
+	
 	UFUNCTION(BlueprintCallable, Category = "Enemy|Movement")
 	void SetMovementLocked(bool bLocked) { bMovementLocked = bLocked; }
-
 	
 	virtual void OnDeath_Implementation() override;
 	
