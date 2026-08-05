@@ -40,6 +40,7 @@ void UTreasureMapComponent::AddCannonFragment()
 int UTreasureMapComponent::SubmitCannonFragment()
 {
 	int currentCannonFragment = CannonFragment;
+	
 	CannonFragment = 0;
 	return currentCannonFragment;
 }
@@ -47,7 +48,6 @@ int UTreasureMapComponent::SubmitCannonFragment()
 void UTreasureMapComponent::SpawnTreasure()
 {
 	if (!PlayerCharacter || !TreasureClass) return;
-
 	UWorld* World = GetWorld();
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(World);
 	

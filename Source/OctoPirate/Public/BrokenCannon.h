@@ -6,9 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "Components/BoxComponent.h"
 
+
 #include "BrokenCannon.generated.h"
 
 class UNiagaraSystem;
+class USoundBase;
 UCLASS()
 
 class OCTOPIRATE_API ABrokenCannon : public AActor
@@ -38,12 +40,21 @@ public:
 	bool bAssembled = false;
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
-	int CannonFragments = 0;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
-	int MaxFragments = 3;
+	int CannonBall = 0;
 	
-	// VFX
+	
+	
+	// VFX & SFX
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> CannonVFX;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX")
+	TObjectPtr<USoundBase> CannonSFX;
+	
+	// Volume multiplier applied to ExplosionSound.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SFX", meta = (ClampMin = "0.0"))
+	float ExplosionSoundVolume = 1.f;
 
+
+	
+	
 };

@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "VFX/ExplosionStatics.h"
 
 #include "Blockade.h"
 
@@ -35,4 +36,22 @@ void ABlockade::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 }
+
+void ABlockade::Explode()
+{
+	
+	FVector ExplosionLocation = GetActorLocation() - ExplosionOffset;
+	UExplosionStatics::Explode(
+		this,
+		ExplosionLocation,
+		0,
+		0,
+		ExplosionVFX,
+		ExplosionSound,
+		GetInstigatorController(),
+		this,
+		{ this },
+		ExplosionSoundVolume);
+}
+
 
