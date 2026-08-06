@@ -26,13 +26,15 @@ ABaseEnemyCharacter::ABaseEnemyCharacter()
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	this->GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel2);
+	
 	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{
-		BasicAttributes->SetMaxHealth(45.f);
-		BasicAttributes->SetHealth(45.f);
-		BasicAttributes->SetAttackDamage(7.f);
-		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
+		BasicAttributes->SetMaxHealth(BaseMaxHealth);
+		BasicAttributes->SetHealth(BaseMaxHealth);
+		BasicAttributes->SetAttackDamage(BaseAttackDamage);
+		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * WalkSpeedMultiplier);
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
 	}
 	
@@ -182,9 +184,20 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
 		}
 	}
+	
+	if (MagnetClass)
+	{
+		const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+		if (MagnetRoll <= MagnetDropChance)
+		{
+			const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+			GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+		}
+	}
+	
 	if (TreasuremapClass)
 	{
-		const FVector TreasureMapLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f);
+		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
 		
 		const float Roll = FMath::RandRange(0.0f, 1.0f);
 		if (Roll <= TreasuremapDropChance)
