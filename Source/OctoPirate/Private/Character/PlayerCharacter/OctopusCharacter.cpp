@@ -49,7 +49,9 @@ AOctopusCharacter::AOctopusCharacter()
 	// --- range decal ---
 	AttackRangeDecal = CreateDefaultSubobject<UDecalComponent>("AttackRangeDecal");
 	AttackRangeDecal->SetupAttachment(RootComponent);
-	AttackRangeDecal->DecalSize = FVector(100.f, 100.f, 100.f); 
+	// X is the projection half-depth. The decal sits on the capsule origin (88 units up),
+	// so it needs enough depth to reach the ground and follow slopes.
+	AttackRangeDecal->DecalSize = FVector(400.f, 100.f, 100.f);
 	AttackRangeDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 }
 
@@ -105,7 +107,7 @@ void AOctopusCharacter::BeginPlay()
 	
 	if (AttackRangeDecal)
 	{
-		AttackRangeDecal->DecalSize = FVector(50.f, ConeMaxDistance, ConeMaxDistance);
+		AttackRangeDecal->DecalSize = FVector(400.f, ConeMaxDistance, ConeMaxDistance);
 	}
 }
 
