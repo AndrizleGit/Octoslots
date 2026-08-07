@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
+#include "Blockade.h"
 #include "VFX/ExplosionStatics.h"
 
-#include "Blockade.h"
+
 
 // Sets default values
 ABlockade::ABlockade()

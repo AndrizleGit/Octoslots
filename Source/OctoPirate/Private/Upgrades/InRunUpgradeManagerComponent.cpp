@@ -3,6 +3,8 @@
 #include "Character/BaseCharacter.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemComponent.h"
+
 #include "Kismet/GameplayStatics.h"
 
 UInRunUpgradeManagerComponent::UInRunUpgradeManagerComponent()
@@ -19,6 +21,11 @@ void UInRunUpgradeManagerComponent::BeginPlay()
     {
         if (Upgrade)
             PickedCounts.Add(Upgrade, 0);
+    }
+    
+    if (AOctopusCharacter* OwningCharacter = Cast<AOctopusCharacter>(GetOwner()))
+    {
+        ASC = OwningCharacter->FindComponentByClass<UAbilitySystemComponent>();
     }
 }
 
@@ -224,20 +231,21 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
             break;
 
         case EInRunUpgradeStat::MovementSpeed:
-            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + (Value * 0.5f));
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetWalkSpeedAttribute(),ASC->GetNumericAttributeBase(UBasicAttributeSet::GetWalkSpeedAttribute()) + (Value * 0.5f));
             Character->GetCharacterMovement()->MaxWalkSpeed = Attributes->GetWalkSpeed();
             break;
 
         case EInRunUpgradeStat::AttackSpeed:
         {
+                
             // +0.15 per pick (e.g. 1.2 → 1.35 → 1.5), cap at 2.5
-            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + 0.15f, 2.5f);
-            Attributes->SetAttackSpeed(NewSpeed);
+            const float NewSpeed = FMath::Min(ASC->GetNumericAttributeBase(UBasicAttributeSet::GetAttackSpeedAttribute()) + 0.15f, 2.5f);
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetAttackSpeedAttribute(),NewSpeed);
             break;
         }
 
         case EInRunUpgradeStat::AttackDamage:
-            Attributes->SetAttackDamage(Attributes->GetAttackDamage() + Value);
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetAttackDamageAttribute(),ASC->GetNumericAttributeBase(UBasicAttributeSet::GetAttackDamageAttribute()) + Value);
             break;
 
         case EInRunUpgradeStat::AttackRange:
