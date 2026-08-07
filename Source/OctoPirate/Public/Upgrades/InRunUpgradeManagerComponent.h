@@ -11,6 +11,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnInRunUpgradeSelected, UInRunUpgra
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJokerLevelUp, int32, NewLevel);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnJokerSelected, UJokerData*, SelectedJoker);
 
+class UAbilitySystemComponent;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OCTOPIRATE_API UInRunUpgradeManagerComponent : public UActorComponent
 {
@@ -82,8 +84,12 @@ public:
     
 protected:
     virtual void BeginPlay() override;
+    // Ability System Component
+    UPROPERTY()
+    TObjectPtr<UAbilitySystemComponent> ASC = nullptr;
 
 private:
+    // API
     void RollNewChoices();
     void RollNewJokerChoices();
     void ApplyUpgrade(UInRunUpgradeData* Upgrade);
