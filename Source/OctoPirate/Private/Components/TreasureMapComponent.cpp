@@ -2,7 +2,8 @@
 
 
 #include "Components/TreasureMapComponent.h"
-
+#include "Pickups/TreasureSpawnZone.h"
+#include "Kismet/GameplayStatics.h"
 // Sets default values for this component's properties
 UTreasureMapComponent::UTreasureMapComponent()
 {
@@ -18,8 +19,8 @@ UTreasureMapComponent::UTreasureMapComponent()
 void UTreasureMapComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
 	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
+	findAllTreasureSpawnZones();
 	
 }
 
@@ -32,17 +33,93 @@ void UTreasureMapComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	// ...
 }
 
-void UTreasureMapComponent::AddCannonFragment()
+void UTreasureMapComponent::findAllTreasureSpawnZones() 
+{
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATreasureSpawnZone::StaticClass(),FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		if (ATreasureSpawnZone* TreasureSpawnZone = Cast<ATreasureSpawnZone>(Actor))
+		{
+			TreasureSpawnZones.Add(TreasureSpawnZone);
+		}
+	}
+}
+
+void UTreasureMapComponent::SetTreasureLevel(int Level)
+{
+	if (!PlayerCharacter) return;
+	
+	TreasureLevel = (Level >TreasureLevel) ? Level : TreasureLevel;
+}
+
+void UTreasureMapComponent::AddCannonAmmo()
 {
 	CannonFragment += 1; 
 }
 
-int UTreasureMapComponent::SubmitCannonFragment()
+int UTreasureMapComponent::SubmitCannonAmmo()
 {
 	int currentCannonFragment = CannonFragment;
 	
 	CannonFragment = 0;
 	return currentCannonFragment;
+}
+// Pick a Zone Close to the player with the same Level as Treasure Level and spawn a Treasure there
+void UTreasureMapComponent::SpawnTreasureInZone()
+{
+	if (!PlayerCharacter || !TreasureClass) return;
+	UWorld* World = GetWorld();
+	
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+	FVector SpawnLocation = GetSpawnLocation(GetClosestTreasureSpawnZone());
+	World->SpawnActor<AActor>(TreasureClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+	PlayerCharacter->OnTreasureSpawn();
+}
+// Returns TreasureZone that are equal in Level with TreasureLevel and are closest to the Player
+ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
+{
+	ATreasureSpawnZone* ClosestZone = nullptr;
+	float ClosestDistance = FLT_MAX;
+	for (ATreasureSpawnZone* Zone : TreasureSpawnZones)
+	{
+		if (!Zone) continue;
+
+		const float Dist = FVector::Dist(PlayerCharacter->GetActorLocation(), Zone->GetActorLocation());
+		
+		if (Dist < ClosestDistance || TreasureLevel == Zone->GetZoneLevel())
+		{
+			ClosestDistance = Dist;
+			ClosestZone = Zone;
+		}
+	}
+	return ClosestZone;
+}
+//Pick a random Location that's on the NavMesh inside the TreasureZone
+FVector UTreasureMapComponent::GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const
+{
+	if (!TreasureSpawnZone) return FVector::ZeroVector;
+
+	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+	if (!NavSys) return FVector::ZeroVector;
+
+	for (int32 Attempt = 0; Attempt < MaxAttempts; Attempt++)
+	{
+		FVector CandidateLocation = TreasureSpawnZone->GetRandomPointInZone();
+
+		FNavLocation NavLocation;
+		if (!NavSys->ProjectPointToNavigation(
+			CandidateLocation, NavLocation, SearchExtent))
+		{
+			continue;
+		}
+
+		return NavLocation.Location;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("TreasureMap Component: Failed to find spawn location in zone %s"), *TreasureSpawnZone->GetName());
+	return FVector::ZeroVector;
 }
 
 void UTreasureMapComponent::SpawnTreasure()
@@ -63,7 +140,7 @@ void UTreasureMapComponent::SpawnTreasure()
 
 		FNavLocation NavLocation;
 		const bool bOnNavMesh = NavSys->ProjectPointToNavigation(
-			DesiredPoint, NavLocation, FVector(SearchExtent, SearchExtent, SearchExtent));
+			DesiredPoint, NavLocation, SearchExtent);
 
 		if (!bOnNavMesh)
 		{

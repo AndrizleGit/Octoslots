@@ -8,7 +8,7 @@
 
 
 #include "BrokenCannon.generated.h"
-
+class ABlockade;
 class UNiagaraSystem;
 class USoundBase;
 UCLASS()
@@ -41,7 +41,9 @@ public:
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
 	int CannonBall = 0;
-	
+	// List Of blockade linked to this cannon
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
+	TArray<TObjectPtr<ABlockade>> BlockadeList;
 	
 	
 	// VFX & SFX
