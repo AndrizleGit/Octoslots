@@ -45,21 +45,21 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
 	void SpawnTreasureInZone();
 	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
-	int SubmitCannonAmmo();
+	int32 SubmitCannonAmmo();
 	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
-	int GetTreasureLevel() const{return TreasureLevel;};
+	int32 GetTreasureNumber() const{return TreasureNumber;};
 	//Set if NewLevel > Current , Current = NewLevel
 	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
-	void SetTreasureLevel(int Level);
+	void NextTreasureNumber();
 	// -- Treasure Actor -- 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
 	TSubclassOf<AActor> TreasureClass;
 	// -- Treasure Map Configs
 	
-	int CannonFragment = 0;
+	int32 CannonFragment = 0;
 	//Determines which areas treasure will be spawning at
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
-	int TreasureLevel = 0;
+	int32 TreasureNumber = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
 	TArray<TObjectPtr<ATreasureSpawnZone>> TreasureSpawnZones;
 protected:
@@ -77,6 +77,7 @@ private:
 	
 	bool IsPointAwayFromNavMeshBorder(UNavigationSystemV1* NavSys, const FVector& Point, float ClearanceRadius, int32 NumSamples = 8);
 	FVector GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const;
+	ATreasureSpawnZone*  GetRandomTreasureSpawnZone() const;
 	ATreasureSpawnZone*  GetClosestTreasureSpawnZone() const;
-	void findAllTreasureSpawnZones();
+	void FindAllTreasureSpawnZones();
 };

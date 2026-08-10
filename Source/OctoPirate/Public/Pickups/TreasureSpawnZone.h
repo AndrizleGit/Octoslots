@@ -20,11 +20,11 @@ public:
 	
 	//Determines the access level required for spawn treasure in the Zone
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureZone")
-	int ZoneLevel = 0;
+	int ZoneNumber = 0;
 	
 	//API
 	UFUNCTION(BlueprintCallable, Category = "TreasureZone")
-	int GetZoneLevel(){return ZoneLevel;};
+	int GetZoneNumber(){return ZoneNumber;};
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "TreasureZone")
 	FVector GetRandomPointInZone() const;
