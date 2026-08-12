@@ -20,7 +20,7 @@ void UTreasureMapComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
-	findAllTreasureSpawnZones();
+	FindAllTreasureSpawnZones();
 	
 }
 
@@ -33,7 +33,7 @@ void UTreasureMapComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	// ...
 }
 
-void UTreasureMapComponent::findAllTreasureSpawnZones() 
+void UTreasureMapComponent::FindAllTreasureSpawnZones() 
 {
 	TArray<AActor*> FoundActors;
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATreasureSpawnZone::StaticClass(),FoundActors);
@@ -46,11 +46,11 @@ void UTreasureMapComponent::findAllTreasureSpawnZones()
 	}
 }
 
-void UTreasureMapComponent::SetTreasureLevel(int Level)
+void UTreasureMapComponent::NextTreasureNumber()
 {
 	if (!PlayerCharacter) return;
 	
-	TreasureLevel = (Level >TreasureLevel) ? Level : TreasureLevel;
+	TreasureNumber += 1;
 }
 
 void UTreasureMapComponent::AddCannonAmmo()
@@ -68,18 +68,26 @@ int UTreasureMapComponent::SubmitCannonAmmo()
 // Pick a Zone Close to the player with the same Level as Treasure Level and spawn a Treasure there
 void UTreasureMapComponent::SpawnTreasureInZone()
 {
-	if (!PlayerCharacter || !TreasureClass) return;
+	if (!PlayerCharacter || !TreasureClass || TreasureSpawnZones.Num() == 0) return;
 	UWorld* World = GetWorld();
 	
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	FVector SpawnLocation = GetSpawnLocation(GetClosestTreasureSpawnZone());
+	FVector SpawnLocation = GetSpawnLocation(GetRandomTreasureSpawnZone());
+	
+	if (SpawnLocation == FVector::ZeroVector)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Treasure Vector 0")));
+		return;
+	}
 	World->SpawnActor<AActor>(TreasureClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	PlayerCharacter->OnTreasureSpawn();
 }
 // Returns TreasureZone that are equal in Level with TreasureLevel and are closest to the Player
 ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
 {
+	if (TreasureSpawnZones.Num() == 0) return nullptr;
+	
 	ATreasureSpawnZone* ClosestZone = nullptr;
 	float ClosestDistance = FLT_MAX;
 	for (ATreasureSpawnZone* Zone : TreasureSpawnZones)
@@ -88,13 +96,39 @@ ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
 
 		const float Dist = FVector::Dist(PlayerCharacter->GetActorLocation(), Zone->GetActorLocation());
 		
-		if (Dist < ClosestDistance || TreasureLevel == Zone->GetZoneLevel())
+		if (Dist < ClosestDistance || TreasureNumber == Zone->GetZoneNumber())
 		{
 			ClosestDistance = Dist;
 			ClosestZone = Zone;
 		}
 	}
 	return ClosestZone;
+}
+// Return a Random TreasureZone of the same level
+ATreasureSpawnZone* UTreasureMapComponent::GetRandomTreasureSpawnZone() const
+{
+	TArray<TObjectPtr<ATreasureSpawnZone>> SortedTreasureSpawnZones;
+	if (TreasureSpawnZones.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("No Treasure Zones")));
+		return nullptr;
+	}
+	for (ATreasureSpawnZone* Zone : TreasureSpawnZones)
+	{
+		if (!Zone) continue;
+		if (TreasureNumber == Zone->GetZoneNumber())
+		{
+			SortedTreasureSpawnZones.Add(Zone);
+		}
+		
+	}
+	int32 index = FMath::RandRange(0, SortedTreasureSpawnZones.Num() - 1);
+	if (SortedTreasureSpawnZones[index] == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("No Sorted Treasures")));
+		return nullptr;
+	}
+	return SortedTreasureSpawnZones[index];
 }
 //Pick a random Location that's on the NavMesh inside the TreasureZone
 FVector UTreasureMapComponent::GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const
@@ -124,7 +158,7 @@ FVector UTreasureMapComponent::GetSpawnLocation(ATreasureSpawnZone* TreasureSpaw
 
 void UTreasureMapComponent::SpawnTreasure()
 {
-	if (!PlayerCharacter || !TreasureClass) return;
+	if (!PlayerCharacter || !TreasureClass || TreasureSpawnZones.Num() == 0) return;
 	UWorld* World = GetWorld();
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(World);
 	
