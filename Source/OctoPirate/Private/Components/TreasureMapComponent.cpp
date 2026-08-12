@@ -68,18 +68,26 @@ int UTreasureMapComponent::SubmitCannonAmmo()
 // Pick a Zone Close to the player with the same Level as Treasure Level and spawn a Treasure there
 void UTreasureMapComponent::SpawnTreasureInZone()
 {
-	if (!PlayerCharacter || !TreasureClass) return;
+	if (!PlayerCharacter || !TreasureClass || TreasureSpawnZones.Num() == 0) return;
 	UWorld* World = GetWorld();
 	
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 	FVector SpawnLocation = GetSpawnLocation(GetRandomTreasureSpawnZone());
+	
+	if (SpawnLocation == FVector::ZeroVector)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Treasure Vector 0")));
+		return;
+	}
 	World->SpawnActor<AActor>(TreasureClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	PlayerCharacter->OnTreasureSpawn();
 }
 // Returns TreasureZone that are equal in Level with TreasureLevel and are closest to the Player
 ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
 {
+	if (TreasureSpawnZones.Num() == 0) return nullptr;
+	
 	ATreasureSpawnZone* ClosestZone = nullptr;
 	float ClosestDistance = FLT_MAX;
 	for (ATreasureSpawnZone* Zone : TreasureSpawnZones)
@@ -100,7 +108,11 @@ ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
 ATreasureSpawnZone* UTreasureMapComponent::GetRandomTreasureSpawnZone() const
 {
 	TArray<TObjectPtr<ATreasureSpawnZone>> SortedTreasureSpawnZones;
-	
+	if (TreasureSpawnZones.Num() == 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("No Treasure Zones")));
+		return nullptr;
+	}
 	for (ATreasureSpawnZone* Zone : TreasureSpawnZones)
 	{
 		if (!Zone) continue;
@@ -111,6 +123,11 @@ ATreasureSpawnZone* UTreasureMapComponent::GetRandomTreasureSpawnZone() const
 		
 	}
 	int32 index = FMath::RandRange(0, SortedTreasureSpawnZones.Num() - 1);
+	if (SortedTreasureSpawnZones[index] == nullptr)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("No Sorted Treasures")));
+		return nullptr;
+	}
 	return SortedTreasureSpawnZones[index];
 }
 //Pick a random Location that's on the NavMesh inside the TreasureZone
@@ -141,7 +158,7 @@ FVector UTreasureMapComponent::GetSpawnLocation(ATreasureSpawnZone* TreasureSpaw
 
 void UTreasureMapComponent::SpawnTreasure()
 {
-	if (!PlayerCharacter || !TreasureClass) return;
+	if (!PlayerCharacter || !TreasureClass || TreasureSpawnZones.Num() == 0) return;
 	UWorld* World = GetWorld();
 	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(World);
 	
