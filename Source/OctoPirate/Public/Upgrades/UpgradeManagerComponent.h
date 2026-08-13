@@ -87,7 +87,7 @@ public:
 	void RemoveUpgrade(UUpgradeData* Upgrade, int32 Levels);
 	void ApplyStatChange(EUpgradeStat Stat, float Value);
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Upgrades")
 	TMap<UUpgradeData*, int32> UpgradeLevels;
 
 	UPROPERTY()
