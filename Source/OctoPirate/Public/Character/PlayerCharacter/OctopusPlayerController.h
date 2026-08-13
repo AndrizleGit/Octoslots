@@ -24,6 +24,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> OctopusMappingContext;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> LeftClickAction;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> RightClickAction;
 
@@ -40,6 +43,8 @@ private:
 	void OnRightMouseReleased();
 	void MoveToCursor() const;
 	void SpawnCursorFX();
+    void OnLeftClickPressed();
+    void OnLeftClickReleased();
 	
 	bool bToggle = false;
 };
