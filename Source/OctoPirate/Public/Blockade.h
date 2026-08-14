@@ -33,7 +33,10 @@ public:
 	// Mesh
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	TSubclassOf<UStaticMeshComponent> Box;
-	
+	// Blockade Config
+	//Level to set for next level of clearance after being destroyed, New treasure level = BlockadeLevel
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Blockade")
+	int32 BlockadeLevel = 1;
 	// VFX & SFX 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explosions")
 	TObjectPtr<UNiagaraSystem> ExplosionVFX;
@@ -45,10 +48,11 @@ public:
 	// Volume multiplier applied to ExplosionSound.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explosions", meta = (ClampMin = "0.0"))
 	float ExplosionSoundVolume = 1.f;
-	
+	//Public API
 	UFUNCTION(BlueprintCallable, Category = "Explosions")
 	void Explode();
-	
+	UFUNCTION(BlueprintCallable, Category = "Blockade")
+	int32 GetBlockadeLevel(){return BlockadeLevel;};
 	//Distance from the centre of the Actor, Explosion location = Centre - Offset
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Explosions")
 	FVector ExplosionOffset = FVector(0,0,250.f);
