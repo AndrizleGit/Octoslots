@@ -37,7 +37,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	//bools
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
-	bool bAssembled = false;
+	bool bIsActive = true;
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
 	int32 CannonBall = 0;
