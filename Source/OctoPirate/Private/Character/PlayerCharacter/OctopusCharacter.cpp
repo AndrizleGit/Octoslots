@@ -351,7 +351,8 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 {
 	if (!ASC) return 0;
 
-	   FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(
+	   FGameplayEffectQuery Query;
+		Query.OwningTagQuery = FGameplayTagQuery::MakeQuery_MatchAnyTags(
         FGameplayTagContainer(EffectTag)
 	);
 
