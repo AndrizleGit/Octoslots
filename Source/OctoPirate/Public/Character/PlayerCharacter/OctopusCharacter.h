@@ -59,7 +59,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
-
+	// -- Treasuremap Events --
+	UFUNCTION(BlueprintImplementableEvent, Category = "Treasure Map")
+	void OnTreasureSpawn();
+	
 	// -- Check for Tag Changes -- 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnTagChanged(FGameplayTag Tag, int32 NewCount);
@@ -118,6 +121,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
 	TObjectPtr<class UNiagaraSystem> DeathExplosionVFX;
+
+	// Sound played at the dying enemy's location. Leave empty for silence.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	TObjectPtr<USoundBase> DeathExplosionSound;
+
+	// Volume multiplier applied to DeathExplosionSound.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion", meta = (ClampMin = "0.0"))
+	float DeathExplosionSoundVolume = 1.f;
 	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
@@ -164,6 +175,12 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
 	void TriggerDeflect();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float AttackTriggerBuffer = 100.f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
+	TObjectPtr<class UDecalComponent> AttackRangeDecal;
 	
 protected:
 	virtual void BeginPlay() override;

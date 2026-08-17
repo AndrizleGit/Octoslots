@@ -5,6 +5,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/DecalComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
@@ -44,6 +45,14 @@ AOctopusCharacter::AOctopusCharacter()
 	InRunUpgradeManager = CreateDefaultSubobject<UInRunUpgradeManagerComponent>("InRunUpgradeManager");
 	
 	PickupRadius = CreateDefaultSubobject<UPickupRadiusComponent>("PickupRadius");
+	
+	// --- range decal ---
+	AttackRangeDecal = CreateDefaultSubobject<UDecalComponent>("AttackRangeDecal");
+	AttackRangeDecal->SetupAttachment(RootComponent);
+	// X is the projection half-depth. The decal sits on the capsule origin (88 units up),
+	// so it needs enough depth to reach the ground and follow slopes.
+	AttackRangeDecal->DecalSize = FVector(400.f, 100.f, 100.f);
+	AttackRangeDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 }
 
 void AOctopusCharacter::BeginPlay()
@@ -96,7 +105,10 @@ void AOctopusCharacter::BeginPlay()
 		InRunUpgradeManager->CaptureBaseline();
 	}
 	
-	
+	if (AttackRangeDecal)
+	{
+		AttackRangeDecal->DecalSize = FVector(400.f, ConeMaxDistance, ConeMaxDistance);
+	}
 }
 
 void AOctopusCharacter::Tick(float DeltaTime)
@@ -142,6 +154,12 @@ void AOctopusCharacter::PerformAttack_Implementation()
     {
         const float DistToEnemy = FVector::Dist(GetActorLocation(), ClosestEnemy->GetActorLocation());
 
+        // Trigger slightly early
+        if (DistToEnemy > ConeMaxDistance + AttackTriggerBuffer)
+        {
+            return; // nothing close enough
+        }
+
         const FRotator OriginalRotation = GetActorRotation();
         FRotator AttackRotation = (ClosestEnemy->GetActorLocation() - GetActorLocation()).GetSafeNormal().Rotation();
         AttackRotation.Pitch = 0.f;
@@ -149,8 +167,8 @@ void AOctopusCharacter::PerformAttack_Implementation()
         SetActorRotation(AttackRotation);
 
         ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
-    	
-    	PlaySFX(this, AttackSound, GetActorLocation());
+        
+        //PlaySFX(this, AttackSound, GetActorLocation());
 
         SetActorRotation(OriginalRotation);
 
@@ -190,10 +208,8 @@ void AOctopusCharacter::PerformAttack_Implementation()
     }
     else
     {
-        // No target found — damage still applies in the facing direction, but the
-        // tentacle visual only plays when there is an enemy to orient toward.
-        UE_LOG(LogTemp, Verbose, TEXT("[Tentacle] No closest enemy — tentacle visual skipped this attack."));
-        ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
+        UE_LOG(LogTemp, Verbose, TEXT("[Tentacle] No closest enemy — attack skipped this cycle."));
+        return;
     }
 }
 
@@ -269,7 +285,8 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
     TArray<AActor*> OverlappingActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
-    
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
+	
     UKismetSystemLibrary::SphereOverlapActors(GetWorld(), Origin, MaxDist, ObjectTypes, nullptr, { this }, OverlappingActors);
     
     for (AActor* Actor : OverlappingActors)

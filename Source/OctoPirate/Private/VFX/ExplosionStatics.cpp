@@ -14,18 +14,25 @@ void UExplosionStatics::Explode(
 	float Radius,
 	float Damage,
 	UNiagaraSystem* NiagaraSystem,
+	USoundBase* ExplosionSound,
 	AController* InstigatorController,
 	AActor* DamageCauser,
-	const TArray<AActor*>& IgnoreActors)
+	const TArray<AActor*>& IgnoreActors,
+	float SoundVolumeMultiplier)
 {
 	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
 	if (!World) return;
 
-	// -- VFX (plays regardless of whether anything is in range) --
+	// -- VFX / SFX (play regardless of whether anything is in range) --
 	if (NiagaraSystem)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			World, NiagaraSystem, Location, FRotator::ZeroRotator, FVector(1.f), true, true);
+	}
+
+	if (ExplosionSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(World, ExplosionSound, Location, SoundVolumeMultiplier);
 	}
 
 	if (Radius <= 0.f || Damage <= 0.f) return;

@@ -35,6 +35,8 @@ void ACrabBomb::BeginPlay()
 void ACrabBomb::OnPawnOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
     UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+    UE_LOG(LogTemp, Error, TEXT("[CrabBomb] OnPawnOverlap: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+
     if (!OtherActor || OtherActor == GetOwner()) return;
 
     if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(OtherActor))
@@ -93,6 +95,8 @@ FVector ACrabBomb::ComputeDeflectedVelocity(const FVector& ReflectedVelocity, AA
 
 void ACrabBomb::HandleImpact(AActor* OtherActor, const FHitResult& Hit)
 {
+    UE_LOG(LogTemp, Error, TEXT("[CrabBomb] HandleImpact hit: %s"), OtherActor ? *OtherActor->GetName() : TEXT("NULL"));
+
     Explode();
 }
 

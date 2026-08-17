@@ -39,6 +39,7 @@ void ABaseCharacter::BeginPlay()
 	{
 		BasicAttributes->SetHealth(BasicAttributes->GetMaxHealth());
 	}
+	GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
