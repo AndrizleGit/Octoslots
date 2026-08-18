@@ -79,12 +79,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Upgrades")
 	int32 GetTotalCoinsSpent() const { return TotalCoinsSpent; }
 	
-	UFUNCTION(BlueprintCallable, Category = "Currency")
-	void AddToLifetimeCoins(float CoinsThisRun);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Currency")
-	float GetLifetimeCoinsCollected() const { return LifetimeCoinsCollected; }
-	
 protected:
 	virtual void BeginPlay() override;
 
@@ -102,7 +96,4 @@ public:
 	int32 TotalCoinsSpent = 0;
 
 	class UBasicAttributeSet* GetPlayerAttributes() const;
-	
-private:
-	float LifetimeCoinsCollected = 0.f;
 };

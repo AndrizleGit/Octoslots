@@ -224,23 +224,18 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 void AOctopusCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-    
+	
 	PlaySFX(this, DeathSound, GetActorLocation());
-
-	if (UpgradeManager && BasicAttributes)
-	{
-		UpgradeManager->AddToLifetimeCoins(BasicAttributes->GetTotalCoinsCollectedThisRun());
-	}
-    
+	
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC)
 	{
 		PC->DisableInput(PC);
 		PC->bShowMouseCursor = true;
 	}
-    
-	UE_LOG(LogTemp, Warning, TEXT("Player has died"));
-    
+	
+	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
+	
 	OnPlayerDied.Broadcast();
 }
 
