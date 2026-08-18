@@ -15,6 +15,7 @@
 #include "Engine/World.h"
 #include "VFX/ExplosionStatics.h"
 #include "Animation/AnimInstance.h"
+#include "Components/TreasureMapComponent.h" 
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -43,8 +44,9 @@ void ABaseEnemyCharacter::BeginPlay()
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnVFX, GetActorLocation());
 	}
 	
-	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	PlayerCharacter = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	
 }
 
 void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier)
@@ -199,10 +201,25 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	{
 		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
 		
-		const float Roll = FMath::RandRange(0.0f, 1.0f);
-		if (Roll <= TreasuremapDropChance)
+		//UGameplayStatics::GetActorOfClass(this,TreasuremapClass,FoundActor);
+		
+		if (PlayerCharacter)
 		{
-			GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr || UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
+			{
+				if (UTreasureMapComponent* TreasureMapComp = PlayerCharacter->FindComponentByClass<UTreasureMapComponent>())
+				{
+					if (TreasureMapComp->bCanSpawnTreasure && TreasureMapComp->GetTreasureNumber() < TreasureMapComp->MaxTreasureSpawn)
+					{
+						GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+						TreasureMapComp->StartTreasureSpawnTimer();
+						TreasureMapComp->NextTreasureNumber();
+					}
+				}
+			}
+			
+			
+			
 		}
 		
 	}
