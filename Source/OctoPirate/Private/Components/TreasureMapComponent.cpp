@@ -10,7 +10,7 @@ UTreasureMapComponent::UTreasureMapComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	
 	// ...
 }
 
@@ -22,6 +22,9 @@ void UTreasureMapComponent::BeginPlay()
 	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
 	FindAllTreasureSpawnZones();
 	
+	
+	
+	StartTreasureSpawnTimer();
 }
 
 
@@ -32,7 +35,17 @@ void UTreasureMapComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 
 	// ...
 }
-
+void UTreasureMapComponent::StartTreasureSpawnTimer() 
+{
+	UWorld* World = GetWorld();
+	World->GetTimerManager().SetTimer(
+		RespawnTimerHandle,
+		this,
+		&UTreasureMapComponent::EnableTreasureSpawn,
+		SpawnIntervalMinutes*60,
+		false
+		);	
+}
 void UTreasureMapComponent::FindAllTreasureSpawnZones() 
 {
 	TArray<AActor*> FoundActors;
@@ -44,6 +57,7 @@ void UTreasureMapComponent::FindAllTreasureSpawnZones()
 			TreasureSpawnZones.Add(TreasureSpawnZone);
 		}
 	}
+	
 }
 
 void UTreasureMapComponent::NextTreasureNumber()
@@ -51,6 +65,8 @@ void UTreasureMapComponent::NextTreasureNumber()
 	if (!PlayerCharacter) return;
 	
 	TreasureNumber += 1;
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, FString::Printf(TEXT("Treasuremap count: %d"),TreasureNumber));
+
 }
 
 void UTreasureMapComponent::AddCannonAmmo()
