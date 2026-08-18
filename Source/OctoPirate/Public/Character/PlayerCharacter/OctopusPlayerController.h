@@ -7,7 +7,7 @@
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "NiagaraSystem.h"
-#include "SlotMachineComponent.h"
+#include "NavigationSystem.h"
 #include "OctopusPlayerController.generated.h"
 
 /**
@@ -24,14 +24,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> OctopusMappingContext;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputAction> LeftClickAction;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> RightClickAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	TObjectPtr<UInputAction> ScrollDownAction;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
-	USlotMachineComponent* SlotMachine;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> CursorClickFX;
@@ -42,13 +39,20 @@ protected:
 	virtual void PlayerTick( float DeltaTime ) override;
 	virtual void BeginPlay() override;
 	
-private: 
+	//Auto Run
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Controller")
+	bool bAutoRun = false;
+	bool bIsRunning = true;
+private:
 	void OnRightMousePressed();
 	void OnRightMouseReleased();
-	void OnScrollDown();
 	void MoveToCursor() const;
 	void SpawnCursorFX();
+    void OnLeftClickPressed();
+    void OnLeftClickReleased();
+	
+	bool bRightMouseHold  = false;
 	
 	
-	bool bRightMouseHeld = false;
+	
 };

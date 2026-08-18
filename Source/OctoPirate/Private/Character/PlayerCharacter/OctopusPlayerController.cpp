@@ -9,7 +9,6 @@
 
 AOctopusPlayerController::AOctopusPlayerController()
 {
-	bShowMouseCursor = true;
 	bEnableClickEvents = true;
 	DefaultMouseCursor = EMouseCursor::Default;
 	bEnableMouseOverEvents = true;
@@ -32,8 +31,6 @@ void AOctopusPlayerController::BeginPlay()
 		}
 	}
 	
-	
-	
 
 }
 
@@ -45,59 +42,92 @@ void AOctopusPlayerController::SetupInputComponent()
 	{
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnRightMousePressed);
 		EnhancedInput->BindAction(RightClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnRightMouseReleased);
-	}
-	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(InputComponent))
-	{
-		EnhancedInput->BindAction(ScrollDownAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnScrollDown);
 		
+		if (LeftClickAction)
+		{
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Started, this, &AOctopusPlayerController::OnLeftClickPressed);
+			EnhancedInput->BindAction(LeftClickAction, ETriggerEvent::Completed, this, &AOctopusPlayerController::OnLeftClickReleased);
+		}
 	}
 }
 
 void AOctopusPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
-	
-	if (bRightMouseHeld)
+	if (bAutoRun)
+	{
+		if (bIsRunning) MoveToCursor();
+	}
+	else if (bRightMouseHold)
 	{
 		MoveToCursor();
 	}
 }
-void AOctopusPlayerController::OnScrollDown()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Scroll Down"));
-	SlotMachine->Spin();
-	
-}
+
 void AOctopusPlayerController::OnRightMousePressed()
 {
-	bRightMouseHeld = true;
-	MoveToCursor();
+	if (bAutoRun) bIsRunning = !bIsRunning;
+	bRightMouseHold  = true;
 	SpawnCursorFX();
 }
 
+void AOctopusPlayerController::OnLeftClickPressed()
+{
+	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
+	if (!OctopusChar) return;
+	OctopusChar->TriggerDeflect();
+}
+
+void AOctopusPlayerController::OnLeftClickReleased()
+{
+	// nothing for now
+	// deflect stays active until DeflectDuration expires
+}
+
+
 void AOctopusPlayerController::OnRightMouseReleased()
 {
-	bRightMouseHeld = false;
+	bRightMouseHold  = false;
 }
 
 void AOctopusPlayerController::MoveToCursor() const
 {
-	UE_LOG(LogTemp, Error, TEXT("MoveToCursor called"));
 	FHitResult HitResult;
+	if (!GetHitResultUnderCursor(TRACE_GROUND, false, HitResult)) return;
 
 	bool bHit = GetHitResultUnderCursor(TRACE_GROUND, false, HitResult);
 
 	if (!bHit) return;
-	if (bHit)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Hit: %s at %s"),
-			*HitResult.GetActor()->GetName(),
-			*HitResult.ImpactPoint.ToString());
-	}
+	
 	AOctopusCharacter* OctopusChar = Cast<AOctopusCharacter>(GetPawn());
 	if (!OctopusChar) return;
 
-	OctopusChar->SetMoveDestination(HitResult.ImpactPoint);
+	FVector Destination = HitResult.ImpactPoint;
+
+	// Skip redundant nav queries/moves if cursor hasn't moved much
+	static FVector LastDestination = FVector::ZeroVector;
+	if (FVector::DistSquared(Destination, LastDestination) < FMath::Square(25.f))
+	{
+		return;
+	}
+	// Find nearest available Navmesh
+	if (UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld()))
+	{
+		FNavLocation ProjectedLocation;
+		const FVector QueryExtent(500.f, 500.f, 700.f);
+
+		if (NavSys->ProjectPointToNavigation(Destination, ProjectedLocation, QueryExtent))
+		{
+			Destination = ProjectedLocation.Location;
+		}
+		else
+		{
+			return;
+		}
+	}
+
+	LastDestination = Destination;
+	OctopusChar->SetMoveDestination(Destination);
 }
 
 void AOctopusPlayerController::SpawnCursorFX()

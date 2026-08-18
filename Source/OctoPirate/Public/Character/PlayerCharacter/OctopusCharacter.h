@@ -21,6 +21,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PlayerPoison)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonWeaponBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Status_PoisonTrailBuff)
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Debuffs_PoisonTrailDebuff)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeflectCooldownChanged, float, NormalizedValue);
+
 UCLASS()
 class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 {
@@ -28,6 +30,17 @@ class OCTOPIRATE_API AOctopusCharacter : public ABaseCharacter
 
 public:
 	AOctopusCharacter();
+	
+	// --- Audio ---
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> AttackSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> DeflectSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Audio")
+	TObjectPtr<USoundBase> DeathSound;
+	
 	// -- Slot Machine Events -- 
 	// - Buffs -
 	
@@ -46,7 +59,10 @@ public:
 	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Slot Machine|Player")
 	void ApplySevenBuff();
-
+	// -- Treasuremap Events --
+	UFUNCTION(BlueprintImplementableEvent, Category = "Treasure Map")
+	void OnTreasureSpawn();
+	
 	// -- Check for Tag Changes -- 
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnTagChanged(FGameplayTag Tag, int32 NewCount);
@@ -105,6 +121,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
 	TObjectPtr<class UNiagaraSystem> DeathExplosionVFX;
+
+	// Sound played at the dying enemy's location. Leave empty for silence.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion")
+	TObjectPtr<USoundBase> DeathExplosionSound;
+
+	// Volume multiplier applied to DeathExplosionSound.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Jokers|DeathExplosion", meta = (ClampMin = "0.0"))
+	float DeathExplosionSoundVolume = 1.f;
 	
 	// - Upgrade Manager -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Upgrades")
@@ -119,9 +143,48 @@ public:
 	// - Pickup Component -
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pickup")
 	TObjectPtr<UPickupRadiusComponent> PickupRadius;
+	
+	// --- Deflect System ---
+
+	// activates/deactivates the deflect window — can be set from slot machine buff or input
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void SetDeflectActive(bool bActive);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool IsDeflectActive() const { return bDeflectActive; }
+
+	// how long the deflect window stays open on left click
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectDuration = 0.5f;
+
+	// placeholder — replace with actual animation call when ready
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectStarted();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat|Deflect")
+	void OnDeflectEnded();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Deflect")
+	float DeflectCooldown = 3.f;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Combat|Deflect")
+	bool CanDeflect() const { return bCanDeflect; }
 	    
+	UPROPERTY(BlueprintAssignable, Category = "Combat|Deflect")
+	FOnDeflectCooldownChanged OnDeflectCooldownChanged;
+	
+	UFUNCTION(BlueprintCallable, Category = "Combat|Deflect")
+	void TriggerDeflect();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
+	float AttackTriggerBuffer = 100.f;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
+	TObjectPtr<class UDecalComponent> AttackRangeDecal;
+	
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaSeconds) override;
 	virtual void PerformAttack_Implementation() override;
 	void ApplyDamageInZone(float MinDist, float MaxDist, float Damage) override;
 	static int32 GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag) ;
@@ -129,7 +192,6 @@ protected:
 	// React to the bomb joker being granted/removed.
 	virtual void OnJokerEffectAdded(FName EffectID, float Value) override;
 	virtual void OnJokerEffectRemoved(FName EffectID) override;
-
 public:	
 	// --- Tentacle Attack ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
@@ -138,12 +200,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Combat|Tentacle")
 	TObjectPtr<UAnimMontage> TentacleAttackMontage;
 
-	// The default scale of the tentacle mesh (tweak this in the editor to get the right base size)
+	// Yaw correction (degrees) applied on top of the aim rotation, to align the
+	// tentacle mesh's authored forward axis with the attack direction. Tune live
+	// in BP_OctopusCharacter; try ±90 if the tentacle points sideways.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Tentacle")
-	float BaseTentacleScale = 2.f;
-
-	// Base range used to calculate tentacle scale (set automatically from ConeMaxDistance at BeginPlay)
-	float BaseConeMaxDistance = 0.f;
+	float TentacleYawOffset = -45.f;
 
 	// --- Camera ---
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
@@ -171,11 +232,27 @@ private:
 	// Starts the bomb-drop timer when the "BombDrop" joker is active, stops it otherwise.
 	void RefreshBombTimer();
 
+public:
+	// Console test cheat: grant a joker effect immediately, e.g. `GrantJoker BombDrop`
+	// or `GrantJoker DeathExplosion` in the PIE console (~). Lets you test without
+	// grinding to level 10. Remove before shipping.
+	UFUNCTION(Exec)
+	void GrantJoker(FName EffectID, float Value = 0.f);
+
+private:
+
 	UFUNCTION()
 	void SpawnBombBehind();
 
 	FTimerHandle BombSpawnTimer;
-
+	bool bDeflectActive = false;
+	FTimerHandle DeflectTimer;
+	
 	UFUNCTION()
 	void OnTentacleMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	
+	void DeactivateDeflect();
+	
+	bool bCanDeflect = true;
+	float CooldownRemaining = 0.f;
 };

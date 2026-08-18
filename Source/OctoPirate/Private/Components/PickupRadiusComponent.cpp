@@ -50,18 +50,29 @@ void UPickupRadiusComponent::TickComponent(float DeltaTime, ELevelTick TickType,
     
     for (ABasePickup* Pickup : ActivePickups)
     {
+        if (ForcedPickups.Contains(Pickup)) continue; 
+
         const float Dist = FVector::Dist(PlayerLocation, Pickup->GetActorLocation());
 
         if (Dist <= Radius)
         {
-            // Still in range — keep pulling
             Pickup->PullToward(PlayerLocation, Pickup->PullSpeed, GetOwner());
         }
         else
         {
-            // Left the range — stop pulling
             Pickup->StopPull();
         }
+    }
+
+    // -- new: magnet-forced pickups, no radius check --
+    ForcedPickups.RemoveAll([](ABasePickup* Pickup)
+    {
+        return !IsValid(Pickup);
+    });
+
+    for (ABasePickup* Pickup : ForcedPickups)
+    {
+        Pickup->PullToward(PlayerLocation, Pickup->PullSpeed, GetOwner());
     }
 }
 
@@ -84,12 +95,21 @@ void UPickupRadiusComponent::OnSphereBeginOverlap(UPrimitiveComponent* Overlappe
     ActivePickups.Add(Pickup);
 }
 
-void UPickupRadiusComponent::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,
-    AActor* OtherActor, UPrimitiveComponent* OtherOverlappedComponent, int32 OtherBodyIndex)
+void UPickupRadiusComponent::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,AActor* OtherActor, UPrimitiveComponent* OtherOverlappedComponent, int32 OtherBodyIndex)
 {
     ABasePickup* Pickup = Cast<ABasePickup>(OtherActor);
     if (!Pickup) return;
 
-    Pickup->StopPull();
     ActivePickups.Remove(Pickup);
+
+    if (!ForcedPickups.Contains(Pickup))
+    {
+        Pickup->StopPull();
+    }
+}
+
+void UPickupRadiusComponent::ForcePull(ABasePickup* Pickup)
+{
+    if (!Pickup || ForcedPickups.Contains(Pickup)) return;
+    ForcedPickups.Add(Pickup);
 }

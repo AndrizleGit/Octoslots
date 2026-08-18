@@ -9,26 +9,38 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
+#include "NiagaraFunctionLibrary.h"
 #include "TaskSyncManager.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/World.h"
 #include "VFX/ExplosionStatics.h"
+#include "Animation/AnimInstance.h"
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	
 }
 
 void ABaseEnemyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	this->GetCapsuleComponent()->SetCollisionObjectType(ECC_GameTraceChannel2);
+	
 	// -- Set Base Enemy Attributes --
 	if (BasicAttributes)
 	{
-		BasicAttributes->SetAttackDamage(7.f);
-		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * 1.2f); // 20% faster than base
+		BasicAttributes->SetMaxHealth(BaseMaxHealth);
+		BasicAttributes->SetHealth(BaseMaxHealth);
+		BasicAttributes->SetAttackDamage(BaseAttackDamage);
+		BasicAttributes->SetWalkSpeed(BasicAttributes->GetWalkSpeed() * WalkSpeedMultiplier);
 		GetCharacterMovement()->MaxWalkSpeed = BasicAttributes->GetWalkSpeed();
+	}
+	
+	if (SpawnVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnVFX, GetActorLocation());
 	}
 	
 	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
@@ -53,12 +65,12 @@ void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float D
 void ABaseEnemyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	ChasePlayer();
+	
 }
 
 void ABaseEnemyCharacter::ChasePlayer()
 {
-	if (bIsDead || bIsFrozen || !PlayerCharacter) return;
+	if (bIsDead || bIsFrozen || bMovementLocked || !PlayerCharacter) return;
 	
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	
@@ -110,7 +122,7 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 	const float DistanceToPlayer = FVector::Dist(GetActorLocation(), PlayerCharacter->GetActorLocation());
 	if (DistanceToPlayer > AttackRange)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
+		UE_LOG(LogTemp, Verbose, TEXT("Enemy %s: Out of range (Dist: %.1f, Range: %.1f)"), *GetName(), DistanceToPlayer, AttackRange);
 		return;
 	}
 
@@ -125,54 +137,118 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 		AttackInterval = BasicAttributes->GetAttackSpeed();
 	}
 
+	// --- Play the attack animation montage (if assigned in the Blueprint) ---
+	if (AttackMontage)
+	{
+		if (UAnimInstance* AnimInstance = GetMesh() ? GetMesh()->GetAnimInstance() : nullptr)
+		{
+			AnimInstance->Montage_Play(AttackMontage);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Enemy %s: AttackMontage set but mesh has no AnimInstance — assign an Anim Blueprint to the mesh."), *GetName());
+		}
+	}
+
 	Super::PerformAttack_Implementation();
 }
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
-	Super::OnDeath_Implementation();
-	
-	const FVector SpawnLocation = GetActorLocation();
-	const FRotator SpawnRotation = FRotator::ZeroRotator;
+    if (HealthBarWidget)
+    {
+        HealthBarWidget->SetVisibility(false);
+    }
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride =
-		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+    // Immediately destroy anything attached to enemy
+    TArray<AActor*> AttachedActors;
+    GetAttachedActors(AttachedActors);
+    for (AActor* Attached : AttachedActors)
+    {
+        if (IsValid(Attached))
+        {
+            Attached->Destroy();
+        }
+    }
 
-	if (CoinClass)
+    Super::OnDeath_Implementation();
+    
+    const FVector SpawnLocation = GetActorLocation();
+    const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride =
+       ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    if (CoinClass)
+    {
+       GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
+    }
+
+    if (HealthPackClass)
+    {
+       const float Roll = FMath::RandRange(0.0f, 1.0f);
+       if (Roll <= HealthPackDropChance)
+       {
+          const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
+          GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+       }
+    }
+    
+    if (MagnetClass)
+    {
+       const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+       if (MagnetRoll <= MagnetDropChance)
+       {
+          const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+          GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+       }
+    }
+    
+    if (TreasuremapClass)
+    {
+       const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
+       
+       const float Roll = FMath::RandRange(0.0f, 1.0f);
+       if (Roll <= TreasuremapDropChance)
+       {
+          GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+       }
+       
+    }
+    GetMesh()->SetVisibility(false);
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+	for (UMeshComponent* MeshComp : MeshComponents)
 	{
-		GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
-	}
-
-	if (HealthPackClass)
-	{
-		const float Roll = FMath::RandRange(0.0f, 1.0f);
-		if (Roll <= HealthPackDropChance)
+		if (MeshComp && MeshComp != GetMesh())
 		{
-			const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
-			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+			MeshComp->SetVisibility(false);
 		}
 	}
-	GetMesh()->SetVisibility(false);
-	SetLifeSpan(2.f);
+    SetLifeSpan(2.f);
 
-	// -- Joker: Explode on Death --
-	// If the player owns the DeathExplosion joker, detonate at this enemy's location
-	// using the player's independently-tuned values. Kills are credited to the player.
-	// The shared routine only hits enemies, so dying enemies can chain-react.
-	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
-	{
-		if (Player->HasJokerEffect("DeathExplosion"))
-		{
-			UExplosionStatics::Explode(
-				this,
-				GetActorLocation(),
-				Player->DeathExplosionRadius,
-				Player->DeathExplosionDamage,
-				Player->DeathExplosionVFX,
-				Player->GetController(),
-				this,
-				{ this });
-		}
-	}
+    // -- Joker: Explode on Death --
+    // If the player owns the DeathExplosion joker, detonate at this enemy's location
+    // using the player's independently-tuned values. Kills are credited to the player.
+    // The shared routine only hits enemies, so dying enemies can chain-react.
+    if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+    {
+       const bool bHasDeathExplosion = Player->HasJokerEffect("DeathExplosion");
+       UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] enemy %s died; player has joker=%d"), *GetName(), bHasDeathExplosion);
+       if (bHasDeathExplosion)
+       {
+          UExplosionStatics::Explode(
+             this,
+             GetActorLocation(),
+             Player->DeathExplosionRadius,
+             Player->DeathExplosionDamage,
+             Player->DeathExplosionVFX,
+             Player->DeathExplosionSound,
+             Player->GetController(),
+             this,
+             { this },
+             Player->DeathExplosionSoundVolume);
+       }
+    }
 }

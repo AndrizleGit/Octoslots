@@ -30,16 +30,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
 	TArray<TObjectPtr<UUpgradeData>> AvailableUpgrades;
 	
+	// --- booleen ---
+	UPROPERTY(BlueprintReadWrite, Category = "Config")
+    bool bIsMetaProgressionMode = false;
+
 	/// Die Events kannst du an das widget binden
 	UPROPERTY(BlueprintAssignable, Category = "Upgrades")
 	FOnUpgradePurchased OnUpgradePurchased;
 	
 	UPROPERTY(BlueprintAssignable, Category = "Upgrades")
 	FOnAllUpgradesRefunded OnAllUpgradesRefunded;
-
+    
 	// Die Functions kannst du vom widget callen
 	UFUNCTION(BlueprintCallable, Category = "Upgrades")
 	bool PurchaseUpgrade(UUpgradeData* Upgrade);
+	
+	UFUNCTION(BlueprintCallable, Category = "Upgrades")
+    bool SellSingleUpgrade(UUpgradeData* Upgrade);
 
 	UFUNCTION(BlueprintCallable, Category = "Upgrades")
 	void RefundAllUpgrades();
@@ -72,6 +79,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Upgrades")
 	int32 GetTotalCoinsSpent() const { return TotalCoinsSpent; }
 	
+	UFUNCTION(BlueprintCallable, Category = "Currency")
+	void AddToLifetimeCoins(float CoinsThisRun);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Currency")
+	float GetLifetimeCoinsCollected() const { return LifetimeCoinsCollected; }
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -80,7 +93,7 @@ public:
 	void RemoveUpgrade(UUpgradeData* Upgrade, int32 Levels);
 	void ApplyStatChange(EUpgradeStat Stat, float Value);
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Upgrades")
 	TMap<UUpgradeData*, int32> UpgradeLevels;
 
 	UPROPERTY()
@@ -89,4 +102,7 @@ public:
 	int32 TotalCoinsSpent = 0;
 
 	class UBasicAttributeSet* GetPlayerAttributes() const;
+	
+private:
+	float LifetimeCoinsCollected = 0.f;
 };

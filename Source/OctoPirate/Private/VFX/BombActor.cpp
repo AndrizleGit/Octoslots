@@ -38,9 +38,11 @@ void ABombActor::Explode()
 		Radius,
 		Damage,
 		ExplosionVFX,
+		ExplosionSound,
 		GetInstigatorController(),
 		this,
-		{ this });
+		{ this },
+		ExplosionSoundVolume);
 
 	Destroy();
 }

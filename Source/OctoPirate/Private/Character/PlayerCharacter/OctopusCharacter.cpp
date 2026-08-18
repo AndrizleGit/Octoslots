@@ -1,10 +1,14 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Projectiles/BaseProjectile.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "Components/DecalComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "VFX/BombActor.h"
 #include "Engine/World.h"
@@ -41,13 +45,20 @@ AOctopusCharacter::AOctopusCharacter()
 	InRunUpgradeManager = CreateDefaultSubobject<UInRunUpgradeManagerComponent>("InRunUpgradeManager");
 	
 	PickupRadius = CreateDefaultSubobject<UPickupRadiusComponent>("PickupRadius");
+	
+	// --- range decal ---
+	AttackRangeDecal = CreateDefaultSubobject<UDecalComponent>("AttackRangeDecal");
+	AttackRangeDecal->SetupAttachment(RootComponent);
+	// X is the projection half-depth. The decal sits on the capsule origin (88 units up),
+	// so it needs enough depth to reach the ground and follow slopes.
+	AttackRangeDecal->DecalSize = FVector(400.f, 100.f, 100.f);
+	AttackRangeDecal->SetRelativeRotation(FRotator(-90.f, 0.f, 0.f));
 }
 
 void AOctopusCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	BaseConeMaxDistance = ConeMaxDistance;
-
+	
 	// Force absolute rotation & scale AFTER Blueprint init so the BP can't override it
 	if (TentacleMesh)
 	{
@@ -93,6 +104,29 @@ void AOctopusCharacter::BeginPlay()
 	{
 		InRunUpgradeManager->CaptureBaseline();
 	}
+	
+	if (AttackRangeDecal)
+	{
+		AttackRangeDecal->DecalSize = FVector(400.f, ConeMaxDistance, ConeMaxDistance);
+	}
+}
+
+void AOctopusCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!bCanDeflect && CooldownRemaining > 0.f)
+	{
+		CooldownRemaining -= DeltaTime;
+		OnDeflectCooldownChanged.Broadcast(1.f - (CooldownRemaining / DeflectCooldown));
+
+		if (CooldownRemaining <= 0.f)
+		{
+			CooldownRemaining = 0.f;
+			bCanDeflect = true;
+			OnDeflectCooldownChanged.Broadcast(1.f);
+		}
+	}
 }
 
 void AOctopusCharacter::PerformAttack_Implementation()
@@ -120,6 +154,12 @@ void AOctopusCharacter::PerformAttack_Implementation()
     {
         const float DistToEnemy = FVector::Dist(GetActorLocation(), ClosestEnemy->GetActorLocation());
 
+        // Trigger slightly early
+        if (DistToEnemy > ConeMaxDistance)
+        {
+            return; // nothing close enough
+        }
+
         const FRotator OriginalRotation = GetActorRotation();
         FRotator AttackRotation = (ClosestEnemy->GetActorLocation() - GetActorLocation()).GetSafeNormal().Rotation();
         AttackRotation.Pitch = 0.f;
@@ -127,22 +167,23 @@ void AOctopusCharacter::PerformAttack_Implementation()
         SetActorRotation(AttackRotation);
 
         ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
+        
+        //PlaySFX(this, AttackSound, GetActorLocation());
 
         SetActorRotation(OriginalRotation);
 
         // --- Show tentacle and play attack animation ---
         if (TentacleMesh && TentacleAttackMontage)
         {
-            TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, -90.f, 0.f));
-
-            const float RangeRatio = (BaseConeMaxDistance > 0.f) ? ConeMaxDistance / BaseConeMaxDistance : 1.f;
-            const float RangeFactor = FMath::Pow(RangeRatio, 5.f);
-            const float FinalScale = BaseTentacleScale * RangeFactor;
-            TentacleMesh->SetWorldScale3D(FVector(FinalScale));
-            UE_LOG(LogTemp, Warning, TEXT("Tentacle - ConeMax: %f | Base: %f | RangeFactor: %f | BaseTentacleScale: %f | FinalScale: %f"),
-                ConeMaxDistance, BaseConeMaxDistance, RangeFactor, BaseTentacleScale, FinalScale);
+            TentacleMesh->SetWorldRotation(AttackRotation + FRotator(0.f, TentacleYawOffset, 0.f));
+            TentacleMesh->SetWorldScale3D(FVector(1.f));
 
             TentacleMesh->SetHiddenInGame(false);
+
+            if (!TentacleMesh->GetSkeletalMeshAsset())
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Tentacle] TentacleMesh has no Skeletal Mesh asset assigned in BP_OctopusCharacter — nothing will render."));
+            }
 
             UAnimInstance* AnimInstance = TentacleMesh->GetAnimInstance();
             if (AnimInstance)
@@ -153,11 +194,22 @@ void AOctopusCharacter::PerformAttack_Implementation()
                 EndDelegate.BindUObject(this, &AOctopusCharacter::OnTentacleMontageEnded);
                 AnimInstance->Montage_SetEndDelegate(EndDelegate, TentacleAttackMontage);
             }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("[Tentacle] TentacleMesh->GetAnimInstance() is null — set the component's Anim Class (Anim Blueprint) in BP_OctopusCharacter, or the montage cannot play."));
+            }
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("[Tentacle] Skipped: TentacleMesh=%s, TentacleAttackMontage=%s. Assign the montage in BP_OctopusCharacter (Combat|Tentacle)."),
+                TentacleMesh ? TEXT("OK") : TEXT("NULL"),
+                TentacleAttackMontage ? TEXT("OK") : TEXT("NULL"));
         }
     }
     else
     {
-        ApplyDamageInZone(0.0f, ConeMaxDistance, EffectiveDamage);
+        UE_LOG(LogTemp, Verbose, TEXT("[Tentacle] No closest enemy — attack skipped this cycle."));
+        return;
     }
 }
 
@@ -172,16 +224,23 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 void AOctopusCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	
+    
+	PlaySFX(this, DeathSound, GetActorLocation());
+
+	if (UpgradeManager && BasicAttributes)
+	{
+		UpgradeManager->AddToLifetimeCoins(BasicAttributes->GetTotalCoinsCollectedThisRun());
+	}
+    
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC)
 	{
 		PC->DisableInput(PC);
 		PC->bShowMouseCursor = true;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
-	
+    
+	UE_LOG(LogTemp, Warning, TEXT("Player has died"));
+    
 	OnPlayerDied.Broadcast();
 }
 
@@ -231,7 +290,8 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
     TArray<AActor*> OverlappingActors;
     TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
     ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
-    
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_GameTraceChannel2));
+	
     UKismetSystemLibrary::SphereOverlapActors(GetWorld(), Origin, MaxDist, ObjectTypes, nullptr, { this }, OverlappingActors);
     
     for (AActor* Actor : OverlappingActors)
@@ -258,7 +318,9 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
             const FVector KnockbackDirection = ToTarget.GetSafeNormal();
             HitCharacter->LaunchCharacter(KnockbackDirection * KnockbackStrength, true, false);
         }
-        
+    	
+    	SpawnDamageNumber(Actor, Damage);
+    	
         // -- Lifesteal --
         if (lifeStealEnabled) BasicAttributes->ApplyLifesteal(Damage);
 
@@ -314,6 +376,7 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 void AOctopusCharacter::OnJokerEffectAdded(FName EffectID, float Value)
 {
 	Super::OnJokerEffectAdded(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] OnJokerEffectAdded: '%s' (value %.1f)"), *EffectID.ToString(), Value);
 	RefreshBombTimer();
 }
 
@@ -325,8 +388,17 @@ void AOctopusCharacter::OnJokerEffectRemoved(FName EffectID)
 
 void AOctopusCharacter::RefreshBombTimer()
 {
-	const bool bWant = HasJokerEffect("BombDrop") && BombClass != nullptr && BombSpawnInterval > 0.f;
+	const bool bHasJoker = HasJokerEffect("BombDrop");
+	const bool bWant = bHasJoker && BombClass != nullptr && BombSpawnInterval > 0.f;
 	const bool bActive = GetWorldTimerManager().IsTimerActive(BombSpawnTimer);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] RefreshBombTimer: HasJoker=%d BombClassSet=%d Interval=%.1f -> want=%d (alreadyActive=%d)"),
+		bHasJoker, BombClass != nullptr, BombSpawnInterval, bWant, bActive);
+
+	if (bHasJoker && !BombClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("[Bomb] BombDrop joker is active but BombClass is NOT set on BP_OctopusCharacter — no bombs will spawn."));
+	}
 
 	if (bWant && !bActive)
 	{
@@ -352,7 +424,66 @@ void AOctopusCharacter::SpawnBombBehind()
 	SpawnParams.Owner = this;
 	SpawnParams.Instigator = this;
 
-	World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	ABombActor* Bomb = World->SpawnActor<ABombActor>(BombClass, SpawnLocation, GetActorRotation(), SpawnParams);
+	UE_LOG(LogTemp, Warning, TEXT("[Bomb] SpawnBombBehind at %s -> %s"), *SpawnLocation.ToString(), Bomb ? TEXT("spawned") : TEXT("FAILED"));
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Orange, FString::Printf(TEXT("Bomb dropped: %s"), Bomb ? TEXT("OK") : TEXT("FAILED")));
+	}
 }
 
+void AOctopusCharacter::GrantJoker(FName EffectID, float Value)
+{
+	// Console cheat for testing: `GrantJoker BombDrop` or `GrantJoker DeathExplosion`
+	AddJokerEffect(EffectID, Value);
+	UE_LOG(LogTemp, Warning, TEXT("[Joker] GrantJoker cheat: granted '%s'"), *EffectID.ToString());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Green, FString::Printf(TEXT("Granted joker: %s"), *EffectID.ToString()));
+	}
+}
 
+void AOctopusCharacter::SetDeflectActive(bool bActive)
+{
+	if (bActive == bDeflectActive) return;
+	bDeflectActive = bActive;
+
+	if (bActive)
+	{
+		OnDeflectStarted();
+	}
+	else
+	{
+		OnDeflectEnded();
+	}
+}
+
+void AOctopusCharacter::TriggerDeflect()
+{
+	if (!bCanDeflect || bDeflectActive) return;
+
+	// start cooldown instantly
+	bCanDeflect = false;
+	CooldownRemaining = DeflectCooldown;
+	OnDeflectCooldownChanged.Broadcast(0.f);
+
+	SetDeflectActive(true);
+	
+	PlaySFX(this, DeflectSound, GetActorLocation());
+
+	// deactivate deflect window after short time
+	GetWorldTimerManager().SetTimer(
+		DeflectTimer,
+		[this]()
+		{
+			SetDeflectActive(false);
+		},
+		0.5f,
+		false
+	);
+}
+
+void AOctopusCharacter::DeactivateDeflect()
+{
+	SetDeflectActive(false);
+}

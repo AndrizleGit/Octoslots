@@ -69,7 +69,16 @@ public:
 	FGameplayAttributeData Coins;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, Coins)
 	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
+	FGameplayAttributeData TotalCoinsCollectedThisRun;
+	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, TotalCoinsCollectedThisRun)
+	
 public:
 	void ApplyLifesteal(float Damage);
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	float GetAttackDamageValue() const { return AttackDamage.GetCurrentValue(); }
+
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	float GetTotalCoinsValue() const { return TotalCoinsCollectedThisRun.GetCurrentValue(); }
 };
 	

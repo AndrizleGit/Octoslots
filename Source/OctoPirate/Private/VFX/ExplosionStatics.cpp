@@ -14,18 +14,25 @@ void UExplosionStatics::Explode(
 	float Radius,
 	float Damage,
 	UNiagaraSystem* NiagaraSystem,
+	USoundBase* ExplosionSound,
 	AController* InstigatorController,
 	AActor* DamageCauser,
-	const TArray<AActor*>& IgnoreActors)
+	const TArray<AActor*>& IgnoreActors,
+	float SoundVolumeMultiplier)
 {
 	UWorld* World = GEngine ? GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull) : nullptr;
 	if (!World) return;
 
-	// -- VFX (plays regardless of whether anything is in range) --
+	// -- VFX / SFX (play regardless of whether anything is in range) --
 	if (NiagaraSystem)
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			World, NiagaraSystem, Location, FRotator::ZeroRotator, FVector(1.f), true, true);
+	}
+
+	if (ExplosionSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(World, ExplosionSound, Location, SoundVolumeMultiplier);
 	}
 
 	if (Radius <= 0.f || Damage <= 0.f) return;
@@ -39,6 +46,14 @@ void UExplosionStatics::Explode(
 	UKismetSystemLibrary::SphereOverlapActors(
 		World, Location, Radius, ObjectTypes,
 		ABaseEnemyCharacter::StaticClass(), IgnoreActors, Overlapped);
+
+	UE_LOG(LogTemp, Warning, TEXT("[Explosion] at %s radius=%.0f dmg=%.0f -> %d enemies hit"),
+		*Location.ToString(), Radius, Damage, Overlapped.Num());
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red,
+			FString::Printf(TEXT("Explosion: %d enemies hit"), Overlapped.Num()));
+	}
 
 	for (AActor* Actor : Overlapped)
 	{

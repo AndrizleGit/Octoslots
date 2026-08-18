@@ -1,162 +1,193 @@
 #include "Enemy/EnemySpawner.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Enemy/DifficultyManager.h"
+#include "Enemy/SpawnZone.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 #include "NavigationSystem.h"
-#include "Engine/World.h"
 
 AEnemySpawner::AEnemySpawner()
 {
-	PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = false;
 }
 
 void AEnemySpawner::BeginPlay()
 {
-	Super::BeginPlay();
-	
-	if (SpawnPool.Num() > 0)
-	{
-		GetWorldTimerManager().SetTimer(SpawnTimerHandle, this, &AEnemySpawner::SpawnCycle, SpawnCycleInterval, true);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Enemy Spawner: SpawnPool is empty!"))
-	}
+    Super::BeginPlay();
+
+    for (ASpawnZone* Zone : SpawnZones)
+    {
+        if (!Zone) continue;
+        if (Zone->ZoneLevel == 1)
+            Zone->Unlock();
+        else
+            Zone->Lock();
+    }
+    
+    if (SpawnZones.Num() > 0)
+    {
+        GetWorldTimerManager().SetTimer(SpawnTimerHandle, this, &AEnemySpawner::SpawnCycle, SpawnCycleInterval, true);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: No SpawnZones assigned!"));
+    }
 }
 
 void AEnemySpawner::SetSpawningEnabled(bool bEnabled)
 {
-	if (bEnabled) GetWorldTimerManager().UnPauseTimer(SpawnTimerHandle);
-	else GetWorldTimerManager().PauseTimer(SpawnTimerHandle);
+    if (bEnabled) GetWorldTimerManager().UnPauseTimer(SpawnTimerHandle);
+    else GetWorldTimerManager().PauseTimer(SpawnTimerHandle);
 }
 
 void AEnemySpawner::SpawnCycle()
 {
-	ActiveEnemies.RemoveAll([](ABaseEnemyCharacter* Enemy)
-	{
-		return !IsValid(Enemy);
-	});
-	
-	if (ActiveEnemies.Num() >= MaxEnemies) return;
-	
-	ADifficultyManager* DifficultyManager = ADifficultyManager::Get(GetWorld());
-	const float Coefficient = DifficultyManager ? DifficultyManager->GetDifficultyCoefficient() : 0.f;
-	float Budget = DifficultyManager ? DifficultyManager->GetCurrentSpawnBudget() : 4.f;
-	
-	UE_LOG(LogTemp, Error, TEXT("SpawnCycle — DifficultyManager: %s, Coefficient: %.2f, Budget: %.2f"),
-		DifficultyManager ? TEXT("FOUND") : TEXT("NULL"), Coefficient, Budget);
-	
-	while (Budget > 0.0f && ActiveEnemies.Num() < MaxEnemies)
-	{
-		UEnemySpawnData* Choice = PickWeightedEnemy(Coefficient);
-		
-		UE_LOG(LogTemp, Error, TEXT("PickWeightedEnemy returned: %s"), Choice ? TEXT("VALID") : TEXT("NULL"));
+    // clean up dead enemies
+    ActiveEnemies.RemoveAll([](ABaseEnemyCharacter* Enemy)
+    {
+        return !IsValid(Enemy);
+    });
 
-		if (!Choice || !Choice->EnemyClass)
-		{
-			UE_LOG(LogTemp, Error, TEXT("Breaking — Choice null or EnemyClass null"));
-			break;
-		}
-		
-		Budget -= Choice->SpawnCost;
-		if (Budget < 0.f)
-		{
-			UE_LOG(LogTemp, Error, TEXT("Breaking — Budget went negative: %.2f"), Budget);
-			break;
-		}
-		
-		const FVector SpawnLocation = GetSpawnLocationOutsideViewport();
-		
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-		
-		ABaseEnemyCharacter* NewEnemy = GetWorld()->SpawnActor<ABaseEnemyCharacter>(Choice->EnemyClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
-		
-		UE_LOG(LogTemp, Error, TEXT("SpawnActor result: %s at %s"), NewEnemy ? TEXT("SUCCESS") : TEXT("FAILED"), *SpawnLocation.ToString());
+    if (ActiveEnemies.Num() >= MaxEnemies) return;
 
-		if (NewEnemy)
-		{
-			ActiveEnemies.Add(NewEnemy);
-			
-			if (DifficultyManager)
-			{
-				NewEnemy->ApplyDifficultyScaling(DifficultyManager->GetHealthMultiplier(), DifficultyManager->GetDamageMultiplier());
-			}
-		}
-	}
+    // find the closest available zone to the player
+    ASpawnZone* ActiveZone = GetClosestAvailableZone();
+    if (!ActiveZone) return;
+
+    ADifficultyManager* DifficultyManager = ADifficultyManager::Get(GetWorld());
+    const float Coefficient = DifficultyManager ? DifficultyManager->GetDifficultyCoefficient() : 0.f;
+    float Budget = DifficultyManager ? DifficultyManager->GetCurrentSpawnBudget() : 4.f;
+
+    while (Budget > 0.f && ActiveEnemies.Num() < MaxEnemies)
+    {
+        UEnemySpawnData* Choice = PickWeightedEnemyFromPool(ActiveZone->ZoneSpawnPool, Coefficient);
+        if (!Choice || !Choice->EnemyClass) break;
+
+        Budget -= Choice->SpawnCost;
+        if (Budget < 0.f) break;
+
+        const FVector SpawnLocation = GetSpawnLocationInZone(ActiveZone);
+        if (SpawnLocation == FVector::ZeroVector) break;
+
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+        ABaseEnemyCharacter* NewEnemy = GetWorld()->SpawnActor<ABaseEnemyCharacter>(
+            Choice->EnemyClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
+
+        if (NewEnemy)
+        {
+            ActiveEnemies.Add(NewEnemy);
+            ActiveZone->RegisterSpawn();
+
+            if (DifficultyManager)
+            {
+                NewEnemy->ApplyDifficultyScaling(
+                    DifficultyManager->GetHealthMultiplier(),
+                    DifficultyManager->GetDamageMultiplier());
+            }
+        }
+    }
 }
 
-UEnemySpawnData* AEnemySpawner::PickWeightedEnemy(float DifficultyCoefficient) const
+// finds the unlocked, non-cooldown zone closest to the player
+ASpawnZone* AEnemySpawner::GetClosestAvailableZone() const
 {
-	TArray<UEnemySpawnData*> EligiblePool;
-	float TotalWeight = 0.f;
-	
-	for (UEnemySpawnData* Entry : SpawnPool)
-	{
-		if (Entry && DifficultyCoefficient > Entry->MinDifficultyToSpawn)
-		{
-			EligiblePool.Add(Entry);
-			TotalWeight += (1.f / FMath::Max(Entry->SpawnCost, 0.01f));
-		}
-	}
-	
-	if (EligiblePool.Num() == 0) return nullptr;
-	
-	float Roll = FMath::FRandRange(0.f, TotalWeight);
-	for (UEnemySpawnData* Entry : EligiblePool)
-	{
-		const float Weight = 1.f / FMath::Max(Entry->SpawnCost, 0.01f);
-		if (Roll <= Weight) return Entry;
-		Roll -= Weight;
-	}
-	
-	return EligiblePool.Last();
+    ACharacter* Player = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
+    if (!Player) return nullptr;
+
+    ASpawnZone* Closest = nullptr;
+    float ClosestDist = FLT_MAX;
+
+    for (ASpawnZone* Zone : SpawnZones)
+    {
+        if (!Zone || !Zone->IsAvailable()) continue;
+
+        const float Dist = FVector::Dist(Player->GetActorLocation(), Zone->GetZoneCenter());
+        if (Dist < ClosestDist)
+        {
+            ClosestDist = Dist;
+            Closest = Zone;
+        }
+    }
+
+    return Closest;
 }
 
-FVector AEnemySpawner::GetSpawnLocationOutsideViewport() const
+// picks a random enemy using inverse-cost weighting
+UEnemySpawnData* AEnemySpawner::PickWeightedEnemyFromPool(const TArray<UEnemySpawnData*>& Pool, float DifficultyCoefficient) const
 {
-	ACharacter* Player = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	const FVector PlayerLocation = Player ? Player->GetActorLocation() : FVector::ZeroVector;
+    TArray<UEnemySpawnData*> EligiblePool;
+    float TotalWeight = 0.f;
 
-	UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
-	if (!NavSys) return FVector::ZeroVector;
+    for (UEnemySpawnData* Entry : Pool)
+    {
+        if (Entry && DifficultyCoefficient >= Entry->MinDifficultyToSpawn)
+        {
+            EligiblePool.Add(Entry);
+            TotalWeight += (1.f / FMath::Max(Entry->SpawnCost, 0.01f));
+        }
+    }
 
-	for (int32 Attempt = 0; Attempt < 20; Attempt++)
-	{
-		const float RandomAngle = FMath::RandRange(0.f, 360.f);
-		FVector CandidateLocation = PlayerLocation + FVector(
-			FMath::Cos(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
-			FMath::Sin(FMath::DegreesToRadians(RandomAngle)) * SpawnDistance,
-			0.f
-		);
+    if (EligiblePool.Num() == 0) return nullptr;
 
-		CandidateLocation.Z = PlayerLocation.Z + 200.f;
+    float Roll = FMath::FRandRange(0.f, TotalWeight);
+    for (UEnemySpawnData* Entry : EligiblePool)
+    {
+        const float Weight = 1.f / FMath::Max(Entry->SpawnCost, 0.01f);
+        if (Roll <= Weight) return Entry;
+        Roll -= Weight;
+    }
 
-		FNavLocation NavLocation;
-		if (!NavSys->ProjectPointToNavigation(
-			CandidateLocation, NavLocation, FVector(500.f, 500.f, 2000.f)))
-		{
-			continue; 
-		}
+    return EligiblePool.Last();
+}
 
-		const float HorizontalDist = FVector::Dist2D(NavLocation.Location, PlayerLocation);
-		if (HorizontalDist < SpawnDistance * 0.5f)
-		{
-			continue; 
-		}
-		
-		const float HeightDiff = NavLocation.Location.Z - PlayerLocation.Z;
-		if (HeightDiff < -StairHeightTolerance)
-		{
-			UE_LOG(LogTemp, Verbose, TEXT("Rejecting spawn at Z=%.1f (player Z=%.1f, diff=%.1f)"),
-				NavLocation.Location.Z, PlayerLocation.Z, HeightDiff);
-			continue;
-		}
+// finds a valid navmesh point inside the zone bounds
+FVector AEnemySpawner::GetSpawnLocationInZone(ASpawnZone* Zone) const
+{
+    if (!Zone) return FVector::ZeroVector;
 
-		return NavLocation.Location;
-	}
+    UNavigationSystemV1* NavSys = UNavigationSystemV1::GetCurrent(GetWorld());
+    if (!NavSys) return FVector::ZeroVector;
 
-	UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: Failed to find valid spawn location"));
-	return FVector::ZeroVector;
+    for (int32 Attempt = 0; Attempt < 20; Attempt++)
+    {
+        FVector CandidateLocation = Zone->GetRandomPointInZone();
+
+        FNavLocation NavLocation;
+        if (!NavSys->ProjectPointToNavigation(
+            CandidateLocation, NavLocation, FVector(500.f, 500.f, 500.f)))
+        {
+            continue;
+        }
+
+        return NavLocation.Location;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("EnemySpawner: Failed to find spawn location in zone %s"), *Zone->GetName());
+    return FVector::ZeroVector;
+}
+
+void AEnemySpawner::UnlockZonesOfLevel(int32 Level)
+{
+    for (ASpawnZone* Zone : SpawnZones)
+    {
+        if (Zone && Zone->ZoneLevel == Level)
+        {
+            Zone->Unlock();
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("Unlocked all zones of level %d"), Level);
+}
+
+void AEnemySpawner::LockZonesOfLevel(int32 Level)
+{
+    for (ASpawnZone* Zone : SpawnZones)
+    {
+        if (Zone && Zone->ZoneLevel == Level)
+        {
+            Zone->Lock();
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("Locked all zones of level %d"), Level);
 }

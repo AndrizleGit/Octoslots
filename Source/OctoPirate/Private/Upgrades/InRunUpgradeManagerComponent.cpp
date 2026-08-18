@@ -3,6 +3,8 @@
 #include "Character/BaseCharacter.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "AbilitySystemComponent.h"
+
 #include "Kismet/GameplayStatics.h"
 
 UInRunUpgradeManagerComponent::UInRunUpgradeManagerComponent()
@@ -14,11 +16,16 @@ void UInRunUpgradeManagerComponent::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Initialize pick counts for all upgrades
+    // initialize pick counts for all upgrades
     for (UInRunUpgradeData* Upgrade : AllPossibleUpgrades)
     {
         if (Upgrade)
             PickedCounts.Add(Upgrade, 0);
+    }
+    
+    if (AOctopusCharacter* OwningCharacter = Cast<AOctopusCharacter>(GetOwner()))
+    {
+        ASC = OwningCharacter->FindComponentByClass<UAbilitySystemComponent>();
     }
 }
 
@@ -43,14 +50,16 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
         CurrentLevel++;
     }
 
+    // lock against re-entry while writing XP attributes
     bIsProcessingLevelUp = true;
     Attributes->SetMaxExperience(MaxXP);
     Attributes->SetExperience(Experience);
     bIsProcessingLevelUp = false;
 
     const bool bIsJokerLevel = (JokerLevelInterval > 0) && (CurrentLevel % JokerLevelInterval == 0);
+    const bool bCanGetJoker = AcquiredJokers.Num() < MaxJokers && AllPossibleJokers.Num() > 0;
 
-    if (bIsJokerLevel && AllPossibleJokers.Num() > 0)
+    if (bIsJokerLevel && bCanGetJoker)
     {
         RollNewJokerChoices();
         if (CurrentJokerChoices.Num() > 0)
@@ -74,6 +83,7 @@ void UInRunUpgradeManagerComponent::CheckForLevelUp()
     }
 }
 
+// picks 3 random upgrades from the pool without duplicates
 void UInRunUpgradeManagerComponent::RollNewChoices()
 {
     CurrentChoices.Empty();
@@ -94,6 +104,7 @@ void UInRunUpgradeManagerComponent::RollNewChoices()
     }
 }
 
+// picks 3 random jokers, excluding ones already acquired this run
 void UInRunUpgradeManagerComponent::RollNewJokerChoices()
 {
     CurrentJokerChoices.Empty();
@@ -124,9 +135,7 @@ void UInRunUpgradeManagerComponent::SelectUpgrade(UInRunUpgradeData* Upgrade)
         PickedCounts[Upgrade]++;
 
     UGameplayStatics::SetGamePaused(GetWorld(), false);
-
     OnUpgradeSelected.Broadcast(Upgrade);
-
     UE_LOG(LogTemp, Log, TEXT("In-run upgrade selected: %s"), *Upgrade->UpgradeName.ToString());
 }
 
@@ -136,6 +145,7 @@ void UInRunUpgradeManagerComponent::SelectJoker(UJokerData* Joker)
 
     AcquiredJokers.Add(Joker);
 
+    // register the effect on the character so HasJokerEffect() checks work everywhere
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (Character)
     {
@@ -143,10 +153,9 @@ void UInRunUpgradeManagerComponent::SelectJoker(UJokerData* Joker)
     }
 
     UGameplayStatics::SetGamePaused(GetWorld(), false);
-
     OnJokerSelected.Broadcast(Joker);
-
-    UE_LOG(LogTemp, Log, TEXT("Joker selected: %s (Effect: %s, Value: %.1f)"), *Joker->JokerName.ToString(), *Joker->JokerEffectID.ToString(), Joker->JokerValue);
+    UE_LOG(LogTemp, Log, TEXT("Joker selected: %s (Effect: %s, Value: %.1f)"),
+        *Joker->JokerName.ToString(), *Joker->JokerEffectID.ToString(), Joker->JokerValue);
 }
 
 void UInRunUpgradeManagerComponent::CaptureBaseline()
@@ -181,13 +190,11 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (Attributes && Character)
     {
-        // Roll the per-run stats back to the baseline captured at spawn (base + meta-progression),
-        // undoing everything the previous run's in-run upgrades stacked on. Without this the
-        // stats carry over and keep inflating run after run.
+        // restore stats (undoing all in-run upgrades)
         if (bBaselineCaptured)
         {
             Attributes->SetMaxHealth(BaselineMaxHealth);
-            Attributes->SetHealth(BaselineMaxHealth);   // start each run at full health
+            Attributes->SetHealth(BaselineMaxHealth);
             Attributes->SetWalkSpeed(BaselineWalkSpeed);
             Attributes->SetAttackSpeed(BaselineAttackSpeed);
             Attributes->SetAttackDamage(BaselineAttackDamage);
@@ -198,8 +205,7 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
         Attributes->SetExperience(0.0f);
         Attributes->SetMaxExperience(100.0f);
 
-        // Jokers register their effect IDs on the character itself; emptying the manager's
-        // AcquiredJokers list above does not remove them, so clear them here too.
+        // joker effect IDs live on the character, not just this component
         Character->ClearAllJokerEffects();
     }
 
@@ -225,25 +231,25 @@ void UInRunUpgradeManagerComponent::ApplyStatChange(EInRunUpgradeStat Stat, floa
             break;
 
         case EInRunUpgradeStat::MovementSpeed:
-            Attributes->SetWalkSpeed(Attributes->GetWalkSpeed() + (Value * 0.5f));
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetWalkSpeedAttribute(),ASC->GetNumericAttributeBase(UBasicAttributeSet::GetWalkSpeedAttribute()) + (Value * 0.5f));
             Character->GetCharacterMovement()->MaxWalkSpeed = Attributes->GetWalkSpeed();
             break;
 
         case EInRunUpgradeStat::AttackSpeed:
         {
+                
             // +0.15 per pick (e.g. 1.2 → 1.35 → 1.5), cap at 2.5
-            const float NewSpeed = FMath::Min(Attributes->GetAttackSpeed() + 0.15f, 2.5f);
-            Attributes->SetAttackSpeed(NewSpeed);
+            const float NewSpeed = FMath::Min(ASC->GetNumericAttributeBase(UBasicAttributeSet::GetAttackSpeedAttribute()) + 0.15f, 2.5f);
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetAttackSpeedAttribute(),NewSpeed);
             break;
         }
 
         case EInRunUpgradeStat::AttackDamage:
-            Attributes->SetAttackDamage(Attributes->GetAttackDamage() + Value);
+            ASC->SetNumericAttributeBase(UBasicAttributeSet::GetAttackDamageAttribute(),ASC->GetNumericAttributeBase(UBasicAttributeSet::GetAttackDamageAttribute()) + Value);
             break;
 
         case EInRunUpgradeStat::AttackRange:
             Character->ConeMaxDistance += Value * 0.5f;
-            //Character->ExtraDamageDistance += Value * 0.5f;
             break;
     }
 }

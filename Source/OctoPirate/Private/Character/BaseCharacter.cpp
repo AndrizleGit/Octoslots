@@ -7,6 +7,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "Components/CapsuleComponent.h"
 #include "Enemy/BaseEnemyCharacter.h"
+#include "Sound/SoundBase.h"
 #include "VFX/DamageNumberActor.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
@@ -33,7 +34,12 @@ void ABaseCharacter::BeginPlay()
 	
 	AttackDamage = GetAttackDamage();
 	
-	
+	// ensure health starts full — respects meta progression max health
+	if (BasicAttributes)
+	{
+		BasicAttributes->SetHealth(BasicAttributes->GetMaxHealth());
+	}
+	GetCharacterMovement()->MaxWalkSpeed = GetWalkSpeed();
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -345,9 +351,6 @@ float ABaseCharacter::GetAttackDamage() const
 	return Health;
 }
 
-
-
-
 float ABaseCharacter::GetWalkSpeed() const
 {
 	const float WalkSpeed = BasicAttributes ? BasicAttributes->GetWalkSpeed() : 400.f;
@@ -355,3 +358,8 @@ float ABaseCharacter::GetWalkSpeed() const
 	return WalkSpeed;
 }
 
+void ABaseCharacter::PlaySFX(UObject* WorldContext, USoundBase* Sound, FVector Location, float VolumeMultiplier)
+{
+	if (!Sound) return;
+	UGameplayStatics::PlaySoundAtLocation(WorldContext, Sound, Location, VolumeMultiplier);
+}
