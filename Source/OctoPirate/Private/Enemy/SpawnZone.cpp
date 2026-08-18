@@ -1,4 +1,6 @@
 #include "Enemy/SpawnZone.h"
+#include "Kismet/GameplayStatics.h"
+#include "Enemy/BaseEnemyCharacter.h"
 #include "Components/BoxComponent.h"
 
 ASpawnZone::ASpawnZone()
@@ -71,4 +73,27 @@ bool ASpawnZone::IsPointInZone(const FVector& Point) const
     return FMath::Abs(LocalPoint.X) <= Extent.X
         && FMath::Abs(LocalPoint.Y) <= Extent.Y
         && FMath::Abs(LocalPoint.Z) <= Extent.Z;
+}
+
+void ASpawnZone::TriggerBossFightLockdown(UObject* WorldContextObject)
+{
+    UWorld* World = WorldContextObject ? WorldContextObject->GetWorld() : nullptr;
+    if (!World) return;
+
+    TArray<AActor*> AllZones;
+    UGameplayStatics::GetAllActorsOfClass(World, ASpawnZone::StaticClass(), AllZones);
+    for (AActor* ZoneActor : AllZones)
+    {
+        if (ASpawnZone* Zone = Cast<ASpawnZone>(ZoneActor))
+        {
+            if (!Zone->bIsBossRoomSpawner) Zone->Lock();
+        }
+    }
+
+    TArray<AActor*> AllEnemies;
+    UGameplayStatics::GetAllActorsOfClass(World, ABaseEnemyCharacter::StaticClass(), AllEnemies);
+    for (AActor* Enemy : AllEnemies)
+    {
+        if (Enemy) Enemy->Destroy();
+    }
 }

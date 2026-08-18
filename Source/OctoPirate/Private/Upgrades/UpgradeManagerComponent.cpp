@@ -33,15 +33,16 @@ void UUpgradeManagerComponent::SaveUpgrades()
     
     for (auto& Pair : UpgradeLevels)
     {
-       if (Pair.Key) SaveData->UpgradeLevels.Add(Pair.Key->GetName(), Pair.Value);
+        if (Pair.Key) SaveData->UpgradeLevels.Add(Pair.Key->GetName(), Pair.Value);
     }
 
     SaveData->TotalCoinsSpent = TotalCoinsSpent;
+    SaveData->LifetimeCoinsCollected = LifetimeCoinsCollected;
     
     if (bIsMetaProgressionMode)
     {
-       UOctopirateGameInstance* GI = Cast<UOctopirateGameInstance>(GetWorld()->GetGameInstance());
-       if (GI) SaveData->SavedCoins = GI->TotalMetaCoins;
+        UOctopirateGameInstance* GI = Cast<UOctopirateGameInstance>(GetWorld()->GetGameInstance());
+        if (GI) SaveData->SavedCoins = GI->TotalMetaCoins;
     }
     else
     {
@@ -49,14 +50,22 @@ void UUpgradeManagerComponent::SaveUpgrades()
         if (Attributes) SaveData->SavedCoins = Attributes->GetCoins();
     }
 
+    
     UGameplayStatics::SaveGameToSlot(SaveData, SaveSlotName, 0);
 }
 
 void UUpgradeManagerComponent::LoadUpgrades()
 {
     UOctoSlotsSaveGame* SaveData = Cast<UOctoSlotsSaveGame>(UGameplayStatics::LoadGameFromSlot(SaveSlotName, 0));
-    if (!SaveData) return;
+    if (!SaveData)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("[UpgradeManager] LoadUpgrades — no save data found (slot: %s)"), *SaveSlotName);
+        return;
+    }
 
+    UE_LOG(LogTemp, Warning, TEXT("[UpgradeManager] LoadUpgrades called successfully on %s"), *GetOwner()->GetName());
+
+    
     for (UUpgradeData* Upgrade : AvailableUpgrades)
     {
        if (!Upgrade) continue;
@@ -80,6 +89,7 @@ void UUpgradeManagerComponent::LoadUpgrades()
     }
 
     TotalCoinsSpent = SaveData->TotalCoinsSpent;
+    LifetimeCoinsCollected = SaveData->LifetimeCoinsCollected;
 }
 
 bool UUpgradeManagerComponent::PurchaseUpgrade(UUpgradeData* Upgrade)
@@ -237,4 +247,11 @@ UBasicAttributeSet* UUpgradeManagerComponent::GetPlayerAttributes() const
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Character) return nullptr;
     return Character->BasicAttributes;
+}
+
+void UUpgradeManagerComponent::AddToLifetimeCoins(float CoinsThisRun)
+{
+    LifetimeCoinsCollected += CoinsThisRun;
+    UE_LOG(LogTemp, Warning, TEXT("[LifetimeCoins] Added %.0f this run — new total: %.0f"), CoinsThisRun, LifetimeCoinsCollected);
+    SaveUpgrades();
 }

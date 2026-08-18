@@ -22,6 +22,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	void UpdateRadius(float NewRadius);
     
+	UFUNCTION(BlueprintCallable, Category = "Pickup")
+	void ForcePull(ABasePickup* Pickup);
 private:
 	UPROPERTY()
 	TObjectPtr<USphereComponent> SphereCollision;
@@ -37,4 +39,7 @@ private:
     
 	UPROPERTY()
 	TArray<ABasePickup*> ActivePickups;
+	
+	UPROPERTY()
+	TArray<ABasePickup*> ForcedPickups;
 };
