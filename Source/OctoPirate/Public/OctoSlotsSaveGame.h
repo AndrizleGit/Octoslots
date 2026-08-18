@@ -23,4 +23,7 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Save")
 	float SavedCoins = 0.0f;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Save")
+	float LifetimeCoinsCollected = 0.0f;
 };

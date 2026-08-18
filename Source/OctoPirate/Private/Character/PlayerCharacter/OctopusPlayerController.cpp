@@ -54,8 +54,11 @@ void AOctopusPlayerController::SetupInputComponent()
 void AOctopusPlayerController::PlayerTick(float DeltaTime)
 {
 	Super::PlayerTick(DeltaTime);
-	
-	if (bRightMouseHold )
+	if (bAutoRun)
+	{
+		if (bIsRunning) MoveToCursor();
+	}
+	else if (bRightMouseHold)
 	{
 		MoveToCursor();
 	}
@@ -63,6 +66,7 @@ void AOctopusPlayerController::PlayerTick(float DeltaTime)
 
 void AOctopusPlayerController::OnRightMousePressed()
 {
+	if (bAutoRun) bIsRunning = !bIsRunning;
 	bRightMouseHold  = true;
 	SpawnCursorFX();
 }
