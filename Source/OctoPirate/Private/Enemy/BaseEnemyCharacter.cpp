@@ -247,7 +247,7 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 		
 		if (PlayerCharacter)
 		{
-			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr || UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
+			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr && UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
 			{
 				if (UTreasureMapComponent* TreasureMapComp = PlayerCharacter->FindComponentByClass<UTreasureMapComponent>())
 				{
@@ -255,7 +255,6 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 					{
 						GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
 						TreasureMapComp->StartTreasureSpawnTimer();
-						TreasureMapComp->NextTreasureNumber();
 					}
 				}
 			}
