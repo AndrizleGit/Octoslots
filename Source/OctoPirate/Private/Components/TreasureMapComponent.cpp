@@ -3,6 +3,7 @@
 
 #include "Components/TreasureMapComponent.h"
 #include "Pickups/TreasureSpawnZone.h"
+#include "BrokenCannon.h"
 #include "Kismet/GameplayStatics.h"
 // Sets default values for this component's properties
 UTreasureMapComponent::UTreasureMapComponent()
@@ -10,7 +11,7 @@ UTreasureMapComponent::UTreasureMapComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
+	
 	// ...
 }
 
@@ -21,7 +22,10 @@ void UTreasureMapComponent::BeginPlay()
 	Super::BeginPlay();
 	PlayerCharacter = Cast<AOctopusCharacter>(GetOwner());
 	FindAllTreasureSpawnZones();
+	FindAllBrokenCannons();
 	
+	
+	StartTreasureSpawnTimer();
 }
 
 
@@ -31,6 +35,55 @@ void UTreasureMapComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
+}
+void UTreasureMapComponent::StartTreasureSpawnTimer() 
+{
+	bCanSpawnTreasure = false;
+	RespawnTimerHandle.Invalidate();
+	UWorld* World = GetWorld();
+	World->GetTimerManager().SetTimer(
+		RespawnTimerHandle,
+		this,
+		&UTreasureMapComponent::EnableTreasureSpawn,
+		SpawnIntervalMinutes*60,
+		false
+		);	
+}
+void UTreasureMapComponent::FindAllBrokenCannons() 
+{
+	TArray<AActor*> FoundActors;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABrokenCannon::StaticClass(),FoundActors);
+	for (AActor* Actor : FoundActors)
+	{
+		if (ABrokenCannon* BrokenCannon = Cast<ABrokenCannon>(Actor))
+		{
+			CannonList.Add(BrokenCannon);
+		}
+	}
+	SortAllBrokenCannons();
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, FString::Printf(TEXT("Total Cannons: %d"),CannonList.Num()));
+}
+
+void UTreasureMapComponent::SortAllBrokenCannons()
+{
+	bool bSwapped = true;
+	while (bSwapped)
+	{
+		bSwapped = false;
+		for (int i = 0; i < CannonList.Num() -1; i++)
+		{
+			
+			if (CannonList[i]->CannonNumber > CannonList[i+1]->CannonNumber)
+			{
+				TObjectPtr<ABrokenCannon> BrokenCannon = CannonList[i];
+				CannonList[i] = CannonList[i+1];
+				CannonList[i+1] = BrokenCannon;
+				bSwapped = true;
+			}
+		}
+	}
+
+	
 }
 
 void UTreasureMapComponent::FindAllTreasureSpawnZones() 
@@ -44,6 +97,7 @@ void UTreasureMapComponent::FindAllTreasureSpawnZones()
 			TreasureSpawnZones.Add(TreasureSpawnZone);
 		}
 	}
+	
 }
 
 void UTreasureMapComponent::NextTreasureNumber()
@@ -51,6 +105,8 @@ void UTreasureMapComponent::NextTreasureNumber()
 	if (!PlayerCharacter) return;
 	
 	TreasureNumber += 1;
+	GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Blue, FString::Printf(TEXT("Treasuremap count: %d"),TreasureNumber));
+
 }
 
 void UTreasureMapComponent::AddCannonAmmo()
@@ -82,6 +138,7 @@ void UTreasureMapComponent::SpawnTreasureInZone()
 	}
 	World->SpawnActor<AActor>(TreasureClass, SpawnLocation, FRotator::ZeroRotator, SpawnParams);
 	PlayerCharacter->OnTreasureSpawn();
+	NextTreasureNumber();
 }
 // Returns TreasureZone that are equal in Level with TreasureLevel and are closest to the Player
 ATreasureSpawnZone* UTreasureMapComponent::GetClosestTreasureSpawnZone() const
@@ -122,12 +179,8 @@ ATreasureSpawnZone* UTreasureMapComponent::GetRandomTreasureSpawnZone() const
 		}
 		
 	}
+	if (SortedTreasureSpawnZones.Num() == 0) return nullptr;
 	int32 index = FMath::RandRange(0, SortedTreasureSpawnZones.Num() - 1);
-	if (SortedTreasureSpawnZones[index] == nullptr)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Red, FString::Printf(TEXT("No Sorted Treasures")));
-		return nullptr;
-	}
 	return SortedTreasureSpawnZones[index];
 }
 //Pick a random Location that's on the NavMesh inside the TreasureZone
