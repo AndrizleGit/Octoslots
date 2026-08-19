@@ -12,7 +12,7 @@
 #include "TreasureMapComponent.generated.h"
 
 class ATreasureSpawnZone;
-
+class ABrokenCannon;
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OCTOPIRATE_API UTreasureMapComponent : public UActorComponent
 {
@@ -66,6 +66,8 @@ public:
 	int32 TreasureNumber = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
 	TArray<TObjectPtr<ATreasureSpawnZone>> TreasureSpawnZones;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap|Cannon")
+    	TArray<TObjectPtr<ABrokenCannon>> CannonList;
 	void StartTreasureSpawnTimer();
 protected:
 	// Called when the game starts
@@ -85,8 +87,14 @@ private:
 	FVector GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const;
 	ATreasureSpawnZone*  GetRandomTreasureSpawnZone() const;
 	ATreasureSpawnZone*  GetClosestTreasureSpawnZone() const;
+	void FindAllBrokenCannons();
+	void SortAllBrokenCannons();
 	void FindAllTreasureSpawnZones();
-	
-	void EnableTreasureSpawn(){ bCanSpawnTreasure = true; };
+	void EnableTreasureSpawn()
+	{
+		bCanSpawnTreasure = true;
+		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, FString::Printf(TEXT("Next Treasure can spawn")));
+
+	};
 	
 };
