@@ -22,6 +22,7 @@ UBasicAttributeSet::UBasicAttributeSet()
 	Experience = 0.0f;
 	MaxExperience = 100.0f;
 	Coins = 0.0f;
+	TotalCoinsCollectedThisRun = 0.0f;
 }
 void UBasicAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
