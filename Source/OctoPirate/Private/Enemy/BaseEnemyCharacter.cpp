@@ -206,18 +206,32 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
           GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
        }
     }
-    
-    if (TreasuremapClass)
-    {
-       const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
-       
-       const float Roll = FMath::RandRange(0.0f, 1.0f);
-       if (Roll <= TreasuremapDropChance)
-       {
-          GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
-       }
-       
-    }
+	if (TreasuremapClass)
+	{
+		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
+		
+		//UGameplayStatics::GetActorOfClass(this,TreasuremapClass,FoundActor);
+		
+		if (PlayerCharacter)
+		{
+			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr && UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
+			{
+				if (UTreasureMapComponent* TreasureMapComp = PlayerCharacter->FindComponentByClass<UTreasureMapComponent>())
+				{
+					if (TreasureMapComp->bCanSpawnTreasure && TreasureMapComp->GetTreasureNumber() < TreasureMapComp->MaxTreasureSpawn)
+					{
+						GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+						TreasureMapComp->StartTreasureSpawnTimer();
+					}
+				}
+			}
+			
+			
+			
+		}
+		
+	}
+
     GetMesh()->SetVisibility(false);
 	TArray<UMeshComponent*> MeshComponents;
 	GetComponents<UMeshComponent>(MeshComponents);
@@ -239,32 +253,7 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 		}
 	}
 	
-	if (TreasuremapClass)
-	{
-		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
-		
-		//UGameplayStatics::GetActorOfClass(this,TreasuremapClass,FoundActor);
-		
-		if (PlayerCharacter)
-		{
-			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr || UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
-			{
-				if (UTreasureMapComponent* TreasureMapComp = PlayerCharacter->FindComponentByClass<UTreasureMapComponent>())
-				{
-					if (TreasureMapComp->bCanSpawnTreasure && TreasureMapComp->GetTreasureNumber() < TreasureMapComp->MaxTreasureSpawn)
-					{
-						GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
-						TreasureMapComp->StartTreasureSpawnTimer();
-						TreasureMapComp->NextTreasureNumber();
-					}
-				}
-			}
-			
-			
-			
-		}
-		
-	}
+	
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
     SetLifeSpan(2.f);
