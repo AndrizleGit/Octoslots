@@ -206,39 +206,6 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
           GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
        }
     }
-    
-    if (TreasuremapClass)
-    {
-       const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
-       
-       const float Roll = FMath::RandRange(0.0f, 1.0f);
-       if (Roll <= TreasuremapDropChance)
-       {
-          GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
-       }
-       
-    }
-    GetMesh()->SetVisibility(false);
-	TArray<UMeshComponent*> MeshComponents;
-	GetComponents<UMeshComponent>(MeshComponents);
-	for (UMeshComponent* MeshComp : MeshComponents)
-	{
-		if (MeshComp && MeshComp != GetMesh())
-		{
-			MeshComp->SetVisibility(false);
-		}
-	}
-	
-	if (MagnetClass)
-	{
-		const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
-		if (MagnetRoll <= MagnetDropChance)
-		{
-			const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
-			GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
-		}
-	}
-	
 	if (TreasuremapClass)
 	{
 		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
@@ -264,6 +231,29 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 		}
 		
 	}
+
+    GetMesh()->SetVisibility(false);
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+	for (UMeshComponent* MeshComp : MeshComponents)
+	{
+		if (MeshComp && MeshComp != GetMesh())
+		{
+			MeshComp->SetVisibility(false);
+		}
+	}
+	
+	if (MagnetClass)
+	{
+		const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+		if (MagnetRoll <= MagnetDropChance)
+		{
+			const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+			GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+		}
+	}
+	
+	
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
     SetLifeSpan(2.f);
