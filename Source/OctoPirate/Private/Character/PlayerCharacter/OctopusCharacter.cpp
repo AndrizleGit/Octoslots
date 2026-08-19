@@ -248,7 +248,9 @@ void AOctopusCharacter::OnDeath_Implementation()
 		PC->SetInputMode(FInputModeUIOnly());
 		PC->bShowMouseCursor = true;
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Player has died"));
+	
+	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
+	
 	OnPlayerDied.Broadcast();
 }
 
@@ -364,8 +366,7 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 {
 	if (!ASC) return 0;
 
-	   FGameplayEffectQuery Query;
-		Query.OwningTagQuery = FGameplayTagQuery::MakeQuery_MatchAnyTags(
+	   FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(
         FGameplayTagContainer(EffectTag)
 	);
 

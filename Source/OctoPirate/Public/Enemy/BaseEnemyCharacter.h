@@ -39,8 +39,10 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
 	TSubclassOf<AActor> TreasuremapClass;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
-	TSubclassOf<AActor> TreasureClass;
+	float TreasuremapDropChance = 0.1f;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
 	float TreasuremapDropChance;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy|Drops")
