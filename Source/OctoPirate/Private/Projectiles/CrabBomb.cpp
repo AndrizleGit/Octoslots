@@ -2,6 +2,7 @@
 #include "Components/SphereComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Components/DecalComponent.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Character/BaseCharacter.h"
@@ -74,6 +75,18 @@ void ACrabBomb::LaunchAtTarget(const FVector& TargetLocation, float ArcParam)
         ProjectileMovement->Velocity = LaunchVelocity;
         ProjectileMovement->UpdateComponentVelocity();
     }
+
+    if (WarningDecalMaterial)
+    {
+        WarningDecal = UGameplayStatics::SpawnDecalAtLocation(
+            this,
+            WarningDecalMaterial,
+            FVector(WarningDecalSize, WarningDecalSize, WarningDecalSize),
+            TargetLocation,
+            FRotator(-90.f, 0.f, 0.f),
+            0.f
+        );
+    }
 }
 
 void ACrabBomb::OnDeflected_Implementation(const FVector& ReflectedVelocity, AActor* Deflector)
@@ -102,6 +115,12 @@ void ACrabBomb::HandleImpact(AActor* OtherActor, const FHitResult& Hit)
 
 void ACrabBomb::Explode()
 {
+    if (WarningDecal)
+    {
+        WarningDecal->DestroyComponent();
+        WarningDecal = nullptr;
+    }
+
     if (ExplosionVFX)
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionVFX, GetActorLocation());
