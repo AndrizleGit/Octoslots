@@ -1,4 +1,4 @@
-﻿#include "Upgrades/InRunUpgradeManagerComponent.h"
+#include "Upgrades/InRunUpgradeManagerComponent.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/BaseCharacter.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
@@ -204,8 +204,6 @@ void UInRunUpgradeManagerComponent::ResetForNewRun()
 
         Attributes->SetExperience(0.0f);
         Attributes->SetMaxExperience(100.0f);
-        // per-run counter — must reset or lifetime coins double-count each run
-        Attributes->SetTotalCoinsCollectedThisRun(0.0f);
 
         // joker effect IDs live on the character, not just this component
         Character->ClearAllJokerEffects();

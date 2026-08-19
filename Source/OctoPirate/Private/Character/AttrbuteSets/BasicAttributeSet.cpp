@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Character\AttributeSets\BasicAttributeSet.h"
@@ -22,7 +22,6 @@ UBasicAttributeSet::UBasicAttributeSet()
 	Experience = 0.0f;
 	MaxExperience = 100.0f;
 	Coins = 0.0f;
-	TotalCoinsCollectedThisRun = 0.0f;
 }
 void UBasicAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
 {
