@@ -74,5 +74,8 @@ public:
 	void ApplyLifesteal(float Damage);
 	UFUNCTION(BlueprintPure, Category = "Attributes")
 	float GetAttackDamageValue() const { return AttackDamage.GetCurrentValue(); }
+
+	UFUNCTION(BlueprintPure, Category = "Attributes")
+	float GetTotalCoinsValue() const { return TotalCoinsCollectedThisRun.GetCurrentValue(); }
 };
 	
