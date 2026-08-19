@@ -1,5 +1,6 @@
 #include "Enemy/SuicideCrab.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "AIController.h"
 #include "Kismet/GameplayStatics.h"
 #include "NiagaraFunctionLibrary.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -40,9 +41,26 @@ void ASuicideCrab::TriggerExplosion()
     if (bIsExploding) return;
     bIsExploding = true;
 
+    // Stop moving
+    SetMovementLocked(true);
+    if (AAIController* AICon = Cast<AAIController>(GetController()))
+    {
+        AICon->StopMovement();
+    }
+
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
     GetWorldTimerManager().ClearTimer(AttackTimerHandle);
+
+    // Hide HP bar and become invincible while fusing.
+    if (HealthBarWidget)
+    {
+        HealthBarWidget->SetVisibility(false);
+    }
+    if (AbilitySystemComponent)
+    {
+        AbilitySystemComponent->AddLooseGameplayTag(TAG_Status_Immortal);
+    }
 
     if (ExplosionMontage)
     {
