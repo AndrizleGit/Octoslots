@@ -15,6 +15,7 @@
 #include "Engine/World.h"
 #include "VFX/ExplosionStatics.h"
 #include "Animation/AnimInstance.h"
+#include "Components/TreasureMapComponent.h" 
 
 ABaseEnemyCharacter::ABaseEnemyCharacter()
 {
@@ -43,8 +44,9 @@ void ABaseEnemyCharacter::BeginPlay()
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), SpawnVFX, GetActorLocation());
 	}
 	
-	PlayerCharacter = Cast<ACharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	PlayerCharacter = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	
 }
 
 void ABaseEnemyCharacter::ApplyDifficultyScaling(float HealthMultiplier, float DamageMultiplier)
@@ -226,6 +228,45 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 			MeshComp->SetVisibility(false);
 		}
 	}
+	
+	if (MagnetClass)
+	{
+		const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+		if (MagnetRoll <= MagnetDropChance)
+		{
+			const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+			GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+		}
+	}
+	
+	if (TreasuremapClass)
+	{
+		const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
+		
+		//UGameplayStatics::GetActorOfClass(this,TreasuremapClass,FoundActor);
+		
+		if (PlayerCharacter)
+		{
+			if (UGameplayStatics::GetActorOfClass(this, TreasuremapClass) == nullptr || UGameplayStatics::GetActorOfClass(this, TreasureClass) == nullptr)
+			{
+				if (UTreasureMapComponent* TreasureMapComp = PlayerCharacter->FindComponentByClass<UTreasureMapComponent>())
+				{
+					if (TreasureMapComp->bCanSpawnTreasure && TreasureMapComp->GetTreasureNumber() < TreasureMapComp->MaxTreasureSpawn)
+					{
+						GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+						TreasureMapComp->StartTreasureSpawnTimer();
+						TreasureMapComp->NextTreasureNumber();
+					}
+				}
+			}
+			
+			
+			
+		}
+		
+	}
+	GetMesh()->SetVisibility(false);
+	SetLifeSpan(2.f);
     SetLifeSpan(2.f);
 
     // -- Joker: Explode on Death --

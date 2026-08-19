@@ -11,6 +11,7 @@
 
 #include "TreasureMapComponent.generated.h"
 
+class ATreasureSpawnZone;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OCTOPIRATE_API UTreasureMapComponent : public UActorComponent
@@ -22,35 +23,54 @@ public:
 	UTreasureMapComponent();
 	// -- Configs --
 	// -- Treasure Digging Config -- 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Digging Time")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Digging")
 	float DiggingTime = 10.f;
 	// -- Treasure Spawning Config --
 	// How Far does the Treasure Spawn from Player - Default 15m
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Distance From Player")
 	float Distance = 1500.f;
-	// How Far to Search from randomly picked point for Nav Mesh
+	// How Far to Search from randomly picked point for Nav Mesh (X,Y,Z)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Search Extent")
-	float SearchExtent = 200.f;
+	FVector SearchExtent = FVector(500.f,500.f,500.f);
 	// How Far From The Border 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Distance From Border")
 	float BorderClearance = 150.f;
 	int32 MaxAttempts = 40;
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Spawn")
+	int32 SpawnIntervalMinutes = 3;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Spawn")
+	int32 MaxTreasureSpawn = 3;
+	bool bCanSpawnTreasure = false;
 	// --- Public API ---
-	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
-	void AddCannonFragment();
-	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
+	void AddCannonAmmo();
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
 	void SpawnTreasure();
-	UFUNCTION(BlueprintCallable, Category = "Treasure Map")
-	int SubmitCannonFragment();
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
+	void SpawnTreasureInZone();
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
+	int32 SubmitCannonAmmo();
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
+	int32 GetTreasureNumber() const{return TreasureNumber;};
+	//Set if NewLevel > Current , Current = NewLevel
+	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
+	void NextTreasureNumber();
 	// -- Treasure Actor -- 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
 	TSubclassOf<AActor> TreasureClass;
-	int CannonFragment = 0;
+	// -- Treasure Map Configs
+	
+	int32 CannonFragment = 0;
+	//Determines which areas treasure will be spawning at
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map")
+	int32 TreasureNumber = 0;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
+	TArray<TObjectPtr<ATreasureSpawnZone>> TreasureSpawnZones;
+	void StartTreasureSpawnTimer();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-
+	
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -58,8 +78,15 @@ private:
 	
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
-	
+	UPROPERTY()
+	FTimerHandle RespawnTimerHandle;
 	
 	bool IsPointAwayFromNavMeshBorder(UNavigationSystemV1* NavSys, const FVector& Point, float ClearanceRadius, int32 NumSamples = 8);
-		
+	FVector GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const;
+	ATreasureSpawnZone*  GetRandomTreasureSpawnZone() const;
+	ATreasureSpawnZone*  GetClosestTreasureSpawnZone() const;
+	void FindAllTreasureSpawnZones();
+	
+	void EnableTreasureSpawn(){ bCanSpawnTreasure = true; };
+	
 };
