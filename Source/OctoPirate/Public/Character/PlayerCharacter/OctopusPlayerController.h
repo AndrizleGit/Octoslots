@@ -32,12 +32,17 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VFX")
 	TObjectPtr<UNiagaraSystem> CursorClickFX;
-
+	
+	
 protected:
 	virtual void SetupInputComponent() override;
 	virtual void PlayerTick( float DeltaTime ) override;
 	virtual void BeginPlay() override;
 	
+	//Auto Run
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Player Controller")
+	bool bAutoRun = false;
+	bool bIsRunning = true;
 private:
 	void OnRightMousePressed();
 	void OnRightMouseReleased();
@@ -47,4 +52,7 @@ private:
     void OnLeftClickReleased();
 	
 	bool bRightMouseHold  = false;
+	
+	
+	
 };
