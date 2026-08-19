@@ -157,33 +157,75 @@ void ABaseEnemyCharacter::PerformAttack_Implementation()
 
 void ABaseEnemyCharacter::OnDeath_Implementation()
 {
+    if (HealthBarWidget)
+    {
+        HealthBarWidget->SetVisibility(false);
+    }
 
-	if (HealthBarWidget)
+    // Immediately destroy anything attached to enemy
+    TArray<AActor*> AttachedActors;
+    GetAttachedActors(AttachedActors);
+    for (AActor* Attached : AttachedActors)
+    {
+        if (IsValid(Attached))
+        {
+            Attached->Destroy();
+        }
+    }
+
+    Super::OnDeath_Implementation();
+    
+    const FVector SpawnLocation = GetActorLocation();
+    const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.SpawnCollisionHandlingOverride =
+       ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+    if (CoinClass)
+    {
+       GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
+    }
+
+    if (HealthPackClass)
+    {
+       const float Roll = FMath::RandRange(0.0f, 1.0f);
+       if (Roll <= HealthPackDropChance)
+       {
+          const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
+          GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+       }
+    }
+    
+    if (MagnetClass)
+    {
+       const float MagnetRoll = FMath::RandRange(0.0f, 1.0f);
+       if (MagnetRoll <= MagnetDropChance)
+       {
+          const FVector MagnetLocation = SpawnLocation + FVector(-30.f, -30.f, 0.f); // slight offset
+          GetWorld()->SpawnActor<AActor>(MagnetClass, MagnetLocation, SpawnRotation, SpawnParams);
+       }
+    }
+    
+    if (TreasuremapClass)
+    {
+       const FVector TreasureMapLocation = SpawnLocation + FVector(-50.f, -30.f, 0.f);
+       
+       const float Roll = FMath::RandRange(0.0f, 1.0f);
+       if (Roll <= TreasuremapDropChance)
+       {
+          GetWorld()->SpawnActor<AActor>(TreasuremapClass, TreasureMapLocation, SpawnRotation, SpawnParams);
+       }
+       
+    }
+    GetMesh()->SetVisibility(false);
+	TArray<UMeshComponent*> MeshComponents;
+	GetComponents<UMeshComponent>(MeshComponents);
+	for (UMeshComponent* MeshComp : MeshComponents)
 	{
-		HealthBarWidget->SetVisibility(false);
-	}
-	
-	Super::OnDeath_Implementation();
-	
-	const FVector SpawnLocation = GetActorLocation();
-	const FRotator SpawnRotation = FRotator::ZeroRotator;
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride =
-		ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-	if (CoinClass)
-	{
-		GetWorld()->SpawnActor<AActor>(CoinClass, SpawnLocation, SpawnRotation, SpawnParams);
-	}
-
-	if (HealthPackClass)
-	{
-		const float Roll = FMath::RandRange(0.0f, 1.0f);
-		if (Roll <= HealthPackDropChance)
+		if (MeshComp && MeshComp != GetMesh())
 		{
-			const FVector HealthPackLocation = SpawnLocation + FVector(30.f, 30.f, 0.f);
-			GetWorld()->SpawnActor<AActor>(HealthPackClass, HealthPackLocation, SpawnRotation, SpawnParams);
+			MeshComp->SetVisibility(false);
 		}
 	}
 	
@@ -224,28 +266,29 @@ void ABaseEnemyCharacter::OnDeath_Implementation()
 	}
 	GetMesh()->SetVisibility(false);
 	SetLifeSpan(2.f);
+    SetLifeSpan(2.f);
 
-	// -- Joker: Explode on Death --
-	// If the player owns the DeathExplosion joker, detonate at this enemy's location
-	// using the player's independently-tuned values. Kills are credited to the player.
-	// The shared routine only hits enemies, so dying enemies can chain-react.
-	if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
-	{
-		const bool bHasDeathExplosion = Player->HasJokerEffect("DeathExplosion");
-		UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] enemy %s died; player has joker=%d"), *GetName(), bHasDeathExplosion);
-		if (bHasDeathExplosion)
-		{
-			UExplosionStatics::Explode(
-				this,
-				GetActorLocation(),
-				Player->DeathExplosionRadius,
-				Player->DeathExplosionDamage,
-				Player->DeathExplosionVFX,
-				Player->DeathExplosionSound,
-				Player->GetController(),
-				this,
-				{ this },
-				Player->DeathExplosionSoundVolume);
-		}
-	}
+    // -- Joker: Explode on Death --
+    // If the player owns the DeathExplosion joker, detonate at this enemy's location
+    // using the player's independently-tuned values. Kills are credited to the player.
+    // The shared routine only hits enemies, so dying enemies can chain-react.
+    if (AOctopusCharacter* Player = Cast<AOctopusCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+    {
+       const bool bHasDeathExplosion = Player->HasJokerEffect("DeathExplosion");
+       UE_LOG(LogTemp, Warning, TEXT("[DeathExplosion] enemy %s died; player has joker=%d"), *GetName(), bHasDeathExplosion);
+       if (bHasDeathExplosion)
+       {
+          UExplosionStatics::Explode(
+             this,
+             GetActorLocation(),
+             Player->DeathExplosionRadius,
+             Player->DeathExplosionDamage,
+             Player->DeathExplosionVFX,
+             Player->DeathExplosionSound,
+             Player->GetController(),
+             this,
+             { this },
+             Player->DeathExplosionSoundVolume);
+       }
+    }
 }

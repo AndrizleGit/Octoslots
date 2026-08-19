@@ -155,7 +155,7 @@ void AOctopusCharacter::PerformAttack_Implementation()
         const float DistToEnemy = FVector::Dist(GetActorLocation(), ClosestEnemy->GetActorLocation());
 
         // Trigger slightly early
-        if (DistToEnemy > ConeMaxDistance + AttackTriggerBuffer)
+        if (DistToEnemy > ConeMaxDistance)
         {
             return; // nothing close enough
         }
