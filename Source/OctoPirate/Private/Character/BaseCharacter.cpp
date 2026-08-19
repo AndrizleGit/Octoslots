@@ -9,6 +9,7 @@
 #include "Enemy/BaseEnemyCharacter.h"
 #include "Sound/SoundBase.h"
 #include "VFX/DamageNumberActor.h"
+#include "VFX/HitFlashComponent.h"
 #include "Character/AttributeSets/BasicAttributeSet.h"
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 
@@ -26,6 +27,9 @@ ABaseCharacter::ABaseCharacter()
 
 	// -- Attribute Sets --
 	BasicAttributes = CreateDefaultSubobject<UBasicAttributeSet>(TEXT("BasicAttributeSet"));
+
+	// -- Hit Feedback --
+	HitFlash = CreateDefaultSubobject<UHitFlashComponent>(TEXT("HitFlash"));
 }
 
 void ABaseCharacter::BeginPlay()
@@ -97,14 +101,20 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	// -- Update Health Attribute -- 
 	Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 	BasicAttributes->SetHealth(BasicAttributes->GetHealth() - DamageAmount);
-	
+
+	// -- Hit Feedback --
+	if (HitFlash)
+	{
+		HitFlash->Flash();
+	}
+
 	return DamageAmount;
 }
 
 void ABaseCharacter::OnDeath_Implementation()
 {
 	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
-	
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetCharacterMovement()->DisableMovement();
 	GetCharacterMovement()->StopMovementImmediately();

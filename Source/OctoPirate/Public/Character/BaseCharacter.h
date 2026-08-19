@@ -49,6 +49,12 @@ public:
 	// --- Damage Numbers ---
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Combat|VFX")
 	TSubclassOf<class ADamageNumberActor> DamageNumberClass;
+
+	// --- Hit Feedback ---
+	// Fired from TakeDamage, so the player and every enemy get the flash for
+	// free. Tune Duration/FlashColor per character in the Blueprint.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|VFX")
+	TObjectPtr<class UHitFlashComponent> HitFlash;
 	
 	
 	// --- Combat ---

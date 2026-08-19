@@ -98,10 +98,10 @@ void AShark::BeginTelegraph()
     if (LaneDecalMaterial)
     {
         const FVector DecalLocation = GetActorLocation() + ChargeDirection * (EffectiveChargeDistance * 0.5f);
-        const FRotator DecalRotation = ChargeDirection.Rotation();
-        const FVector DecalSize = FVector(EffectiveChargeDistance * 0.5f, ChargeLaneWidth * 0.5f, 50.f);
-
-        ActiveLaneDecal = UGameplayStatics::SpawnDecalAtLocation(this, LaneDecalMaterial, DecalSize, DecalLocation, DecalRotation, TelegraphDuration);
+        FRotator DecalRotation = ChargeDirection.Rotation();
+        DecalRotation.Pitch -= 90.f; // project straight down -- a purely horizontal decal never lands on the floor
+        // X = projection depth, Y = half lane width, Z = half lane length
+        const FVector DecalSize = FVector(200.f, ChargeLaneWidth * 0.5f, EffectiveChargeDistance * 0.5f);
     }
 
     ABaseCharacter::PlaySFX(this, TelegraphSound, GetActorLocation());
