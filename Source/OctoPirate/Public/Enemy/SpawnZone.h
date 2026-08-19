@@ -61,6 +61,13 @@ public:
     // checks if a world point is inside the zone box
     UFUNCTION(BlueprintCallable, BlueprintPure, Category = "SpawnZone")
     bool IsPointInZone(const FVector& Point) const;
+    
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SpawnZone")
+    bool bIsBossRoomSpawner = false;
+
+    UFUNCTION(BlueprintCallable, Category = "SpawnZone")
+    static void TriggerBossFightLockdown(UObject* WorldContextObject);
+
 
 protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "SpawnZone")
