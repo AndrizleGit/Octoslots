@@ -4,6 +4,7 @@
 #include "Character/PlayerCharacter/OctopusCharacter.h"
 #include "Character/BaseCharacter.h"
 #include "Components/DecalComponent.h"
+#include "NavigationSystem.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -67,20 +68,38 @@ void AShark::BeginTelegraph()
     {
         AICon->StopMovement();
     }
-    
+
     ChargeDirection = (PlayerCharacter->GetActorLocation() - GetActorLocation()).GetSafeNormal();
     ChargeDirection.Z = 0.f;
     ChargeStartLocation = GetActorLocation();
+
+    // Clamp the charge to stay on the navmesh
+    EffectiveChargeDistance = ChargeDistance;
+    if (UNavigationSystemV1* NavSystem = FNavigationSystem::GetCurrent<UNavigationSystemV1>(GetWorld()))
+    {
+        const float SampleStep = 100.f;
+        FNavLocation NavLocation;
+
+        for (float Dist = SampleStep; Dist <= ChargeDistance; Dist += SampleStep)
+        {
+            const FVector SamplePoint = ChargeStartLocation + ChargeDirection * Dist;
+            const bool bOnNavMesh = NavSystem->ProjectPointToNavigation(SamplePoint, NavLocation, FVector(50.f, 50.f, 200.f));
+
+            if (!bOnNavMesh)
+            {
+                EffectiveChargeDistance = Dist - SampleStep; // stop at the last valid sample
+                break;
+            }
+        }
+    }
 
     SetActorRotation(ChargeDirection.Rotation());
 
     if (LaneDecalMaterial)
     {
         const FVector DecalLocation = GetActorLocation() + ChargeDirection * (ChargeDistance * 0.5f);
-        FRotator DecalRotation = ChargeDirection.Rotation();
-        DecalRotation.Pitch -= 90.f; // project straight down -- a purely horizontal decal never lands on the floor
-        // X = projection depth, Y = half lane width, Z = half lane length
-        const FVector DecalSize = FVector(200.f, ChargeLaneWidth * 0.5f, ChargeDistance * 0.5f);
+        const FRotator DecalRotation = ChargeDirection.Rotation();
+        const FVector DecalSize = FVector(ChargeDistance * 0.5f, ChargeLaneWidth * 0.5f, 50.f);
 
         ActiveLaneDecal = UGameplayStatics::SpawnDecalAtLocation(this, LaneDecalMaterial, DecalSize, DecalLocation, DecalRotation, TelegraphDuration);
     }
@@ -95,6 +114,19 @@ void AShark::BeginCharge()
     ClearLaneDecal();
     ChargeState = ESharkChargeState::Charging;
     bHasHitPlayerThisCharge = false;
+    LastTickLocation = GetActorLocation();
+
+    // Ignore collision with other enemies for the duration of the charge
+    TArray<AActor*> NearbyEnemies;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseEnemyCharacter::StaticClass(), NearbyEnemies);
+    for (AActor* Enemy : NearbyEnemies)
+    {
+        if (Enemy && Enemy != this)
+        {
+            GetCapsuleComponent()->IgnoreActorWhenMoving(Enemy, true);
+            IgnoredDuringCharge.Add(Enemy);
+        }
+    }
 
     ABaseCharacter::PlaySFX(this, ChargeSound, GetActorLocation());
 }
@@ -103,6 +135,15 @@ void AShark::TickCharge(float DeltaTime)
 {
     const FVector Delta = ChargeDirection * ChargeSpeed * DeltaTime;
     AddActorWorldOffset(Delta, true);
+
+    // Stall detection
+    const float ActualMovedDist = FVector::Dist(GetActorLocation(), LastTickLocation);
+    if (ActualMovedDist < StuckMovementThreshold)
+    {
+        EndCharge();
+        return;
+    }
+    LastTickLocation = GetActorLocation();
 
     if (!bHasHitPlayerThisCharge)
     {
@@ -118,7 +159,7 @@ void AShark::TickCharge(float DeltaTime)
     }
 
     const float TraveledDist = FVector::Dist(GetActorLocation(), ChargeStartLocation);
-    if (TraveledDist >= ChargeDistance)
+    if (TraveledDist >= EffectiveChargeDistance)
     {
         EndCharge();
     }
@@ -129,6 +170,16 @@ void AShark::EndCharge()
     ChargeState = ESharkChargeState::None;
     SetMovementLocked(false);
     bChargeOnCooldown = true;
+
+    for (AActor* Enemy : IgnoredDuringCharge)
+    {
+        if (IsValid(Enemy))
+        {
+            GetCapsuleComponent()->IgnoreActorWhenMoving(Enemy, false);
+        }
+    }
+    IgnoredDuringCharge.Empty();
+
     GetWorldTimerManager().SetTimer(ChargeCooldownTimer, [this]() { bChargeOnCooldown = false; }, ChargeCooldown, false);
 }
 
@@ -140,3 +191,4 @@ void AShark::ClearLaneDecal()
         ActiveLaneDecal = nullptr;
     }
 }
+

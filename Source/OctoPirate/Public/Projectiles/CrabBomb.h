@@ -31,6 +31,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Bomb")
 	float DeflectArcParam = 0.5f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Bomb")
+	TObjectPtr<class UMaterialInterface> WarningDecalMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Bomb")
+	float WarningDecalSize = 200.f;
 
 	virtual void OnDeflected_Implementation(const FVector& ReflectedVelocity, AActor* Deflector) override;
 
@@ -44,4 +50,7 @@ protected:
 
 private:
 	void Explode();
+	
+	UPROPERTY()
+	TObjectPtr<class UDecalComponent> WarningDecal;
 };

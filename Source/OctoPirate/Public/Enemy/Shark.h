@@ -55,6 +55,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shark|Audio")
     TObjectPtr<class USoundBase> ChargeSound;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shark|Charge")
+    float StuckMovementThreshold = 5.f;
 private:
     ESharkChargeState ChargeState = ESharkChargeState::None;
 
@@ -75,4 +77,11 @@ private:
     void TickCharge(float DeltaTime);
     void EndCharge();
     void ClearLaneDecal();
+    
+    FVector LastTickLocation = FVector::ZeroVector;
+    
+    UPROPERTY()
+    TArray<AActor*> IgnoredDuringCharge;
+    
+    float EffectiveChargeDistance = 0.f;
 };

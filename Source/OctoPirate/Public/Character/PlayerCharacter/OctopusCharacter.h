@@ -179,6 +179,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat|Attack")
 	float AttackTriggerBuffer = 100.f;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TObjectPtr<UNiagaraSystem> DeathVFX;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat|Attack")
 	TObjectPtr<class UDecalComponent> AttackRangeDecal;
 	
