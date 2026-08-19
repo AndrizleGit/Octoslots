@@ -10,6 +10,8 @@
 #include "Character/BaseCharacter.h"
 #include "Enemy/BaseEnemyCharacter.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Camera/CameraActor.h"
 #include "VFX/BombActor.h"
 #include "Engine/World.h"
 
@@ -224,18 +226,29 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 void AOctopusCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	
+    
 	PlaySFX(this, DeathSound, GetActorLocation());
-	
-	APlayerController* PC = Cast<APlayerController>(GetController());
-	if (!PC)
+	if (UpgradeManager && BasicAttributes)
 	{
-		PC->DisableInput(PC);
+		UpgradeManager->AddToLifetimeCoins(BasicAttributes->GetTotalCoinsCollectedThisRunValue());
+	}
+	if (DeathVFX)
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), DeathVFX, GetActorLocation());
+	}
+
+	if (GetMesh())
+	{
+		GetMesh()->SetVisibility(false);
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC)
+	{
+		PC->SetInputMode(FInputModeUIOnly());
 		PC->bShowMouseCursor = true;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
-	
+	UE_LOG(LogTemp, Warning, TEXT("Player has died"));
 	OnPlayerDied.Broadcast();
 }
 

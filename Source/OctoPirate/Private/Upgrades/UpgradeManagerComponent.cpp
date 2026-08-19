@@ -37,6 +37,7 @@ void UUpgradeManagerComponent::SaveUpgrades()
     }
 
     SaveData->TotalCoinsSpent = TotalCoinsSpent;
+    SaveData->LifetimeCoinsCollected = LifetimeCoinsCollected;
     
     if (bIsMetaProgressionMode)
     {
@@ -68,18 +69,14 @@ void UUpgradeManagerComponent::LoadUpgrades()
        }
     }
     
-    if (bIsMetaProgressionMode)
-    {
-       UOctopirateGameInstance* GI = Cast<UOctopirateGameInstance>(GetWorld()->GetGameInstance());
-       if (GI) GI->TotalMetaCoins = SaveData->SavedCoins;
-    }
-    else
-    {
-        UBasicAttributeSet* Attributes = GetPlayerAttributes();
-        if (Attributes) Attributes->SetCoins(SaveData->SavedCoins);
-    }
+    // if (bIsMetaProgressionMode)
+    // {
+    //    UOctopirateGameInstance* GI = Cast<UOctopirateGameInstance>(GetWorld()->GetGameInstance());
+    //    if (GI) GI->TotalMetaCoins = SaveData->SavedCoins;
+    // }
 
     TotalCoinsSpent = SaveData->TotalCoinsSpent;
+    LifetimeCoinsCollected = SaveData->LifetimeCoinsCollected;
 }
 
 bool UUpgradeManagerComponent::PurchaseUpgrade(UUpgradeData* Upgrade)
@@ -237,4 +234,10 @@ UBasicAttributeSet* UUpgradeManagerComponent::GetPlayerAttributes() const
     ABaseCharacter* Character = Cast<ABaseCharacter>(GetOwner());
     if (!Character) return nullptr;
     return Character->BasicAttributes;
+}
+
+void UUpgradeManagerComponent::AddToLifetimeCoins(float CoinsThisRun)
+{
+    LifetimeCoinsCollected += CoinsThisRun;
+    SaveUpgrades();
 }
