@@ -37,13 +37,10 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	//bools
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
-	bool bIsActive = true;
+	bool bAssembled = false;
 	// Variables
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
 	int32 CannonBall = 0;
-	// Orders of Cannon starting from 1 , if 0 it wont be recognized by the pointer
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
-	int32 CannonNumber = 1;
 	// List Of blockade linked to this cannon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Variables|Cannon")
 	TArray<TObjectPtr<ABlockade>> BlockadeList;

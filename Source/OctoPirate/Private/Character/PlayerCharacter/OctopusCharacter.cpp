@@ -224,18 +224,23 @@ void AOctopusCharacter::SetMoveDestination(const FVector& Destination)
 void AOctopusCharacter::OnDeath_Implementation()
 {
 	Super::OnDeath_Implementation();
-	
+    
 	PlaySFX(this, DeathSound, GetActorLocation());
-	
+
+	if (UpgradeManager && BasicAttributes)
+	{
+		UpgradeManager->AddToLifetimeCoins(BasicAttributes->GetTotalCoinsCollectedThisRun());
+	}
+    
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC)
 	{
 		PC->DisableInput(PC);
 		PC->bShowMouseCursor = true;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Player has died — Game Over"));
-	
+    
+	UE_LOG(LogTemp, Warning, TEXT("Player has died"));
+    
 	OnPlayerDied.Broadcast();
 }
 
@@ -351,8 +356,7 @@ int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayT
 {
 	if (!ASC) return 0;
 
-	   FGameplayEffectQuery Query;
-		Query.OwningTagQuery = FGameplayTagQuery::MakeQuery_MatchAnyTags(
+	   FGameplayEffectQuery Query = FGameplayEffectQuery::MakeQuery_MatchAnyEffectTags(
         FGameplayTagContainer(EffectTag)
 	);
 

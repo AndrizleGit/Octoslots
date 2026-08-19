@@ -12,7 +12,7 @@
 #include "TreasureMapComponent.generated.h"
 
 class ATreasureSpawnZone;
-class ABrokenCannon;
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class OCTOPIRATE_API UTreasureMapComponent : public UActorComponent
 {
@@ -23,7 +23,7 @@ public:
 	UTreasureMapComponent();
 	// -- Configs --
 	// -- Treasure Digging Config -- 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Digging")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Digging Time")
 	float DiggingTime = 10.f;
 	// -- Treasure Spawning Config --
 	// How Far does the Treasure Spawn from Player - Default 15m
@@ -36,11 +36,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Distance From Border")
 	float BorderClearance = 150.f;
 	int32 MaxAttempts = 40;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Spawn")
-	int32 SpawnIntervalMinutes = 3;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Treasure Map|Spawn")
-	int32 MaxTreasureSpawn = 3;
-	bool bCanSpawnTreasure = false;
+	
 	// --- Public API ---
 	UFUNCTION(BlueprintCallable, Category = "TreasureMap")
 	void AddCannonAmmo();
@@ -66,13 +62,10 @@ public:
 	int32 TreasureNumber = 0;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap")
 	TArray<TObjectPtr<ATreasureSpawnZone>> TreasureSpawnZones;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "TreasureMap|Cannon")
-    	TArray<TObjectPtr<ABrokenCannon>> CannonList;
-	void StartTreasureSpawnTimer();
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	
+
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
@@ -80,21 +73,11 @@ private:
 	
 	UPROPERTY()
 	AOctopusCharacter* PlayerCharacter = nullptr;
-	UPROPERTY()
-	FTimerHandle RespawnTimerHandle;
+	
 	
 	bool IsPointAwayFromNavMeshBorder(UNavigationSystemV1* NavSys, const FVector& Point, float ClearanceRadius, int32 NumSamples = 8);
 	FVector GetSpawnLocation(ATreasureSpawnZone* TreasureSpawnZone) const;
 	ATreasureSpawnZone*  GetRandomTreasureSpawnZone() const;
 	ATreasureSpawnZone*  GetClosestTreasureSpawnZone() const;
-	void FindAllBrokenCannons();
-	void SortAllBrokenCannons();
 	void FindAllTreasureSpawnZones();
-	void EnableTreasureSpawn()
-	{
-		bCanSpawnTreasure = true;
-		GEngine->AddOnScreenDebugMessage(-1, 3.f, FColor::Yellow, FString::Printf(TEXT("Next Treasure can spawn")));
-
-	};
-	
 };

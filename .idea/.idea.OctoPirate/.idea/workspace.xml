@@ -22,11 +22,9 @@
   <component name="ChangeListManager">
     <list default="true" id="d5e67cea-1d7b-4062-9e64-e49f6e3572d2" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.OctoPirate/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_OctopusCharacter.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Levels/Level_FC3_TestLevel.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Levels/Level_FC3_TestLevel.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Private/Components/TreasureMapComponent.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Private/Components/TreasureMapComponent.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/BrokenCannon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/BrokenCannon.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Source/OctoPirate/Public/Components/TreasureMapComponent.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/OctoPirate/Public/Components/TreasureMapComponent.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_Blockade.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_Blockade.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Blueprints/BP_BrokenCannon.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Blueprints/BP_BrokenCannon.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Levels/Level_FC3.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Levels/Level_FC3.umap" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -277,7 +275,6 @@
       <workItem from="1784685039933" duration="196000" />
       <workItem from="1785488746773" duration="186000" />
       <workItem from="1785489706633" duration="17000" />
-      <workItem from="1787128155470" duration="185000" />
     </task>
     <servers />
   </component>
