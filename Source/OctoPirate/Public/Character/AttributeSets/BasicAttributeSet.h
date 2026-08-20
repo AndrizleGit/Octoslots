@@ -72,6 +72,13 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes|Progression|")
 	FGameplayAttributeData TotalCoinsCollectedThisRun;
 	ATTRIBUTE_ACCESSORS_BASIC(UBasicAttributeSet, TotalCoinsCollectedThisRun)
+	
+	UFUNCTION(BlueprintCallable, Category = "Attributes")
+	void SetCoinsCountUp(float NewCoinsValue, float NewTotalThisRunValue)
+	{
+		SetCoins(NewCoinsValue);
+		SetTotalCoinsCollectedThisRun(NewTotalThisRunValue);
+	}
 
 	UFUNCTION(BlueprintPure, Category = "Attributes")
 	float GetTotalCoinsCollectedThisRunValue() const { return TotalCoinsCollectedThisRun.GetCurrentValue(); }

@@ -42,9 +42,6 @@ void AMortar::FireCycle()
     
     ABaseCharacter::PlaySFX(this, FireSound, GetActorLocation());
     
-    // debug explosion radius
-    DrawDebugSphere(GetWorld(), CurrentTargetLocation, ExplosionRadius, 16, FColor::Red, false, WarningDuration);
-    
     // show warning decal at target location
     SpawnWarningDecal(CurrentTargetLocation);
 
@@ -85,9 +82,7 @@ void AMortar::Impact()
         ActiveWarningDecal->DestroyComponent();
         ActiveWarningDecal = nullptr;
     }
-
-    DrawDebugSphere(GetWorld(), CurrentTargetLocation, ExplosionRadius, 16, FColor::Red, false, 2.f);
-
+    
     if (ExplosionVFX)
     {
         UNiagaraFunctionLibrary::SpawnSystemAtLocation(GetWorld(), ExplosionVFX, CurrentTargetLocation);
