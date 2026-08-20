@@ -37,25 +37,30 @@ public:
 
 	// How far the ball travels before it stops and cleans itself up.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel")
-	float TravelDistance = 800.f;
+	float TravelDistance = 1100.f;
 
 	// Speed at the moment it is spawned.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel")
-	float LaunchSpeed = 1200.f;
+	float LaunchSpeed = 1600.f;
 
 	// Speed at the end of the travel, as a fraction of LaunchSpeed.
 	// 1 = no slowdown, 0.15 = ends at 15% of the launch speed.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel", meta = (ClampMin = "0.0", ClampMax = "1.0"))
-	float EndSpeedFraction = 0.15f;
+	float EndSpeedFraction = 0.35f;
 
 	// Shape of the slowdown over the travel distance.
 	// 1 = linear, >1 = holds its speed and drops off near the end, <1 = slows down early.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel", meta = (ClampMin = "0.05"))
 	float SpeedFalloffExponent = 2.f;
 
+	// The ball gives up as soon as it drops below this speed, so it never crawls to a
+	// halt and sits there. Set to 0 to let it always run the full TravelDistance.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel", meta = (ClampMin = "0.0"))
+	float MinSpeedBeforeDespawn = 300.f;
+
 	// Time the VFX is left to finish after the ball has stopped, before the actor is destroyed.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Poison Projectile|Travel", meta = (ClampMin = "0.0"))
-	float VFXLingerTime = 0.5f;
+	float VFXLingerTime = 0.15f;
 
 	// The poison trail/ball VFX. Assign NS_PoisonBall on this component in the Blueprint.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Poison Projectile")

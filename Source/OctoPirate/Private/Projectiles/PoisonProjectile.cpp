@@ -79,6 +79,14 @@ void APoisonProjectile::Tick(float DeltaTime)
 	const float Alpha = FMath::Pow(GetTravelProgress(), FMath::Max(SpeedFalloffExponent, KINDA_SMALL_NUMBER));
 	const float Speed = FMath::Lerp(LaunchSpeed, LaunchSpeed * EndSpeedFraction, Alpha);
 
+	// A ball that has slowed to a crawl reads as a stuck prop, so retire it as soon as
+	// the speed goes low rather than letting it inch out the rest of the distance.
+	if (MinSpeedBeforeDespawn > 0.f && Speed <= MinSpeedBeforeDespawn)
+	{
+		CompleteTravel();
+		return;
+	}
+
 	ProjectileMovement->Velocity = TravelDirection * Speed;
 }
 

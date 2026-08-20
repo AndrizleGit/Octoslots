@@ -1,6 +1,7 @@
 #include "Projectiles/BaseProjectile.h"
 
 #include "Character/PlayerCharacter/OctopusCharacter.h"
+#include "Components/MeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -35,6 +36,22 @@ void ABaseProjectile::BeginPlay()
 	
 	SpawnZ = GetActorLocation().Z;
 	CollisionSphere->OnComponentHit.AddDynamic(this, &ABaseProjectile::OnHit);
+
+	if (bSpinMeshWhileTraveling && !SpinMesh)
+	{
+		// the visual mesh lives on the blueprint, so grab the first one that
+		// is not the root - spinning the root would fight the movement component
+		TArray<UMeshComponent*> MeshComponents;
+		GetComponents<UMeshComponent>(MeshComponents);
+		for (UMeshComponent* Mesh : MeshComponents)
+		{
+			if (Mesh && Mesh != GetRootComponent())
+			{
+				SpinMesh = Mesh;
+				break;
+			}
+		}
+	}
 }
 
 
@@ -52,6 +69,11 @@ void ABaseProjectile::Tick(float DeltaTime)
 			FVector LockedLocation = GetActorLocation();
 			LockedLocation.Z = SpawnZ;
 			SetActorLocation(LockedLocation);
+		}
+
+		if (bSpinMeshWhileTraveling && SpinMesh && !SpinRate.IsNearlyZero())
+		{
+			SpinMesh->AddLocalRotation(SpinRate * DeltaTime);
 		}
 	}
 }

@@ -31,6 +31,11 @@ def effect_mode(value_name):
 BP_FOLDER = "/Game/Blueprints/Projectiles"
 PLAYER_BP_PATH = "/Game/Blueprints/BP_OctopusCharacter"
 
+# Blueprints that already exist normally keep their values, so re-running this never
+# eats hand-tuning. Leave this True while the numbers below are still the source of
+# truth; flip it to False once you start tuning in the Blueprint editor instead.
+OVERWRITE_DEFAULTS = True
+
 # name, niagara system, class-default overrides, property on BP_OctopusCharacter
 BLUEPRINTS = [
     {
@@ -38,10 +43,12 @@ BLUEPRINTS = [
         "niagara": "/Game/Niagara/PoisonBall/NS_PoisonBall",
         "player_property": "poison_projectile_class",
         "defaults": {
-            "travel_distance": 800.0,
-            "launch_speed": 1200.0,
-            "end_speed_fraction": 0.15,
+            "travel_distance": 1100.0,
+            "launch_speed": 1600.0,
+            "end_speed_fraction": 0.35,
             "speed_falloff_exponent": 2.0,
+            "min_speed_before_despawn": 300.0,
+            "vfx_linger_time": 0.15,
             "poison_effect_mode": effect_mode("STANDARD"),
         },
     },
@@ -52,10 +59,12 @@ BLUEPRINTS = [
         # Travel distance is overridden per-shot by PoisonVolleyTravelDistance on the
         # player, so the value here only applies if that is set to 0.
         "defaults": {
-            "travel_distance": 1600.0,
-            "launch_speed": 1300.0,
-            "end_speed_fraction": 0.2,
+            "travel_distance": 2200.0,
+            "launch_speed": 2000.0,
+            "end_speed_fraction": 0.45,
             "speed_falloff_exponent": 2.0,
+            "min_speed_before_despawn": 350.0,
+            "vfx_linger_time": 0.15,
             "poison_effect_mode": effect_mode("THREE_OF_A_KIND"),
         },
     },
@@ -100,7 +109,7 @@ def get_property(obj, names):
 def create_blueprint(name):
     path = BP_FOLDER + "/" + name
     if EAL.does_asset_exist(path):
-        info(path + " already exists -- reusing it, defaults left untouched.")
+        info(path + " already exists -- reusing it.")
         return EAL.load_asset(path), False
 
     factory = unreal.BlueprintFactory()
@@ -120,7 +129,10 @@ def apply_defaults(blueprint, spec, is_new):
     if cdo is None:
         fail("Could not reach the class defaults of " + spec["name"] + ".")
 
-    if is_new:
+    if is_new or OVERWRITE_DEFAULTS:
+        if not is_new:
+            info("Re-applying tuning defaults to " + spec["name"]
+                 + " (set OVERWRITE_DEFAULTS = False to keep hand-tuned values).")
         for prop, value in spec["defaults"].items():
             if value is None:
                 warn("Could not resolve a value for " + prop + " on " + spec["name"]

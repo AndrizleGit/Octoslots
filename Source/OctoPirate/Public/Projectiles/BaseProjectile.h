@@ -4,6 +4,7 @@
 #include "GameFramework/Actor.h"
 #include "BaseProjectile.generated.h"
 
+class UMeshComponent;
 class UProjectileMovementComponent;
 class USphereComponent;
 
@@ -37,6 +38,16 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Projectile")
 	TObjectPtr<USphereComponent> CollisionSphere;
 
+	// spins the visual mesh while the projectile is in the air.
+	// only the mesh spins, so the travel direction is unaffected
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Spin")
+	bool bSpinMeshWhileTraveling = false;
+
+	// spin applied to the mesh in its local space, in degrees per second.
+	// Pitch tumbles it end over end, Roll barrel-rolls it, Yaw spins it flat
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Projectile|Spin", meta = (EditCondition = "bSpinMeshWhileTraveling"))
+	FRotator SpinRate = FRotator(720.f, 0.f, 0.f);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Projectile")
 	bool WasDeflected() const { return bIsDeflected; }
 
@@ -54,6 +65,10 @@ protected:
 	
 	bool bLockToSpawnHeight = true;
 	float SpawnZ = 0.f;
+
+	// the mesh the spin is applied to, resolved on BeginPlay
+	UPROPERTY(Transient)
+	TObjectPtr<UMeshComponent> SpinMesh;
 private:
 	
 	FVector LastFrameVelocity = FVector::ZeroVector;

@@ -144,7 +144,7 @@ public:
 	// Travel distance for volley balls, overriding the value on their Blueprint.
 	// Set to 0 to use whatever the Blueprint itself says.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects|Poison Volley", meta = (ClampMin = "0.0"))
-	float PoisonVolleyTravelDistance = 1600.f;
+	float PoisonVolleyTravelDistance = 2200.f;
 
 	// The stronger poison the volley applies. Leave empty to reuse PoisonPathEffectClass,
 	// the effect the three-of-a-kind already applied on hit.
