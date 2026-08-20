@@ -2,6 +2,7 @@
 #include "Blueprint/AIBlueprintHelperLibrary.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Projectiles/BaseProjectile.h"
+#include "Projectiles/PoisonProjectile.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -95,6 +96,25 @@ void AOctopusCharacter::BeginPlay()
 			);
 		}
 	}
+	// -- Three-of-a-kind volley poison --
+	// Falls back to the path effect, so the volley works with the effects that already
+	// exist until a dedicated, stronger one is authored.
+	if (AbilitySystemComponent)
+	{
+		const TSubclassOf<UGameplayEffect> VolleyEffectClass =
+			ThreeOfAKindPoisonEffectClass ? ThreeOfAKindPoisonEffectClass : PoisonPathEffectClass;
+
+		if (VolleyEffectClass)
+		{
+			FGameplayEffectContextHandle VolleyContext = AbilitySystemComponent->MakeEffectContext();
+			CachedThreeOfAKindSpecHandle = AbilitySystemComponent->MakeOutgoingSpec(
+				VolleyEffectClass,
+				1.0f,
+				VolleyContext
+			);
+		}
+	}
+
 	// -- Checking for Poison Trail Tag -- 
 	AbilitySystemComponent->RegisterGameplayTagEvent(TAG_Status_PoisonTrailBuff, EGameplayTagEventType::NewOrRemoved)
 	   .AddUObject(this, &AOctopusCharacter::OnTagChanged);
@@ -290,6 +310,22 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
 {
     if (bIsDead) return;
     
+    // -- Poison buff: fire poison ball(s) forward on every swing --
+    // The caller has already rotated the character towards the target, so the actor's
+    // forward vector is the swing direction.
+    if (AbilitySystemComponent)
+    {
+        if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonTrailBuff))
+        {
+            // Three of a kind replaces the single ball with the fan.
+            SpawnPoisonVolley();
+        }
+        else if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
+        {
+            SpawnPoisonProjectile();
+        }
+    }
+    
     const FVector Origin = GetActorLocation();
     FVector Forward = GetActorForwardVector();
     Forward.Z = 0.0f;
@@ -339,27 +375,153 @@ void AOctopusCharacter::ApplyDamageInZone(float MinDist, float MaxDist, float Da
             UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Actor);
 
         if (!TargetASC) continue;
-        
-        if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff))
-        {
-            if (!CachedPoisonSpecHandle.IsValid()) continue;
-            if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) continue;
-            if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PlayerPoison)) continue;
 
-            for (int i = 0; i < GetStacksByTag(AbilitySystemComponent, TAG_Status_PoisonWeaponBuff); i++)
-            {
-                AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
-            }
+        // The poison ball fired above is what poisons now. Only the opt-in flag makes the
+        // swing itself poison as well; a target that is immune or already poisoned still
+        // skips the trail block below, exactly as it did before.
+        if (bMeleeSwingAlsoAppliesPoison
+            && AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff)
+            && !ApplyPoisonWeaponToASC(TargetASC))
+        {
+            continue;
         }
 
         // -- Apply 3 Kind Poison --
-        if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PoisonTrailDebuff)) continue;
-        if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonTrailBuff))
+        // The volley carries this now as well; the same opt-in flag brings the swing back.
+        if (bMeleeSwingAlsoAppliesPoison)
         {
-            if (!CachedPoisonPathSpecHandle.IsValid()) continue;
-            AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonPathSpecHandle.Data.Get(), TargetASC);
+            if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PoisonTrailDebuff)) continue;
+            if (AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonTrailBuff))
+            {
+                if (!CachedPoisonPathSpecHandle.IsValid()) continue;
+                AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonPathSpecHandle.Data.Get(), TargetASC);
+            }
         }
     }
+}
+
+void AOctopusCharacter::SpawnPoisonProjectileAtAngle(TSubclassOf<APoisonProjectile> ProjectileClass,
+	float YawOffsetDegrees, EPoisonProjectileEffect EffectMode, float TravelDistanceOverride)
+{
+	UWorld* World = GetWorld();
+	if (!World || !ProjectileClass) return;
+
+	FVector Forward = GetActorForwardVector();
+	Forward.Z = 0.f;
+	if (!Forward.Normalize()) return;
+
+	const FVector Direction = FRotator(0.f, YawOffsetDegrees, 0.f).RotateVector(Forward);
+
+	const FTransform SpawnTransform(
+		Direction.Rotation(),
+		GetActorLocation()
+			+ Direction * PoisonProjectileSpawnOffset
+			+ FVector(0.f, 0.f, PoisonProjectileSpawnHeight));
+
+	// Deferred: the ball poisons whatever is already standing inside it during BeginPlay,
+	// so its effect mode and travel distance have to be set before that runs.
+	APoisonProjectile* Projectile = World->SpawnActorDeferred<APoisonProjectile>(
+		ProjectileClass, SpawnTransform, this, this,
+		ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
+
+	if (!Projectile) return;
+
+	Projectile->PoisonEffectMode = EffectMode;
+	if (TravelDistanceOverride > 0.f)
+	{
+		Projectile->TravelDistance = TravelDistanceOverride;
+	}
+
+	Projectile->FinishSpawning(SpawnTransform);
+}
+
+void AOctopusCharacter::SpawnPoisonProjectile()
+{
+	if (!PoisonProjectileClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Poison] PoisonProjectileClass is not set on %s — no poison ball spawned."), *GetName());
+		return;
+	}
+
+	SpawnPoisonProjectileAtAngle(PoisonProjectileClass, 0.f, EPoisonProjectileEffect::Standard, 0.f);
+}
+
+void AOctopusCharacter::SpawnPoisonVolley()
+{
+	const TSubclassOf<APoisonProjectile> VolleyClass =
+		PoisonVolleyProjectileClass ? PoisonVolleyProjectileClass : PoisonProjectileClass;
+
+	if (!VolleyClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Poison] Neither PoisonVolleyProjectileClass nor PoisonProjectileClass is set on %s — no volley spawned."), *GetName());
+		return;
+	}
+
+	const int32 Count = FMath::Max(PoisonVolleyCount, 1);
+
+	// Centre the fan on the swing direction: three balls 30 degrees apart come out at
+	// -30 / 0 / +30, and an even count straddles the centre line instead of sitting on it.
+	const float FirstAngle = -PoisonVolleySpreadDegrees * (Count - 1) * 0.5f;
+
+	for (int32 i = 0; i < Count; i++)
+	{
+		SpawnPoisonProjectileAtAngle(
+			VolleyClass,
+			FirstAngle + PoisonVolleySpreadDegrees * i,
+			EPoisonProjectileEffect::ThreeOfAKind,
+			PoisonVolleyTravelDistance);
+	}
+}
+
+bool AOctopusCharacter::ApplyPoisonToActor(AActor* Target)
+{
+	if (!IsValid(Target)) return false;
+
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+
+	return ApplyPoisonWeaponToASC(TargetASC);
+}
+
+bool AOctopusCharacter::ApplyThreeOfAKindPoisonToActor(AActor* Target)
+{
+	if (!IsValid(Target)) return false;
+
+	UAbilitySystemComponent* TargetASC =
+		UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+
+	return ApplyThreeOfAKindPoisonToASC(TargetASC);
+}
+
+bool AOctopusCharacter::ApplyThreeOfAKindPoisonToASC(UAbilitySystemComponent* TargetASC)
+{
+	if (!AbilitySystemComponent || !TargetASC) return false;
+	if (!CachedThreeOfAKindSpecHandle.IsValid()) return false;
+	if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) return false;
+	// Already carrying the three-of-a-kind poison - the rule the melee cone used.
+	if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PoisonTrailDebuff)) return false;
+
+	AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedThreeOfAKindSpecHandle.Data.Get(), TargetASC);
+	return true;
+}
+
+bool AOctopusCharacter::ApplyPoisonWeaponToASC(UAbilitySystemComponent* TargetASC)
+{
+	if (!AbilitySystemComponent || !TargetASC) return false;
+	if (!AbilitySystemComponent->HasMatchingGameplayTag(TAG_Status_PoisonWeaponBuff)) return false;
+	if (!CachedPoisonSpecHandle.IsValid()) return false;
+	if (TargetASC->HasMatchingGameplayTag(TAG_Status_PoisonImmune)) return false;
+	if (TargetASC->HasMatchingGameplayTag(TAG_Debuffs_PlayerPoison)) return false;
+
+	const int32 Stacks = GetStacksByTag(AbilitySystemComponent, TAG_Status_PoisonWeaponBuff);
+	for (int32 i = 0; i < Stacks; i++)
+	{
+		AbilitySystemComponent->ApplyGameplayEffectSpecToTarget(*CachedPoisonSpecHandle.Data.Get(), TargetASC);
+	}
+
+	// Past every gate — the target accepted the poison (the caller uses this to mirror
+	// the cone's old early-out behaviour).
+	return true;
 }
 
 int32 AOctopusCharacter::GetStacksByTag(UAbilitySystemComponent* ASC, FGameplayTag EffectTag)

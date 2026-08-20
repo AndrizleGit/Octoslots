@@ -102,6 +102,8 @@ void AShark::BeginTelegraph()
         DecalRotation.Pitch -= 90.f; // project straight down -- a purely horizontal decal never lands on the floor
         // X = projection depth, Y = half lane width, Z = half lane length
         const FVector DecalSize = FVector(200.f, ChargeLaneWidth * 0.5f, EffectiveChargeDistance * 0.5f);
+
+        ActiveLaneDecal = UGameplayStatics::SpawnDecalAtLocation(this, LaneDecalMaterial, DecalSize, DecalLocation, DecalRotation, TelegraphDuration);
     }
 
     ABaseCharacter::PlaySFX(this, TelegraphSound, GetActorLocation());
