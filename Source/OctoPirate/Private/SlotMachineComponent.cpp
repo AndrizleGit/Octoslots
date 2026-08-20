@@ -25,6 +25,7 @@ void USlotMachineComponent::TickComponent(float DeltaTime, ELevelTick TickType, 
     if (DopamineCurrent > 0.f)
     {
         DopamineCurrent = FMath::Max(0.f, DopamineCurrent - (DopamineDrainPerSecond * DeltaTime));
+        UE_LOG(LogTemp, Warning, TEXT("[Dopamine] Current: %.1f"), DopamineCurrent);
         OnDopamineChanged.Broadcast(GetDopamineNormalized());
         
         if (DopamineCurrent <= 0.f)
@@ -114,6 +115,13 @@ void USlotMachineComponent::OnSpinAnimationFinished()
 bool USlotMachineComponent::CanAffordSpin() const
 {
     const UBasicAttributeSet* Attributes = PlayerCharacter ? PlayerCharacter->BasicAttributes : nullptr;
+    
+    UE_LOG(LogTemp, Warning, TEXT("[CanAffordSpin] PlayerCharacter valid: %d, Attributes valid: %d, Coins: %.1f, SpinCost: %.1f"),
+        PlayerCharacter != nullptr,
+        Attributes != nullptr,
+        Attributes ? Attributes->GetCoins() : -1.f,
+        SpinCost);
+    
     return Attributes && Attributes->GetCoins() >= SpinCost;
 }
 
